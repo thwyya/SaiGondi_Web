@@ -5,14 +5,7 @@ import { PostTable } from './PostTable';
 import BackgroundBlur from "@/shared/BackgroundBlur";
 
 
-interface Props {
-    params: {
-      id: string;
-    };
-  }
-
-
-export default async function ProfilePage({params}:Props) {
+export default async function ProfilePage({ params }) {
 
     const { id } = params;
     const user = users.find((u)=>u.id === 'user_1')

@@ -17,6 +17,8 @@ export interface AlbumItem {
 export interface Author {
   _id: string;
   avatar: string;
+  username: string;
+  badge: string;
 }
 
 export interface Blog {

@@ -5,6 +5,13 @@ import { FiSearch, FiSliders } from "react-icons/fi";
 import Button from "./Button";
 
 const SearchBox = () => {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearch = () => {
+    if (searchQuery.trim() === "") return;
+    window.location.href = `/search?query=${encodeURIComponent(searchQuery)}`;
+  };
+
   return (
     <div className="relative bg-transparent flex justify-center py-12 sm:py-16 px-4">
       <div className="bg-[var(--background)] rounded-2xl shadow-md flex items-center w-full max-w-7xl gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
@@ -26,6 +33,8 @@ const SearchBox = () => {
                        placeholder:text-[11px] sm:placeholder:text-sm
                        focus:outline-none focus:border-[var(--primary)]
                        focus:ring-1 focus:ring-[var(--primary)] transition"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -34,6 +43,7 @@ const SearchBox = () => {
           className="flex items-center justify-center gap-2
                      px-4 sm:px-6 py-2.5 sm:py-3
                      text-xs sm:text-sm font-semibold rounded-full"
+          onClick={handleSearch}
         >
           TÌM KIẾM
         </Button>

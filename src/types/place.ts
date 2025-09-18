@@ -1,8 +1,3 @@
-
-export interface Ward {
-  _id: string;
-  name: string;
-}
 export interface Place {
   _id: string;
   name: string;
@@ -31,8 +26,6 @@ export interface Place {
   comments?: any[];
   lat: number;
   lng: number;
-  ward?: string;
-
 
   distance?: string | number; 
   serviceCount?: number;

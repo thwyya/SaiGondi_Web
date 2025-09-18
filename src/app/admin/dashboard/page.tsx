@@ -13,7 +13,7 @@ import AnimatedNumber from '../AnimatedNumber'
 
 const Slider = dynamic(() => import("react-slick"), { ssr: false }) as any;
 
-const page = () => {
+const Page = () => {
 
   const sliderRef1 = useRef<any>(null);
   const sliderRef2 = useRef<any>(null);
@@ -161,4 +161,4 @@ const page = () => {
   </>
 }
 
-export default page
+export default Page;

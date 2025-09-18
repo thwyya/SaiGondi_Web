@@ -1,23 +1,51 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { Destination } from "@/app/assets/data/destinations";
 import Image from "next/image";
+import { useState, useEffect } from 'react';
+import useUser from "@/hooks/useUser";
+import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 
 interface Props {
   destination: Destination;
 }
 
 const DestinationCard = ({ destination }: Props) => {
-  console.log("Destination object:", destination);
   const router = useRouter();
+  const { user, isAuthenticated, loading: userLoading, refetch: refetchUser } = useUser();
+  
+  const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
 
   const handleClick = () => {
     router.push(`/user/destination/${destination._id}`);
   };
 
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      if (isFavorited) {
+        await removeFromFavorites(destination._id);
+      } else {
+        await addToFavorites(destination._id);
+      }
+      // Refetch user to get updated favorites and trigger re-render
+      await refetchUser(); 
+    } catch (error) {
+      console.error("Failed to update favorite status", error);
+    }
+  };
+
   const imageUrl = destination.images?.[0] || "/image.svg";
 
   return (
-    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden">
+    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
       {/* Ảnh */}
       <Image
         alt={destination.name}
@@ -88,7 +116,13 @@ const DestinationCard = ({ destination }: Props) => {
 
         {/* Actions */}
         <div className="flex justify-between items-center">
-          <i className="ri-heart-fill border border-[var(--primary)] rounded-md p-2 text-[var(--secondary)] cursor-pointer"></i>
+          <button 
+            onClick={handleFavoriteClick} 
+            className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={userLoading}
+          >
+              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+            </button>
           <button
             onClick={handleClick}
             className="btn-primary w-[70%] sm:w-[80%] h-10 rounded-3xl text-white text-sm cursor-pointer"

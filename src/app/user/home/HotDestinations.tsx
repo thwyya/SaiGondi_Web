@@ -6,10 +6,10 @@ import Button from '@/components/ui/Button';
 import { HiLocationMarker } from 'react-icons/hi';
 
 const destinations = [
-  { title: 'PHƯỜNG THỦ ĐỨC', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
-  { title: 'PHƯỜNG BÀN CỜ', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
-  { title: 'PHƯỜNG BẾN NGHÉ', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
-  { title: 'PHƯỜNG LINH XUÂN', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
+  { _id: 'dest_1', title: 'PHƯỜNG THỦ ĐỨC', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
+  { _id: 'dest_2', title: 'PHƯỜNG BÀN CỜ', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
+  { _id: 'dest_3', title: 'PHƯỜNG BẾN NGHÉ', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
+  { _id: 'dest_4', title: 'PHƯỜNG LINH XUÂN', location: 'Phường Bàn Cờ', distance: 'Cách bạn 90m', image: '/hot-destination.svg' },
 ];
 
 const HotDestinations = () => {
