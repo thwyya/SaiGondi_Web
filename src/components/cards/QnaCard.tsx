@@ -24,30 +24,27 @@ export default function QnaCard({
   const [expanded] = useState(false);
 
   return (
-    <div className="relative mx-1 sm:mx-2">
-      <div className="relative w-full max-w-[300px] mx-auto">
+    <div className="relative h-full">
+      <div
+        className="
+          absolute inset-0 -z-10 rounded-[20px] bg-[#307AFD63]
+          transform-gpu translate-x-4 translate-y-4
+        "
+      />
+
+      <div className="flex flex-col h-full bg-white rounded-[20px] p-4 sm:p-5 shadow-lg transition-all duration-300">
+        <h3 className="text-base sm:text-[17px] md:text-[18px] font-bold text-gray-900 mb-3 sm:mb-4 leading-snug line-clamp-2">
+          {title}
+        </h3>
+
         <div
-          className="
-            absolute inset-0 -z-10 rounded-[20px] bg-[#307AFD63]
-            transform-gpu
-            scale-[1.0] translate-x-4 translate-y-4
-            sm:scale-[1.0] sm:translate-x-5 sm:translate-y-5
-          "
-        />
+          className={`text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5 leading-snug flex-1 ${
+            expanded ? '' : 'line-clamp-3'
+          }`}
+        >
+        </div>
 
-        <div className="bg-white rounded-[20px] p-4 sm:p-5 shadow-lg transition-all duration-300">
-          <h3 className="text-base sm:text-[17px] md:text-[18px] font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">
-            {title}
-          </h3>
-
-          <div
-            className={`text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5 leading-snug ${
-              expanded ? '' : 'line-clamp-2'
-            }`}
-          >
-            {description}
-          </div>
-
+        <div className="mt-auto"> 
           <div className="flex flex-col gap-1 mb-3 sm:mb-4">
             <span className="text-sm sm:text-base font-semibold font-inter">
               {author}
