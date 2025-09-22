@@ -1,43 +1,55 @@
 'use client'
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { GenericTable } from "@/shared/GenericTable"
 
-interface Props<T> {
-  data: T[]
+interface Blog {
+  title: string
+  mainImage?: string
+  viewCount?: number
+  createdAt?: string
+  slug: string
 }
 
-export function PostTable<T extends { title: string; cover?: string; views?: number; createdAt?: string }>({ data }: Props<T>) {
+interface Props {
+  data: Blog[]
+}
 
-  const columns = useMemo<ColumnDef<T>[]>(() => [
+export function PostTable({ data }: Props) {
+  const columns = useMemo<ColumnDef<Blog>[]>(() => [
     {
       header: 'Bài đăng',
       accessorKey: 'title',
       cell: ({ row }) => {
-        const post = row.original;
+        const post = row.original
         return (
-          <div className="flex gap-3">
-            <img src={post.cover || '/images/default-cover.jpg'} alt="" className='h-10 w-10 object-cover rounded-md' />
-            <h2>{post.title}</h2>
-          </div>
+          <Link href={`/user/blog/${post.slug}`} className="flex gap-3 items-center hover:text-blue-600">
+            <img
+              src={post.mainImage || '/images/default-cover.jpg'}
+              alt={post.title}
+              className="h-10 w-10 object-cover rounded-md shadow"
+            />
+            <h2 className="font-medium">{post.title}</h2>
+          </Link>
         )
       },
     },
     {
       header: 'Lượt tiếp cận',
-      accessorKey: 'views',
+      accessorKey: 'viewCount',
       cell: ({ getValue }) => {
-        const value = getValue() as number;
-        return <span>{value ?? 0}</span>;
+        const value = getValue() as number
+        return <span>{value ?? 0}</span>
       }
     },
     {
       header: 'Ngày đăng',
       accessorKey: 'createdAt',
       cell: ({ getValue }) => {
-        const date = new Date(getValue() as string)
-        return <span>{date.toLocaleDateString('vi-VN')}</span>
-      },
+        const date = getValue() as string
+        return <span>{date ? new Date(date).toLocaleDateString('vi-VN') : ''}</span>
+      }
     },
   ], [])
 
