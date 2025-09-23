@@ -141,16 +141,6 @@ export default function Header() {
               <FaChevronDown className="text-gray-500" size={14} />
               {avatarOpen && (
                 <div className="absolute right-0 top-[110%] w-44 bg-white rounded-xl shadow-lg py-1 border border-gray-100">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLogout();
-                      setAvatarOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
-                  >
-                    Đăng xuất
-                  </button>
                   <Link
                     href="/user/profile"
                     onClick={(e) => {
@@ -161,6 +151,16 @@ export default function Header() {
                   >
                     Trang cá nhân
                   </Link>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
+                      setAvatarOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
+                  >
+                    Đăng xuất
+                  </button>
                 </div>
               )}
               </div>
