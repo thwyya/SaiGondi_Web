@@ -85,5 +85,13 @@ export const authApi = {
   getUserReviews: async (userId: string) => {
     const res = await axiosInstance.get(`/users/${userId}/reviews`)
     return res.data.data
+  },
+  deleteBlog: async (blogId: string) => {
+    const res = await axiosInstance.delete(`/blogs/${blogId}`);
+    return res.data;
+  },
+  banUser: async () => {
+    const res = await axiosInstance.put("/users/me/ban");
+    return res.data;
   }
 };

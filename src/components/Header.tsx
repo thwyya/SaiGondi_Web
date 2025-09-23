@@ -151,6 +151,16 @@ export default function Header() {
                   >
                     Đăng xuất
                   </button>
+                  <Link
+                    href="/user/profile"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAvatarOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
+                  >
+                    Trang cá nhân
+                  </Link>
                 </div>
               )}
               </div>
