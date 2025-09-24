@@ -15,6 +15,7 @@ export function mapBlogToPost(blog: any): Post {
     tags: blog.tags || [],
 
     // author
+    authorId: typeof blog.authorId === "object" ? blog.authorId._id : blog.authorId,
     author: typeof blog.authorId === "object"
       ? `${blog.authorId.firstName || ""} ${blog.authorId.lastName || ""}`.trim() || "Ẩn danh"
       : "Ẩn danh",

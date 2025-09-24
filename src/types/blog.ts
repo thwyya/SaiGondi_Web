@@ -60,6 +60,7 @@ export interface Post {
 
   // Author
   author: string;
+  authorId?: string;
   authorAvatar: string;
 
   // Thông tin thời gian & địa điểm

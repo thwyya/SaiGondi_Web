@@ -93,5 +93,9 @@ export const authApi = {
   banUser: async () => {
     const res = await axiosInstance.put("/users/me/ban");
     return res.data;
-  }
+  },
+  getUserById: async (id: string) => {
+  const res = await axios.get(`${API_URL}/users/${id}`);
+  return res.data;
+},
 };
