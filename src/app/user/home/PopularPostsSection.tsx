@@ -35,7 +35,6 @@ const PopularPostsSection = () => {
             }
           })
         );
-
         setPosts(withComments);
       } catch (err) {
         console.error("Lỗi khi load popular blogs:", err);
@@ -66,7 +65,6 @@ const PopularPostsSection = () => {
         <p className="text-gray-600 font-inter text-sm sm:text-base lg:text-[17px] leading-relaxed mb-6 sm:mb-8 max-w-[700px]">
           Cùng xem các bài viết được xem nhiều nhất hôm nay
         </p>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 lg:gap-x-8 xl:gap-x-10 gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
           {posts.map((item, index) => (
             <div
@@ -90,11 +88,10 @@ const PopularPostsSection = () => {
                     <span>{new Date(item.date).toLocaleDateString('vi-VN')}</span>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-2 mt-2">
-                    <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug">
-                      {item.title}
-                    </h3>
-
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem]">
+                    {item.title}
+                  </h3>
                     <div className="flex items-center space-x-2">
                       <Image
                         src={item.authorAvatar || '/avatar.svg'}
