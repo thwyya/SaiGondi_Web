@@ -22,8 +22,13 @@ export function mapBlogToPost(blog: Blog): Post {
     tags: blog.tags || [],
 
     // author
-    author: author ? `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Ẩn danh" : "Ẩn danh",
-    authorAvatar: author?.avatar || "/Logo.svg",
+    authorId: typeof blog.authorId === "object" ? blog.authorId._id : blog.authorId,
+    author: typeof blog.authorId === "object"
+      ? `${blog.authorId.firstName || ""} ${blog.authorId.lastName || ""}`.trim() || "Ẩn danh"
+      : "Ẩn danh",
+    authorAvatar: typeof blog.authorId === "object"
+      ? blog.authorId.avatar || "/Logo.svg"
+      : "/Logo.svg",
 
     // time & location
     date: blog.createdAt,

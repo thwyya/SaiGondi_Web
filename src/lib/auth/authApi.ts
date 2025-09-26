@@ -70,16 +70,32 @@ export const authApi = {
     return res.data;
   },
 
-// Lấy thông tin profile theo token
-getProfile: async (token: string) => {
-  const res = await axios.get(`${API_URL}/users/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-    },
-  });
+  // Lấy thông tin profile theo token
+  getProfile: async (token: string) => {
+    const res = await axios.get(`${API_URL}/users/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+    return res.data;
+  },
+  getUserReviews: async (userId: string) => {
+    const res = await axiosInstance.get(`/users/${userId}/reviews`)
+    return res.data.data
+  },
+  deleteBlog: async (blogId: string) => {
+    const res = await axiosInstance.delete(`/blogs/${blogId}`);
+    return res.data;
+  },
+  banUser: async () => {
+    const res = await axiosInstance.put("/users/me/ban");
+    return res.data;
+  },
+  getUserById: async (id: string) => {
+  const res = await axios.get(`${API_URL}/users/${id}`);
   return res.data;
-}
+},
 };
