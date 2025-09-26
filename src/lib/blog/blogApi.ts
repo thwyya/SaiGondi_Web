@@ -62,7 +62,7 @@ export const blogApi = {
 
   // Chia sẻ blog
   shareBlog: async (id: string) => {
-    const res = await axiosInstance.post(`/blogs/${id}/share`);
+    const res = await axiosInstance.patch(`/blogs/${id}/share`);
     return res.data;
   },
 

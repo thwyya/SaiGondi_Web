@@ -74,8 +74,9 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             {/* Nội dung bài viết */}
             <div className="flex-[0.7] min-w-0">
               <BlogDetail post={post} />
-              {/* Social share */}
-              <SocialShare />
+                <div className="flex items-center gap-2 mb-8">
+                  <hr className="flex-1 border-[#D1E7E5]" />
+                </div>
               <CommentSection blogId={post._id} />
             </div>
 
