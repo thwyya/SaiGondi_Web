@@ -25,6 +25,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     currentUserId ? post.likeBy.includes(currentUserId) : false
   );
   const [likeCount, setLikeCount] = useState(post.totalLikes);
+  const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
   const [visibleCount, setVisibleCount] = useState(3);
@@ -72,10 +73,29 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     setShowShareMenu(false);
   };
 
-  const handleSharePersonal = () => {
-    alert('Đã chia sẻ về trang cá nhân.');
-    setShowShareMenu(false);
+  const handleSharePersonal = async () => {
+    try {
+      const res = await blogApi.shareBlog(post.id);
+
+      // Cập nhật shareCount theo dữ liệu server trả về
+      setShareCount(res.shareCount);
+
+      alert('Đã chia sẻ về trang cá nhân.');
+      setShowShareMenu(false);
+    } catch (err: any) {
+      console.error('Lỗi khi chia sẻ blog:', err);
+
+      if (err.response?.status === 429 || err.response?.data?.statusCode === 429) {
+        alert('Bạn đã chia sẻ quá nhiều lần, vui lòng thử lại sau.');
+      } else {
+        alert('Có lỗi xảy ra khi chia sẻ. Vui lòng thử lại.');
+      }
+      setShowShareMenu(false);
+    }
   };
+
+
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -154,7 +174,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
               onClick={() => setShowShareMenu((prev) => !prev)}
             >
               <LuShare2 className="text-[var(--foreground)]" />
-              <span>{post.shareCount ?? 0}</span>
+              <span>{shareCount}</span>
             </div>
             {showShareMenu && (
               <div className="absolute right-0 mt-2 w-63 bg-[var(--background)] border border-[var(--gray-5)] rounded-lg shadow-lg z-10">
