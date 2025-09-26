@@ -53,7 +53,6 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    // Lấy số liệu thống kê
     api
       .get("/admin/stats/overview")
       .then((res) => {
@@ -61,7 +60,6 @@ export default function AdminDashboardPage() {
       })
       .catch((err) => console.log("Lỗi lấy thống kê:", err));
 
-    // Lấy thông tin admin
     api
       .get("/admin/me")
       .then((res) => {
@@ -76,7 +74,6 @@ export default function AdminDashboardPage() {
         router.push("/admin/login");
       });
 
-    // Lấy TOP user
     api
       .get("/admin/stats/popular")
       .then((res) => {
@@ -91,7 +88,6 @@ export default function AdminDashboardPage() {
       })
       .catch((err) => console.log("Lỗi lấy TOP user:", err));
 
-    // Xử lý đóng popup khi click ra ngoài
     const handleClickOutside = (e: MouseEvent) => {
       if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
         setAvatarOpen(false);
@@ -112,7 +108,6 @@ export default function AdminDashboardPage() {
       <BackgroundBlur01 />
 
       <div className="flex flex-col xl:w-[90%] mx-auto">
-        {/* HEADER admin info */}
         <div className="flex justify-end mt-6 px-4">
           <div
             ref={avatarRef}
@@ -144,9 +139,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* CARD thống kê */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-between m-4 lg:m-8 gap-4 lg:gap-8">
-          {/* Địa điểm */}
           <div className="flex flex-col rounded-2xl py-6 px-2 lg:p-6 gap-2 bg-[#EDEEFC]">
             <h4 className="text-sm lg:text-base font-bold text-center">Số địa điểm</h4>
             <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">
@@ -155,7 +148,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Lượt truy cập */}
           <div className="flex flex-col rounded-2xl py-6 px-2 lg:p-6 gap-2 bg-[#E6F1FD]">
             <h4 className="text-sm lg:text-base font-bold text-center">Lượt truy cập</h4>
             <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">
@@ -164,7 +156,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Người dùng */}
           <div className="flex flex-col rounded-2xl py-6 px-2 lg:p-6 gap-2 bg-[#EDEEFC]">
             <h4 className="text-sm lg:text-base font-bold text-center">Số người dùng</h4>
             <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">
@@ -173,7 +164,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Bài viết */}
           <div className="flex flex-col rounded-2xl py-6 px-2 lg:p-6 gap-2 bg-[#E6F1FD]">
             <h4 className="text-sm lg:text-base font-bold text-center">Số bài viết</h4>
             <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">
@@ -183,7 +173,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* CHART */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 md:px-6">
           <div className="bg-[#F9F9FA] rounded-xl px-4">
             <TopPlaceChart />
@@ -193,12 +182,10 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* LINE CHART */}
         <div className="w-[96%] mx-auto bg-[#F9F9FA] mt-8 px-4 max-h-[400px]">
           <MonthlyLineChart />
         </div>
 
-        {/* SLIDER TOP USERS */}
         <div className="flex flex-col w-full mt-10 px-6">
           <h2 className="text-[#343C6A] text-lg font-bold mb-3">
             TOP 5 NGƯỜI DÙNG NỔI BẬT

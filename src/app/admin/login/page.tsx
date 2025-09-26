@@ -25,12 +25,6 @@ export default function LoginPage() {
   useEffect(() => {
     const prefillEmail = searchParams.get('email');
     if (prefillEmail) setEmail(prefillEmail);
-    api
-      .get("/admin/stats/overview")
-      .then((res) => {
-        setStats(res.data?.data || {});
-      })
-      .catch((err) => console.log("Lỗi lấy thống kê:", err));
 
     const rememberedEmail = localStorage.getItem("admin_remember_email");
     const rememberedPassword = localStorage.getItem("admin_remember_password");
@@ -39,7 +33,16 @@ export default function LoginPage() {
       setPassword(rememberedPassword);
       setRememberMe(true);
     }
+
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      api
+        .get("/admin/stats/overview")
+        .then((res) => setStats(res.data?.data || {}))
+        .catch((err) => console.log("Lỗi lấy thống kê:", err));
+    }
   }, [searchParams]);
+
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
