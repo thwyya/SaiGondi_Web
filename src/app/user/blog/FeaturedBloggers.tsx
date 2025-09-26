@@ -1,29 +1,51 @@
 'use client';
 
-import { dataBlogPosts } from '@/data/data';
+import { useEffect, useState } from 'react';
 import BloggerCard from './BloggerCard';
+import { User } from '@/types/user';
+import { userApi } from '@/lib/user/userApi';
+
+type OutstandingBlogger = {
+  author: Pick<User, "_id" | "firstName" | "lastName" | "avatar"| "bio">;
+  totalBlogs: number;
+  totalLikes: number;
+  totalShares: number;
+};
 
 const FeaturedBloggers = () => {
-  // Lấy 4 bài viết mới nhất
-  const topPosts = [...dataBlogPosts]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4);
+  const [bloggers, setBloggers] = useState<OutstandingBlogger[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Tạo danh sách blogger từ các bài viết
-  const bloggers = topPosts.map((post) => ({
-    name: post.author,
-    description: 'Đưa Mộc Châu Ra Thế Giới - Mang Thế Giới Về Mộc Châu',
-    avatar: post.authorAvatar ?? '/avatars/default.jpg',
-    facebookLink: 'https://facebook.com',
-    zaloLink: 'https://zalo.me',
-  }));
+  useEffect(() => {
+    const fetchBloggers = async () => {
+      try {
+        const data = await userApi.getOutstandingBloggers();
+        setBloggers(data);
+      } catch (err) {
+        console.error("Failed to fetch outstanding bloggers", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBloggers();
+  }, []);
+
+  if (loading) {
+    return <p>Đang tải danh sách blogger...</p>;
+  }
 
   return (
     <div className="mt-10">
       <h3 className="text-xl font-bold mb-4">CÁC BLOGGER NỔI BẬT</h3>
       <div className="flex flex-col gap-5">
-        {bloggers.map((blogger, index) => (
-          <BloggerCard key={index} {...blogger} />
+        {bloggers.map((blogger) => (
+          <BloggerCard
+            key={blogger.author._id}
+            avatar={blogger.author.avatar || "/Logo.svg"}
+            name={`${blogger.author.firstName} ${blogger.author.lastName}`}
+            description={blogger.author.bio}
+          />
         ))}
       </div>
     </div>

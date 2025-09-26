@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from 'next/link';
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
 import { Review } from "@/types/review";
@@ -13,12 +13,14 @@ import { Ward } from "@/types/ward";
 import { blogApi } from "@/lib/blog/blogApi";
 import { Post } from "@/types/post";
 import PostCard from "@/components/PostCard";
+import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
+
 
 import useUser from "@/hooks/useUser";
 import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
 import { HiLocationMarker } from 'react-icons/hi';
-
+import { ServiceOption } from "../addPlaceForm";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -34,7 +36,16 @@ const DestinationDetail = () => {
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
+  const [servicesData, setServicesData] = useState<{id: string, name: string}[]>([]);
+  type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
 
+  const serviceIcons: Record<ServiceKey, ReactNode> = {
+  "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
+  "Miễn phí ăn sáng": <Coffee className="w-4 h-4 text-gray-600" />,
+  "Miễn phí Internet": <Wifi className="w-4 h-4 text-gray-600" />,
+  "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600"/>,
+  "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
+};
   useEffect(() => {
     if (id) {
       const fetchData = async () => {
@@ -70,8 +81,8 @@ const DestinationDetail = () => {
             typeof blogWardIdSource === 'object' && blogWardIdSource !== null
               ? (blogWardIdSource as any)._id
               : typeof blogWardIdSource === 'string'
-              ? blogWardIdSource
-              : null;
+                ? blogWardIdSource
+                : null;
 
           if (finalBlogWardId) {
             const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
@@ -124,8 +135,8 @@ const DestinationDetail = () => {
             typeof wardIdSource === 'object' && wardIdSource !== null
               ? (wardIdSource as any)._id
               : typeof wardIdSource === 'string'
-              ? wardIdSource
-              : null;
+                ? wardIdSource
+                : null;
 
           if (finalWardId) {
             const wardRes = await wardApi.getById(finalWardId);
@@ -140,6 +151,27 @@ const DestinationDetail = () => {
     }
   }, [destination]);
 
+  // Fetch services data
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/services");
+        if (!res.ok) throw new Error("Failed to fetch services");
+        const data = await res.json();
+        console.log("services api response:", data);
+        
+        const formatted = data.data.map((service: {id: string, name: string}) => ({
+          id: service.id,
+          name: service.name
+        }));
+        setServicesData(formatted);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+      }
+    };
+    fetchServices();
+  }, []);
+
   if (loading) {
     return <div className="text-center py-10">Loading...</div>;
   }
@@ -149,6 +181,12 @@ const DestinationDetail = () => {
   }
 
   console.log("Destination data:", destination); // For browser console debugging
+
+  // Helper function to get service name by ID
+  const getServiceName = (serviceId: string) => {
+    const service = servicesData.find(s => s.id === serviceId);
+    return service ? service.name : serviceId; // fallback to ID if not found
+  };
 
   const mainImage =
     Array.isArray(destination.images) && destination.images.length > 0
@@ -258,18 +296,25 @@ const DestinationDetail = () => {
               <p className="text-sm">{destination.totalRatings} nhận xét</p>
             </div>
             <div className="flex gap-3 flex-wrap">
-              {["Trung tâm phường", "Trung tâm phường", "Trung tâm phường"].map(
-                (tag, i) => (
+              {destination.services.map((serviceId, index) => {
+                const serviceName = getServiceName(serviceId);
+                return (
                   <span
-                    key={i}
-                    className="px-4 py-2 border rounded-lg text-gray-700"
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-sm"
                   >
-                    {tag}
+                    {/* icon fallback nếu không khớp key */}
+                    {serviceIcons[serviceName as ServiceKey] ?? (
+                      <CircleHelp className="w-4 h-4 text-gray-400" />
+                    )}
+                    {serviceName}
                   </span>
-                )
-              )}
+                );
+              })}
             </div>
-          </div>
+          </div >
+
+
         </section>
 
         {/* Vị trí */}
@@ -489,15 +534,15 @@ const DestinationDetail = () => {
                   <div key={post._id} className="relative py-6">
                     <div className="absolute bottom-0 left-0 w-full h-70 z-0">
                       <Image
-                              src={post.mainImage || "/default.jpg"}
-                              alt={postTitle}
-                              fill
-                              style={{ objectFit: "cover" }}
-                          />
+                        src={post.mainImage || "/default.jpg"}
+                        alt={postTitle}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
                     </div>
 
                     <div className="bg-white left-3 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[85%] ml-0 mt-8 mb-6">
-                      
+
                       <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
                       <div className="p-4 sm:p-6">
                         <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">

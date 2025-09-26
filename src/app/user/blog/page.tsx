@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { dataBlogPosts } from '@/data/data';
 import FeaturedPost from './FeaturedPost';
 import SearchBox from '@/components/ui/SearchBox';
 import CategorySection from './CategorySection';
@@ -16,29 +15,7 @@ import { useSearchParams } from 'next/navigation';
 export default function BlogPage() {
   const [featuredPosts, setFeaturedPosts] = useState<any[]>([]);
   const [activeCategoryKey, setActiveCategoryKey] = useState("all");
-  const searchParams = useSearchParams();
-  const keyword = searchParams.get("keyword") || "";
-  const type = searchParams.get("type") || "";
-
-  const [blogs, setBlogs] = useState([]);
-  const [searchValue, setSearchValue] = useState(keyword);
-
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        if (type === "popular") {
-          const res = await blogApi.getBlogs({ sort: "-viewCount" });
-          setBlogs(res.data.map(mapBlogToPost));
-        } else {
-          const res = await blogApi.getBlogs({ keyword });
-          setBlogs(res.data.map(mapBlogToPost));
-        }
-      } catch (err) {
-        console.error("Lỗi khi load blogs:", err);
-      }
-    };
-    fetchBlogs();
-  }, [keyword, type]);
+  const [mainCategoryKeys, setMainCategoryKeys] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchBlogs() {
@@ -100,12 +77,16 @@ export default function BlogPage() {
       <CategorySection
         activeTab={activeCategoryKey}
         onChangeTab={setActiveCategoryKey}
+        onLoadCategories={setMainCategoryKeys}
       />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-4 mt-6">
           <div className="flex-[0.7] min-w-0">
-            <BlogListSection activeCategoryKey={activeCategoryKey} />
+            <BlogListSection
+              activeCategoryKey={activeCategoryKey}
+              mainCategoryKeys={mainCategoryKeys}
+            />
           </div>
           <div className="flex-[0.3] w-full lg:max-w-xs px-4 md:px-6 lg:pl-4 lg:pr-8 xl:px-0 pb-4 md:pb-6 lg:pb-8">
             <RecentPosts />

@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import RecentPostCard from "./RecentPostCard";
 import { blogApi } from "@/lib/blog/blogApi";
-import { Post } from "@/types/blog";
 import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
+import { Post } from "@/types/post";
 
 const RecentPosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);

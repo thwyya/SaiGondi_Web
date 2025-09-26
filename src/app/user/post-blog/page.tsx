@@ -38,8 +38,6 @@ export default function PostBlogPage() {
 
   const [address, setAddress] = useState("");
 
-  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -49,75 +47,26 @@ export default function PostBlogPage() {
     }
   }, [router]);
 
-  useEffect(() => {
-    const draft = localStorage.getItem("blogDraft");
-    if (draft) {
-      const data = JSON.parse(draft);
-      setTitle(data.title || "");
-      setContent(data.content || "");
-      setImages(data.images || []);
-      setVideos(data.videos || []);
-      setCategories(data.categories || []);
-      setTags(data.tags || []);
-      setAddress(data.address || "");
-      setWardId(data.wardId || "");
-      setWardName(data.wardName || "");
-      setCover(data.cover || null);
-    }
-  }, []);
-
-  //Auto-save mỗi khi có thay đổi
-  useEffect(() => {
-    if (!authChecked) return;
-
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      saveDraft(false);
-    }, 500); // chờ 0.5s sau khi ngừng gõ/đổi state mới lưu
-  }, [title, content, images, videos, categories, tags, wardId, wardName, address, cover, authChecked]);
-
-  const saveDraft = (showAlert = true) => {
-    const draft = {
-      title,
-      content,
-      images,
-      videos,
-      categories,
-      tags,
-      wardId,
-      wardName,
-      address,
-      cover,
-    };
-    localStorage.setItem("blogDraft", JSON.stringify(draft));
-    console.log("Draft autosaved ✅");
-    if (showAlert) alert("Đã lưu nháp");
-  };
-
-  const readFileAsDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          resolve(reader.result.toString());
-        } else {
-          reject("Failed to read file");
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+  // const readFileAsDataURL = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       if (reader.result) {
+  //         resolve(reader.result.toString());
+  //       } else {
+  //         reject("Failed to read file");
+  //       }
+  //     };
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const handleImageFiles = async (files: File[]) => {
     setImageFiles((prev) => [...prev, ...files]);
-    const urls = await Promise.all(files.map((file) => readFileAsDataURL(file)));
-    setImages((prev) => [...prev, ...urls]);
   };
 
   const handleVideoFiles = async (files: File[]) => {
     setVideoFiles((prev) => [...prev, ...files]);
-    const urls = await Promise.all(files.map((file) => readFileAsDataURL(file)));
-    setVideos((prev) => [...prev, ...urls]);
   };
 
   const removeImage = (index: number) => {
@@ -131,12 +80,7 @@ export default function PostBlogPage() {
   };
 
   const handleCoverChange = (file: File) => {
-    setCoverFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.result) setCover(reader.result.toString());
-    };
-    reader.readAsDataURL(file);
+    setCoverFile(file);    
   };
 
   const handleSubmit = async () => {
@@ -287,7 +231,7 @@ export default function PostBlogPage() {
           </Button>
           <Button
             variant="outline-secondary"
-            onClick={() => saveDraft(true)}
+            // onClick={() => saveDraft(true)}
             className="flex items-center gap-2 rounded-xl border border-[var(--gray-3)] text-[var(--gray-1)] hover:bg-[var(--gray-5)]"
           >
             <FiSave /> Lưu nháp

@@ -1,21 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-import { IoFlagSharp } from 'react-icons/io5';
 import { AiFillLike } from "react-icons/ai";
 import { useEffect, useState } from 'react';
 import { BlogComment } from '@/types/blogComment';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { FiX } from 'react-icons/fi';
+import { HiOutlineDotsVertical } from 'react-icons/hi';
+import Button from '@/components/ui/Button';
 
 type CommentCardProps = {
   comment: BlogComment;
+  onUpdated?: () => void;
+  onEdit?: (comment: BlogComment) => void;
 };
 
-const CommentCard = ({ comment }: CommentCardProps) => {
+const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
   const [likes, setLikes] = useState(comment.totalLikes || 0);
   const [liked, setLiked] = useState(false);
   const [popupImage, setPopupImage] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
 
   const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
@@ -40,16 +47,73 @@ const CommentCard = ({ comment }: CommentCardProps) => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    try {
+      await blogCommentApi.deleteComment(comment._id);
+      onUpdated?.();
+    } catch (err) {
+      console.error("Failed to delete comment", err);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      alert("Vui lòng nhập lý do báo cáo!");
+      return;
+    }
+    try {
+      await blogCommentApi.reportComment(comment._id, reportReason);
+      alert("Đã gửi báo cáo thành công!");
+      setReportOpen(false);
+      setReportReason("");
+    } catch (err) {
+      console.error("Failed to report comment", err);
+    }
+  };
+
   return (
     <>
     <div className="relative border-b border-[var(--gray-2)] py-4 flex flex-col gap-2">
       <button
         className="cursor-pointer absolute right-0 top-0 p-2 text-[var(--gray-2)] hover:text-[var(--gray-1)]"
-        title="Báo cáo đánh giá"
+        title="Tùy chọn"
+        onClick={() => setMenuOpen(!menuOpen)}
       >
-        <IoFlagSharp size={18} />
-        </button> 
-        {/* HiOutlineDotsVertical  */} {/* menu để xóa, sửa comment */}
+        <HiOutlineDotsVertical size={18} />
+      </button> 
+        {menuOpen && (
+            <div className="absolute right-0 mt-4 bg-white rounded shadow-lg z-10 min-w-[120px]">
+              {currentUserId === comment.userId?._id && (
+                <>
+                  <button
+                    onClick={() => {
+                      onEdit?.(comment);
+                      setMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-red-500"
+                  >
+                    Xóa
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => {
+                  setReportOpen(true);
+                  setMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+              >
+                Báo cáo
+              </button>
+            </div>
+          )}
       <button
         onClick={handleLike}
         className="cursor-pointer absolute right-8 top-0 p-2 flex items-center gap-1 text-[var(--gray-2)] hover:text-[var(--gray-1)]"
@@ -92,6 +156,8 @@ const CommentCard = ({ comment }: CommentCardProps) => {
         </div>
       </div>
     </div>
+    
+    {/* popup xem ảnh lớn */}
     {popupImage && (
         <div 
           className="fixed inset-0 w-screen h-screen bg-black/20 backdrop-blur-xs flex items-center justify-center z-50"
@@ -114,6 +180,37 @@ const CommentCard = ({ comment }: CommentCardProps) => {
             >
               <FiX size={20} />
             </button>
+        </div>
+      )}
+
+      {/* popup báo cáo */}
+      {reportOpen && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md relative">
+          <h2 className="text-lg font-semibold mb-3">Báo cáo bình luận</h2>
+          <textarea
+            className="w-full border rounded p-2 mb-4 text-sm"
+            rows={4}
+            placeholder="Nhập lý do báo cáo..."
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+          />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline-secondary"
+                onClick={() => setReportOpen(false)}
+                className="flex items-center gap-2 border border-[var(--gray-3)] text-[var(--gray-1)] hover:bg-[var(--gray-5)]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleReport}
+                variant="primary"
+              >
+                Gửi
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </>

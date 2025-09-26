@@ -72,10 +72,10 @@ const DestinationCard = ({ destination }: Props) => {
               </span>
 
               {/* Số service (nếu có) */}
-              {destination.serviceCount && (
+              {destination.services && (
                 <span className="text-[var(--primary)]">
                   <i className="ri-cup-fill"></i>{" "}
-                  {destination.serviceCount} SERVICE
+                  {destination.services.length} SERVICE
                 </span>
               )}
             </div>

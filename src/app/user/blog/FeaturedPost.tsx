@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
-import { Post } from "@/types/blog";
+import { Post } from "@/types/post";
 
 export default function FeaturedPost({ posts }: { posts: Post[] }) {
   const [current, setCurrent] = useState(0);
