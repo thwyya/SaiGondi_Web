@@ -9,9 +9,15 @@ const normalizeUser = (userData: any): User | null => {
   const userProfile = userData?.user || userData;
   if (!userProfile) return null;
 
+  // Ensure favorites is an array and extract _id if it's an array of objects
+  const normalizedFavorites = Array.isArray(userProfile.favorites)
+    ? userProfile.favorites.map((fav: any) => (typeof fav === 'object' && fav._id) ? fav._id : fav)
+    : [];
+
   return {
     ...userProfile,
     _id: userProfile._id || userProfile.userId, // đồng bộ key _id
+    favorites: normalizedFavorites,
   } as User;
 };
 
@@ -77,7 +83,11 @@ const useUser = () => {
   //   }
   // }, [loading, isAuthenticated, router]);
 
-  return { user, isAuthenticated, loading, refetch: fetchUser };
+  const updateUser = useCallback((updater: (prevUser: User | null) => User | null) => {
+    setUser(updater);
+  }, []);
+
+  return { user, isAuthenticated, loading, refetch: fetchUser, updateUser };
 };
 
 export default useUser;

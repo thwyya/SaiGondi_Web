@@ -1,9 +1,8 @@
+import { User } from './user'; // Import User interface
+
 export interface Review {
   _id: string;
-  userId: {
-    name: string;
-    avatar: string;
-  };
+  userId: User; // Use the User interface
   rating: number;
   comment: string;
   createdAt: string;

@@ -5,7 +5,7 @@ const API_URL =
 
 export const badgeApi = {
   getUserBadges: async (status?: string) => {
-    const token = localStorage.getItem("accessToken"); // đồng bộ 1 key
+    const token = localStorage.getItem("accessToken"); 
     const res = await axios.get(`${API_URL}/users/badges`, {
       params: { status },
       headers: {

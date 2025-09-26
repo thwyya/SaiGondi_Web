@@ -1,26 +1,17 @@
 // SearchBox.tsx
 "use client";
+import React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiSliders } from "react-icons/fi";
 import Button from "./Button";
 
-interface SearchBoxProps {
-  initialValue?: string;
-}
-
-const SearchBox = ({ initialValue = "" }: SearchBoxProps) => {
-  const [value, setValue] = useState(initialValue);
-  const router = useRouter();
-
-  useEffect(() => {
-    setValue(initialValue); 
-  }, [initialValue]);
+const SearchBox = () => {
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const handleSearch = () => {
-    if (value.trim()) {
-      router.push(`/user/blog?keyword=${encodeURIComponent(value.trim())}`);
-    }
+    if (searchQuery.trim() === "") return;
+    window.location.href = `/search?query=${encodeURIComponent(searchQuery)}`;
   };
 
   return (
@@ -43,9 +34,6 @@ const SearchBox = ({ initialValue = "" }: SearchBoxProps) => {
                        placeholder:text-[11px] sm:placeholder:text-sm
                        focus:outline-none focus:border-[var(--primary)]
                        focus:ring-1 focus:ring-[var(--primary)] transition"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
 

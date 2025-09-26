@@ -5,6 +5,21 @@ import SearchBar from '../SearchBar'
 import { ReviewTable } from './ReviewTable';
 import { useQuery } from "@tanstack/react-query";       
 import { getReviews } from '@/services/reviewService';   
+// import { Review } from '@/types/review'; // Corrected import - commented out
+
+// Explicitly define Review interface here for testing
+interface Review {
+  _id: string;
+  userId: {
+    name: string;
+    avatar: string;
+  };
+  rating: number;
+  comment: string;
+  createdAt: string;
+  destinationId?: string;
+  status?: string;
+}
 
 const Page = () => {
 

@@ -1,7 +1,17 @@
+<<<<<<< HEAD
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { Destination } from "@/app/assets/data/destinations";
+=======
 "use client";
 
 import { useRouter } from "next/navigation";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import Image from "next/image";
+import { useState, useEffect } from 'react';
+import useUser from "@/hooks/useUser";
+import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 
 interface Props {
   destination: any; // để linh hoạt nhận từ cả 2 API
@@ -9,6 +19,9 @@ interface Props {
 
 const DestinationCard = ({ destination }: Props) => {
   const router = useRouter();
+  const { user, isAuthenticated, loading: userLoading, refetch: refetchUser } = useUser();
+  
+  const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
 
   // Lấy id (ưu tiên _id, fallback placeId)
   const id = destination._id || destination.placeId;
@@ -22,6 +35,30 @@ const DestinationCard = ({ destination }: Props) => {
     router.push(`/user/destination/${id}`);
   };
 
+<<<<<<< HEAD
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      if (isFavorited) {
+        await removeFromFavorites(destination._id);
+      } else {
+        await addToFavorites(destination._id);
+      }
+      // Refetch user to get updated favorites and trigger re-render
+      await refetchUser(); 
+    } catch (error) {
+      console.error("Failed to update favorite status", error);
+    }
+  };
+
+  const imageUrl = destination.images?.[0] || "/image.svg";
+=======
   // Lấy ảnh (ưu tiên image, fallback images[0])
   const imageUrl =
     destination.image ||
@@ -32,9 +69,10 @@ const DestinationCard = ({ destination }: Props) => {
   const avgRating = destination.avgRating || 0;
   const reviewCount = destination.reviewCount || destination.totalRatings || 0;
   const location = destination.location || destination.address || "Chưa rõ";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 
   return (
-    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden">
+    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
       {/* Ảnh */}
       <Image
         alt={destination.name}
@@ -72,10 +110,10 @@ const DestinationCard = ({ destination }: Props) => {
               </span>
 
               {/* Số service (nếu có) */}
-              {destination.serviceCount && (
+              {destination.services && (
                 <span className="text-[var(--primary)]">
                   <i className="ri-cup-fill"></i>{" "}
-                  {destination.serviceCount} SERVICE
+                  {destination.services.length} SERVICE
                 </span>
               )}
             </div>
@@ -112,7 +150,13 @@ const DestinationCard = ({ destination }: Props) => {
 
         {/* Actions */}
         <div className="flex justify-between items-center">
-          <i className="ri-heart-fill border border-[var(--primary)] rounded-md p-2 text-[var(--secondary)] cursor-pointer"></i>
+          <button 
+            onClick={handleFavoriteClick} 
+            className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={userLoading}
+          >
+              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+            </button>
           <button
             onClick={handleClick}
             disabled={!id}

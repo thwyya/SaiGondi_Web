@@ -13,6 +13,7 @@ export interface Location {
     name: string;
     description: string;
     categories: string[];
+    services: string[];
     address: string;
     district: string;
     ward: string;
