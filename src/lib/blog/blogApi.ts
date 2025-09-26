@@ -95,4 +95,11 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/ward/${wardId}`);
     return res.data;
   },
+  // Lấy danh sách blog xem nhiều nhất
+  getPopularBlogs: async (query?: Record<string, any>) => {
+    const res = await axios.get(`${API_URL}/blogs/popular`, {
+      params: query
+    });
+    return res.data;
+  },
 };

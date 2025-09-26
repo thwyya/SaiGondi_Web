@@ -17,7 +17,7 @@ interface Place {
   name: string;
   address?: string;
   district?: string;
-  ward?: { _id: string; name: string };
+  ward?: { _id: string; name: string } | string | null;
   location?: { coordinates: [number, number] };
   images?: string[];
 }
@@ -32,6 +32,9 @@ export default function HCMMap() {
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(
     null
   );
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
   const [selectedPath, setSelectedPath] = useState<SVGPathElement | null>(null);
 
   const [regionStatus, setRegionStatus] = useState<
@@ -76,7 +79,6 @@ export default function HCMMap() {
     return { x: newX, y: newY };
   };
 
-  // ✅ normalize string
   const normalize = (str: string) =>
     str
       .normalize("NFD")
@@ -85,13 +87,21 @@ export default function HCMMap() {
       .trim()
       .toLowerCase();
 
-  // gắn sự kiện hover, click cho path
+  const getWardName = (
+    ward: string | { _id: string; name: string } | null | undefined
+  ): string => {
+    if (!ward) return "";
+    if (typeof ward === "string") return ward;
+    return ward.name;
+  };
+
+  // setup path click events
   useEffect(() => {
     const paths = document.querySelectorAll<SVGPathElement>("svg path");
 
     paths.forEach((path) => {
       const title = path.getAttribute("data-title") || "unknown";
-      const normTitle = normalize(title); // ✅ normalize để đồng bộ key
+      const normTitle = normalize(title);
       const statusObj = regionStatus[normTitle];
 
       path.style.fill = getColorByStatus(statusObj);
@@ -99,6 +109,7 @@ export default function HCMMap() {
       path.style.strokeWidth = "0.5";
       path.style.transition = "fill 0.3s ease";
 
+      // Hover
       path.onmouseenter = () => {
         setHoveredName(title);
         path.style.fill = getRandomPastelColor();
@@ -113,53 +124,79 @@ export default function HCMMap() {
       path.onmousemove = (e) =>
         setMousePos({ x: e.clientX + 15, y: e.clientY + 15 });
 
-      path.onclick = (e) => {
+      // Click
+      path.onclick = async (e) => {
         setSelectedPath(path);
         setSelectedName(title);
         setPopupPos(clampPopupPosition(e.clientX, e.clientY));
+
+        try {
+          const res = await placeApi.getAll();
+          const places: Place[] = Array.isArray(res) ? res : res.places || [];
+
+          const matched: Place | undefined = places.find((p: any) => {
+            if (typeof p.ward === "string") {
+              return normalize(p.ward).includes(normTitle);
+            }
+            if (typeof p.ward === "object" && p.ward?.name) {
+              return normalize(p.ward.name).includes(normTitle);
+            }
+            return false;
+          });
+
+          if (matched) {
+            setSelectedInfo(matched);
+            const normWard = normalize(
+              getWardName(matched.ward) || matched.name
+            );
+            setIsCheckedIn(!!regionStatus[normWard]?.status);
+          } else {
+            setSelectedInfo(null);
+            setIsCheckedIn(false);
+          }
+        } catch (error) {
+          console.error("Lỗi khi load place info:", error);
+          setSelectedInfo(null);
+          setIsCheckedIn(false);
+        }
       };
     });
   }, [regionStatus]);
 
   const handleVisited = async () => {
-    if (!selectedName) return;
+    if (!selectedInfo) return;
     try {
-      const res = await placeApi.getAll();
-      const { places } = res;
-
-      const selectedNorm = normalize(selectedName);
-
-      const matched: Place | undefined = places.find((p: any) => {
-        if (typeof p.ward === "string")
-          return normalize(p.ward).includes(selectedNorm);
-        if (typeof p.ward === "object" && p.ward?.name)
-          return normalize(p.ward.name).includes(selectedNorm);
-        return false;
+      await checkinApi.createCheckin(selectedInfo._id, {
+        note: `Check-in ${selectedInfo.name}`,   // luôn có note
+        device: "Web App",                       // mặc định Web App
+        imgList: [],                             // gửi mảng rỗng nếu không có ảnh
       });
 
-      if (!matched) {
-        console.warn("Không tìm thấy place cho:", selectedName);
-        return;
-      }
-      setSelectedInfo(matched);
-      await checkinApi.createCheckin(matched._id, {
-        device: "Web App",
-        note: `Check-in ${matched.name}`
-      });
+      const normWard = normalize(
+        getWardName(selectedInfo.ward) || selectedInfo.name
+      );
 
       setRegionStatus((prev) => ({
         ...prev,
-        [selectedNorm]: {
+        [normWard]: {
           status: "visited",
-          color: prev[selectedNorm]?.color || getRandomPastelColor(),
+          color: prev[normWard]?.color || getRandomPastelColor(),
         },
       }));
-      handleClosePopup();
+
+      setIsCheckedIn(true);
+      setMessage(`Bạn đã check-in ${selectedInfo.name} thành công!`);
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error("Lỗi khi checkin:", error.response?.data || error.message);
+        console.error("Chi tiết lỗi check-in:", error.response?.data);
+        const errMsg =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          JSON.stringify(error.response?.data) ||
+          error.message;
+        setMessage(`Lỗi khi check-in: ${errMsg}`);
       } else {
-        console.error("Lỗi khi checkin:", error);
+        setMessage("Đã xảy ra lỗi khi check-in.");
       }
     }
   };
@@ -172,9 +209,11 @@ export default function HCMMap() {
         const statusMap: Record<string, { status: Status; color: string }> = {};
         checkins.forEach((c: any) => {
           const wardName =
-            typeof c.placeId.ward === "object"
+            c.ward || 
+            (typeof c.placeId.ward === "object"
               ? c.placeId.ward.name
-              : c.placeId.ward || c.placeId.name;
+              : c.placeId.ward) ||
+            c.placeId.name;
 
           const normWard = normalize(wardName);
           statusMap[normWard] = {
@@ -185,7 +224,7 @@ export default function HCMMap() {
 
         setRegionStatus(statusMap);
       } catch (error) {
-        console.error("⚠️ Lỗi khi load checkins:", error);
+        console.error("Lỗi khi load checkins:", error);
       }
     };
 
@@ -193,9 +232,9 @@ export default function HCMMap() {
   }, []);
 
   const handleExplore = () => {
-    if (selectedPath && selectedName) {
+    if (selectedInfo?._id) {
       handleClosePopup();
-      router.push("/user/destination");
+      router.push(`/user/destination/${selectedInfo._id}`);
     }
   };
 
@@ -270,26 +309,43 @@ export default function HCMMap() {
               <h3 className="font-bold text-base sm:text-lg">{selectedName}</h3>
               <p className="text-gray-500 text-xs sm:text-sm">
                 {selectedInfo?.district ||
-                  selectedInfo?.ward?.name ||
+                  (typeof selectedInfo?.ward === "object"
+                    ? selectedInfo?.ward?.name
+                    : selectedInfo?.ward) ||
                   "Không rõ khu vực"}
               </p>
             </div>
           </div>
-
           <div className="flex justify-around gap-8 mt-4">
-            <button
-              onClick={handleVisited}
-              className="flex flex-col items-center text-sm sm:text-base text-blue-500"
-            >
-              <div className="flex items-center justify-center w-10 h-10">
-                <LiaShoePrintsSolid
-                  size={50}
-                  className="text-blue-500"
-                  stroke="currentColor"
-                />
-              </div>
-              <span className="mt-1 font-medium">ĐÃ ĐI</span>
-            </button>
+            {!isCheckedIn ? (
+              <button
+                onClick={handleVisited}
+                className="flex flex-col items-center text-sm sm:text-base text-blue-500"
+              >
+                <div className="flex items-center justify-center w-10 h-10">
+                  <LiaShoePrintsSolid
+                    size={50}
+                    className="text-blue-500"
+                    stroke="currentColor"
+                  />
+                </div>
+                <span className="mt-1 font-medium">Check-in</span>
+              </button>
+            ) : (
+              <button
+                disabled
+                className="flex flex-col items-center text-sm sm:text-base text-blue-500 cursor-default"
+              >
+                <div className="flex items-center justify-center w-10 h-10">
+                  <LiaShoePrintsSolid
+                    size={50}
+                    className="text-blue-500"
+                    stroke="currentColor"
+                  />
+                </div>
+                <span className="mt-1 font-medium">Đã check-in</span>
+              </button>
+            )}
 
             <button
               onClick={handleExplore}
@@ -302,9 +358,12 @@ export default function HCMMap() {
                   stroke="currentColor"
                 />
               </div>
-              <span className="mt-1 font-medium">KHÁM PHÁ</span>
+              <span className="mt-1 font-medium">Khám phá</span>
             </button>
           </div>
+          {message && (
+            <p className="mt-3 text-sm text-center text-gray-700">{message}</p>
+          )}
         </div>
       )}
     </div>

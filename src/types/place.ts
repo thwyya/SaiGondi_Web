@@ -1,7 +1,13 @@
+
+export interface Ward {
+  _id: string;
+  name: string;
+}
 export interface Place {
   _id: string;
   name: string;
   description: string;
+  services: string[];
   address: string;
   ward: { _id: string; name: string };
   location: {
@@ -9,6 +15,7 @@ export interface Place {
     coordinates: number[]; // [lng, lat]
   };
   images?: string[];
+  
   gallery?: string[]; 
   avgRating: number;
   totalRatings: number;
@@ -26,6 +33,7 @@ export interface Place {
   comments?: any[];
   lat: number;
   lng: number;
+
 
   distance?: string | number; 
   serviceCount?: number;

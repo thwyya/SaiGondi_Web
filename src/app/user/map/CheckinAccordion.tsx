@@ -32,6 +32,7 @@ type Checkin = {
 type PlaceGroup = {
   group: string;
   destinations: {
+    id: string;   
     title: string;
     location: string;
     distance: string;
@@ -50,29 +51,37 @@ const CheckinAccordion = () => {
 
         const groupMap: Record<string, PlaceGroup> = {};
         checkins.forEach((c: Checkin) => {
-        const wardName =
-          typeof c.placeId.ward === "object"
-            ? c.placeId.ward.name
-            : c.placeId.ward || "Khác";
+          let wardName = "";
 
-        if (!groupMap[wardName]) {
-          groupMap[wardName] = { group: wardName, destinations: [] };
-        }
+          if (c.placeId?.ward) {
+            if (typeof c.placeId.ward === "object" && c.placeId.ward?.name) {
+              wardName = c.placeId.ward.name;
+            } else if (typeof c.placeId.ward === "string") {
+              wardName = c.placeId.ward;
+            }
+          }
+          if (!wardName) {
+            wardName = c.placeId?.name || "Khác";
+          }
 
-        groupMap[wardName].destinations.push({
-          title: c.placeId.name,
-          location: c.placeId.address || '',
-          distance: '—', 
-          image: c.placeId.images?.[0] || '/hot-destination.svg',
+          if (!groupMap[wardName]) {
+            groupMap[wardName] = { group: wardName, destinations: [] };
+          }
+
+          groupMap[wardName].destinations.push({
+            id: c.placeId._id,
+            title: c.placeId.name,
+            location: c.placeId.address || "",
+            distance: "—",
+            image: c.placeId.images?.[0] || "/hot-destination.svg",
+          });
         });
-      });
-
 
         const groupArr = Object.values(groupMap);
         setGroups(groupArr);
         if (groupArr.length > 0) setOpenGroup(groupArr[0].group);
       } catch (err) {
-        console.error('Lỗi khi load checkins:', err);
+        console.error("Lỗi khi load checkins:", err);
       }
     };
 

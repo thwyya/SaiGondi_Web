@@ -3,8 +3,13 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from 'next/link';
+<<<<<<< HEAD
 import { useEffect, useState, useRef } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId, addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+=======
+import { ReactNode, useEffect, useState } from "react";
+import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import { Place } from "@/types/place";
 import { Review } from "@/types/review";
 import ReviewCard from "../ReviewCard";
@@ -13,11 +18,17 @@ import { Ward } from "@/types/ward";
 import { blogApi } from "@/lib/blog/blogApi";
 import { Post } from "@/types/post";
 import PostCard from "@/components/PostCard";
+<<<<<<< HEAD
+=======
+import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
+
+
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import useUser from "@/hooks/useUser";
 import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
 import { HiLocationMarker } from 'react-icons/hi';
-
+import { ServiceOption } from "../addPlaceForm";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -34,6 +45,7 @@ const DestinationDetail = () => {
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
+<<<<<<< HEAD
   const shareRef = useRef<HTMLDivElement>(null);
 
 
@@ -111,7 +123,18 @@ const DestinationDetail = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [shareRef]);
+=======
+  const [servicesData, setServicesData] = useState<{id: string, name: string}[]>([]);
+  type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 
+  const serviceIcons: Record<ServiceKey, ReactNode> = {
+  "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
+  "Miễn phí ăn sáng": <Coffee className="w-4 h-4 text-gray-600" />,
+  "Miễn phí Internet": <Wifi className="w-4 h-4 text-gray-600" />,
+  "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600"/>,
+  "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
+};
   useEffect(() => {
     if (id) {
       const fetchData = async () => {
@@ -140,8 +163,33 @@ const DestinationDetail = () => {
               }
             }
 
+<<<<<<< HEAD
             if (Array.isArray(blogWardIdSource)) {
               blogWardIdSource = blogWardIdSource[0];
+=======
+          if (Array.isArray(blogWardIdSource)) {
+            blogWardIdSource = blogWardIdSource[0];
+          }
+
+          const finalBlogWardId =
+            typeof blogWardIdSource === 'object' && blogWardIdSource !== null
+              ? (blogWardIdSource as any)._id
+              : typeof blogWardIdSource === 'string'
+                ? blogWardIdSource
+                : null;
+
+          if (finalBlogWardId) {
+            const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
+            blogsByWard = blogRes.data || [];
+            console.log("Blogs by ward:", blogsByWard);
+          }
+
+          // Combine and remove duplicates
+          const allBlogs = [...blogsByPlace, ...blogsByWard];
+          const uniqueBlogs = allBlogs.reduce((acc, current) => {
+            if (!acc.find((item: Post) => item._id === current._id)) {
+              acc.push(current);
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
             }
 
             const finalBlogWardId =
@@ -218,6 +266,27 @@ const DestinationDetail = () => {
     }
   }, [destination]);
 
+  // Fetch services data
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/services");
+        if (!res.ok) throw new Error("Failed to fetch services");
+        const data = await res.json();
+        console.log("services api response:", data);
+        
+        const formatted = data.data.map((service: {id: string, name: string}) => ({
+          id: service.id,
+          name: service.name
+        }));
+        setServicesData(formatted);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+      }
+    };
+    fetchServices();
+  }, []);
+
   if (loading) {
     return <div className="text-center py-10">Loading...</div>;
   }
@@ -227,6 +296,12 @@ const DestinationDetail = () => {
   }
 
   console.log("Destination data:", destination); // For browser console debugging
+
+  // Helper function to get service name by ID
+  const getServiceName = (serviceId: string) => {
+    const service = servicesData.find(s => s.id === serviceId);
+    return service ? service.name : serviceId; // fallback to ID if not found
+  };
 
   const mainImage =
     Array.isArray(destination.images) && destination.images.length > 0
@@ -407,18 +482,25 @@ const DestinationDetail = () => {
               <p className="text-sm">{destination.totalRatings} nhận xét</p>
             </div>
             <div className="flex gap-3 flex-wrap">
-              {["Trung tâm phường", "Trung tâm phường", "Trung tâm phường"].map(
-                (tag, i) => (
+              {destination.services.map((serviceId, index) => {
+                const serviceName = getServiceName(serviceId);
+                return (
                   <span
-                    key={i}
-                    className="px-4 py-2 border rounded-lg text-gray-700"
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-sm"
                   >
-                    {tag}
+                    {/* icon fallback nếu không khớp key */}
+                    {serviceIcons[serviceName as ServiceKey] ?? (
+                      <CircleHelp className="w-4 h-4 text-gray-400" />
+                    )}
+                    {serviceName}
                   </span>
-                )
-              )}
+                );
+              })}
             </div>
-          </div>
+          </div >
+
+
         </section>
 
         {/* Vị trí */}

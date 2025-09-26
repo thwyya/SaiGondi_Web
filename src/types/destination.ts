@@ -6,12 +6,14 @@ export interface Location {
   }
   
   export interface Destination {
+    placeId: Key | null | undefined;
     location: Location;
     _id: string;
     id: string; 
     name: string;
     description: string;
     categories: string[];
+    services: string[];
     address: string;
     district: string;
     ward: string;

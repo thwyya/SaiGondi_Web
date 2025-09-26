@@ -1,11 +1,19 @@
+import { de } from "zod/v4/locales";
 import axiosInstance from "../axiosInstance";
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
+export const createDestination = async (destinationData: FormData) =>{
+  const res = await axiosInstance.post(`${API_URL}/admin/places`, destinationData);
+  return res.data;
+}
+
+
 // Lấy danh sách địa điểm
 export const getDestinations = async (params?: any) => {
-  console.log("🚀 Fetching destinations with params:", params);
+  console.log(" Fetching destinations with params:", params);
   const res = await axios.get(`${API_URL}/places`, { params });
   return res.data;
 };

@@ -16,6 +16,7 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [editingComment, setEditingComment] = useState<BlogComment | null>(null);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -37,10 +38,39 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
     setComments(prev => [newComment, ...prev]); // Thêm comment mới vào đầu danh sách
   };
 
+  const handleUpdatedComment = (updated: BlogComment) => {
+    setComments(prev =>
+      prev.map(c => (c._id === updated._id ? updated : c))
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+  };
+
+  const refreshComments = async () => {
+    try {
+      const { comments, pagination } = await blogCommentApi.getCommentsByBlog(blogId, {
+        page: currentPage, 
+      });
+      setComments(comments);
+      setTotalPages(pagination.totalPages);
+    } catch (err) {
+      console.error("Failed to fetch comments", err);
+    }
+  };
+
   return (
     <div className="space-y-2">
       {comments.length > 0 ? (
-        comments.map((c) => <CommentCard key={c._id} comment={c} />)
+        comments.map((c) => (
+          <CommentCard
+            key={c._id}
+            comment={c}
+            onUpdated={refreshComments}
+            onEdit={(comment) => setEditingComment(comment)}
+          />
+        ))
       ) : (
         <p className="text-sm text-gray-500">Chưa có bình luận nào.</p>
       )}
@@ -66,7 +96,12 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
           </button>
         </div>
       )}
-      <CommentBox blogId={blogId} onCommentAdded={handleNewComment} />
+      <CommentBox
+        blogId={blogId}
+        onCommentAdded={handleNewComment}
+        onCommentUpdated={handleUpdatedComment}
+        editingComment={editingComment}
+        onCancelEdit={handleCancelEdit} />
     </div>
   );
 };

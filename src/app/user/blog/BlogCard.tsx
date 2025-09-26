@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 import { FaRegCommentDots } from 'react-icons/fa6';
-import { Post } from '@/types/blog';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
+import { Post } from '@/types/post';
 
 interface BlogCardProps {
   post: Post;
@@ -61,9 +61,16 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             </h2>
           </Link>
 
-          <span className="inline-block text-xs bg-[var(--secondary)] text-white font-semibold rounded px-2 py-0.5 my-2">
-            {post.category}
-          </span>
+          <div className="flex flex-wrap gap-2 my-2">
+            {post.categories.map((cat) => (
+              <span
+                key={cat}
+                className="inline-block text-xs bg-[var(--secondary)] text-white font-semibold rounded px-2 py-0.5"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
 
           <p className="text-sm text-[var(--black-3)] line-clamp-3 break-words">
             {getExcerpt(post.content)}

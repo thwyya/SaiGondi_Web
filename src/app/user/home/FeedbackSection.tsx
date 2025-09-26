@@ -8,10 +8,16 @@ const testimonials = [
   {
     name: 'THU HIỀN',
     content:
-      'SÀI GÒN điểm đến nghỉ dưỡng và vui chơi trên bản đồ Việt Nam, không chỉ thu hút với nhiều cảnh đẹp nơi đây còn tạo ấn tượng với nhiều điểm vui chơi cùng thú cưng thú vị',
+      'SÀI GÒN điểm đến nghỉ dưỡng và vui chơi trên bản đồ Việt Nam,\nkhông chỉ thu hút với nhiều cảnh đẹp nơi đây còn tạo ấn tượng với nhiều điểm vui chơi cùng thú cưng thú vị',
   },
-  { name: 'VĂN MINH', content: 'Tôi rất ấn tượng với sự đa dạng và không khí năng động tại Sài Gòn. Chắc chắn sẽ quay lại!' },
-  { name: 'LAN ANH', content: 'Một nơi tuyệt vời cho cả gia đình. Trẻ nhỏ cực kỳ thích thú với các hoạt động giải trí ở đây.' },
+  { 
+    name: 'VĂN MINH', 
+    content: 'Tôi rất ấn tượng với sự đa dạng và không khí năng động tại Sài Gòn.\nChắc chắn sẽ quay lại!' 
+  },
+  { 
+    name: 'LAN ANH', 
+    content: 'Một nơi tuyệt vời cho cả gia đình.\nTrẻ nhỏ cực kỳ thích thú với các hoạt động giải trí ở đây.' 
+  },
 ];
 
 export default function FeedbackSection() {
@@ -30,10 +36,9 @@ export default function FeedbackSection() {
         <h4 className="font-inter text-[var(--gray-3)] mb-2 text-sm sm:text-base md:text-lg">
           {t.name}
         </h4>
-        <p className="font-inter text-[var(--gray-3)] leading-relaxed text-sm:text-base md:text-lg">
+        <p className="font-inter text-[var(--gray-3)] leading-relaxed text-sm sm:text-base md:text-lg whitespace-pre-line">
           {t.content}
         </p>
-
         <button
           aria-label="Previous"
           onClick={handlePrev}

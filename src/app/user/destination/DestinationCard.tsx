@@ -1,14 +1,20 @@
+<<<<<<< HEAD
 'use client';
 
 import { useRouter } from 'next/navigation';
 import { Destination } from "@/app/assets/data/destinations";
+=======
+"use client";
+
+import { useRouter } from "next/navigation";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import useUser from "@/hooks/useUser";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 
 interface Props {
-  destination: Destination;
+  destination: any; // để linh hoạt nhận từ cả 2 API
 }
 
 const DestinationCard = ({ destination }: Props) => {
@@ -17,10 +23,19 @@ const DestinationCard = ({ destination }: Props) => {
   
   const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
 
+  // Lấy id (ưu tiên _id, fallback placeId)
+  const id = destination._id || destination.placeId;
+
+  // Nếu không có id thì không cho click
   const handleClick = () => {
-    router.push(`/user/destination/${destination._id}`);
+    if (!id) {
+      console.error("Destination không có id:", destination);
+      return;
+    }
+    router.push(`/user/destination/${id}`);
   };
 
+<<<<<<< HEAD
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click event
     if (!isAuthenticated) {
@@ -43,6 +58,18 @@ const DestinationCard = ({ destination }: Props) => {
   };
 
   const imageUrl = destination.images?.[0] || "/image.svg";
+=======
+  // Lấy ảnh (ưu tiên image, fallback images[0])
+  const imageUrl =
+    destination.image ||
+    (Array.isArray(destination.images) && destination.images[0]) ||
+    "/image.svg";
+
+  // Một số field fallback
+  const avgRating = destination.avgRating || 0;
+  const reviewCount = destination.reviewCount || destination.totalRatings || 0;
+  const location = destination.location || destination.address || "Chưa rõ";
+>>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 
   return (
     <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
@@ -62,7 +89,7 @@ const DestinationCard = ({ destination }: Props) => {
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">{destination.name}</h2>
             <span className="text-[var(--primary)] flex items-center gap-1 text-sm">
-              <i className="ri-map-pin-fill"></i> {destination.location}
+              <i className="ri-map-pin-fill"></i> {location}
             </span>
 
             <div className="flex items-center gap-4 text-sm">
@@ -72,42 +99,49 @@ const DestinationCard = ({ destination }: Props) => {
                   <i
                     key={index}
                     className={
-                      index + 1 <= Math.floor(destination.avgRating)
-                        ? 'ri-star-fill'
-                        : index + 0.5 <= destination.avgRating
-                          ? 'ri-star-half-line'
-                          : 'ri-star-line'
+                      index + 1 <= Math.floor(avgRating)
+                        ? "ri-star-fill"
+                        : index + 0.5 <= avgRating
+                        ? "ri-star-half-line"
+                        : "ri-star-line"
                     }
                   />
                 ))}
               </span>
 
-              {/* Số service */}
-              <span className="text-[var(--primary)]">
-                <i className="ri-cup-fill"></i> {destination.serviceCount} SERVICE
-              </span>
+              {/* Số service (nếu có) */}
+              {destination.services && (
+                <span className="text-[var(--primary)]">
+                  <i className="ri-cup-fill"></i>{" "}
+                  {destination.services.length} SERVICE
+                </span>
+              )}
             </div>
 
             {/* Rating + status */}
             <div className="flex gap-4 items-center mt-2">
               <div className="border px-3 py-1 rounded-md text-[var(--primary)] font-bold">
-                {destination.avgRating}
+                {avgRating.toFixed(1)}
               </div>
-              <div className="text-[var(--primary)] font-semibold">
-                {destination.status}
-              </div>
+              {destination.status && (
+                <div className="text-[var(--primary)] font-semibold">
+                  {destination.status}
+                </div>
+              )}
               <div className="hidden md:block text-gray-500 text-sm">
-                {destination.reviewCount} Đánh giá
+                {reviewCount} Đánh giá
               </div>
             </div>
           </div>
 
           {/* Category + distance */}
           <div className="flex flex-col items-end text-sm">
-            <div className="bg-[var(--secondary)] text-white px-3 py-1 rounded-md">
-              {destination.category}
-            </div>
-            <p className="mt-2">{destination.distance}</p>
+            {destination.category && (
+              <div className="bg-[var(--secondary)] text-white px-3 py-1 rounded-md">
+                {destination.category}
+              </div>
+            )}
+            {destination.distance && <p className="mt-2">{destination.distance}</p>}
           </div>
         </div>
 
@@ -125,7 +159,8 @@ const DestinationCard = ({ destination }: Props) => {
             </button>
           <button
             onClick={handleClick}
-            className="btn-primary w-[70%] sm:w-[80%] h-10 rounded-3xl text-white text-sm cursor-pointer"
+            disabled={!id}
+            className="btn-primary w-[70%] sm:w-[80%] h-10 rounded-3xl text-white text-sm cursor-pointer disabled:bg-gray-400"
           >
             XEM CHI TIẾT
           </button>

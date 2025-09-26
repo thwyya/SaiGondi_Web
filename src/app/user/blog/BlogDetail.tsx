@@ -7,11 +7,11 @@ import { RiCalendar2Line } from 'react-icons/ri';
 import { useEffect, useRef, useState } from 'react';
 import { PiShareFat } from 'react-icons/pi';
 import Link from 'next/link';
-import { Post } from '@/types/blog';
 import { mapBlogToPost } from '@/lib/blog/mapBlogToPost';
 import Button from '@/components/ui/Button';
 import { blogApi } from '@/lib/blog/blogApi';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
+import { Post } from '@/types/post';
 
 type BlogDetailProps = {
   post: any;

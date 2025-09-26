@@ -1,6 +1,8 @@
+// SearchBox.tsx
 "use client";
-
 import React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FiSearch, FiSliders } from "react-icons/fi";
 import Button from "./Button";
 
@@ -21,7 +23,6 @@ const SearchBox = () => {
           </span>
 
           <FiSearch className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
-
           <FiSliders className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
 
           <input
@@ -33,8 +34,6 @@ const SearchBox = () => {
                        placeholder:text-[11px] sm:placeholder:text-sm
                        focus:outline-none focus:border-[var(--primary)]
                        focus:ring-1 focus:ring-[var(--primary)] transition"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 

@@ -10,6 +10,11 @@ interface CheckinPayload {
 
 export const checkinApi = {
 
+ getHotPlaces: async () => {
+  const res = await axios.get(`${API_URL}/places/hot`);
+  return res.data.data;
+},
+
   getUserCheckins: async () => {
     const token = localStorage.getItem("accessToken");
     const res = await axios.get(`${API_URL}/me/checkins`, {
@@ -22,13 +27,16 @@ export const checkinApi = {
 
   createCheckin: async (placeId: string, data?: CheckinPayload) => {
     const token = localStorage.getItem("accessToken");
+
+    const payload = {
+      note: data?.note || "",
+      device: data?.device || "Web App",
+      imgList: data?.imgList || [],
+    };
+
     const res = await axios.post(
       `${API_URL}/places/${placeId}/checkin`,
-      {
-        ...(data?.note ? { note: data.note } : {}),
-        ...(data?.device ? { device: data.device } : { device: "Web App" }),
-        ...(data?.imgList ? { imgList: data.imgList } : {}),
-      },
+      payload,
       {
         headers: {
           "Content-Type": "application/json",
@@ -39,5 +47,3 @@ export const checkinApi = {
     return res.data.data;
   },
 };
-
-

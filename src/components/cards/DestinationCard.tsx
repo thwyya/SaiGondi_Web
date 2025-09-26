@@ -16,8 +16,8 @@ type DestinationCardProps = {
   location: string;
   distance: string;
   image: string;
-  rating?: number;      
-  totalRatings?: number; 
+  rating?: number;
+  totalRatings?: number;
 };
 
 const DestinationCard: React.FC<DestinationCardProps> = ({
@@ -112,6 +112,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
         <div className="mt-3 sm:mt-4">
           <Button
             variant="outline-primary"
+            onClick={handleFavoriteClick}  
             className="bg-[var(--white)] text-[var(--primary)] text-xs sm:text-sm font-medium px-4 py-1.5 w-full justify-center rounded-none border-none"
           >
             XEM CHI TIẾT
