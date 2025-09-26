@@ -11,19 +11,23 @@ import SearchBox from "@/components/ui/SearchBox";
 import { getDestinations } from "@/lib/place/destinationApi";
 import { useSearchParams } from "next/navigation";
 import { checkinApi } from "@/lib/checkin/checkinApi";
+import { AddPlace, ServiceOption } from "./addPlaceForm";
+import Button from "@/components/ui/Button";
 
 export default function DestinationPage() {
+  const [open, setOpen] = useState(false)
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
   // State quản lý filter
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(10000000);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
   // State dữ liệu
   const [destinations, setDestinations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([])
   // State phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -46,9 +50,9 @@ export default function DestinationPage() {
             page: currentPage,
             limit: itemsPerPage,
           });
-        setDestinations(res.data.places || []);
-        setTotalPages(res.data.pagination?.totalPages || 1);
-        setTotalDestinations(res.data.pagination?.total || 0);
+          setDestinations(res.data.places || []);
+          setTotalPages(res.data.pagination?.totalPages || 1);
+          setTotalDestinations(res.data.pagination?.total || 0);
         }
       } catch (err) {
         console.error("Fetch destinations error:", err);
@@ -57,6 +61,23 @@ export default function DestinationPage() {
       }
     };
 
+    const fetchServices = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/services")
+        if (!res.ok) throw new Error("Failed to fetch services")
+        const data = await res.json()
+        console.log("services api responsse:", data)
+
+        const formatted = data.data.map((service: ServiceOption) => ({
+          id: service.id,
+          name: service.name
+        }))
+        setServiceOptions(formatted)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchServices()
     fetchData();
   }, [minPrice, maxPrice, selectedOptions, currentPage]);
 
@@ -68,6 +89,10 @@ export default function DestinationPage() {
         : [...prev, option]
     );
   };
+  const filteredDestinations = destinations.filter(destination =>
+    selectedOptions.every(option => destination.services?.includes(option)) &&
+    (selectedRating === null || (destination.avgRating ?? 0) >= selectedRating)
+  );
 
   // Tạo danh sách page hiển thị (có "...")
   function getPageNumbers(current: number, total: number): (number | string)[] {
@@ -148,7 +173,9 @@ export default function DestinationPage() {
             {[0, 1, 2, 3, 4].map((star) => (
               <div
                 key={star}
-                className="border h-6 w-6 p-4 flex items-center justify-center rounded-[4px] border-[#8DD3BB]"
+                className={`border h-6 w-6 p-4 flex items-center justify-center rounded-[4px] border-[#8DD3BB] ${selectedRating === star ? "bg-primary text-white" : ""
+                  }`}
+                onClick={() => setSelectedRating(star)}
               >
                 {star}+
               </div>
@@ -160,45 +187,30 @@ export default function DestinationPage() {
           {/* Dịch vụ nổi bật */}
           <h4 className="font-semibold">Dịch vụ nổi bật</h4>
           <div className="flex flex-col mt-3 space-y-2">
-            {[
-              "Free breakfast",
-              "Free parking",
-              "Free internet",
-              "Free airport shuttle",
-              "Free cancellation",
-            ].map((option) => (
-              <label key={option} className="flex items-center gap-2 cursor-pointer">
+            {serviceOptions.map((option) => (
+              <label key={option.id} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => checkboxChangeHandle(option)}
+                  checked={selectedOptions.includes(option.id)}
+                  onChange={() => checkboxChangeHandle(option.id)}
                 />
-                {option}
+                {option.name}
               </label>
             ))}
           </div>
 
           <span className="block h-px bg-gray-300 my-6" />
 
-          {/* Tiện ích */}
-          <h4 className="font-semibold">Tiện ích</h4>
-          <div className="flex flex-col mt-3 space-y-2">
-            {["24h front desk", "Air-conditioned", "Fitness", "Pool"].map(
-              (option) => (
-                <label
-                  key={option}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedOptions.includes(option)}
-                    onChange={() => checkboxChangeHandle(option)}
-                  />
-                  {option}
-                </label>
-              )
-            )}
-            <button className="text-red-500 text-left">+24 more</button>
+
+          <div className="flex flex-col items-center max-h-2">
+            <Button
+              onClick={() => setOpen(true)}
+              className="btn-primary w-[70%] sm:w-[80%] h-10 rounded-3xl text-white text-sm cursor-pointer"
+            >
+              Thêm địa điểm
+            </Button>
+
+            <AddPlace open={open} setOpen={setOpen} />
           </div>
         </div>
 
@@ -234,15 +246,15 @@ export default function DestinationPage() {
               </select>
             </div>
           </div>
-            <h4 className="font-bold">
-              {type === "hot" ? "Địa điểm hot" : "Tất cả"}
-            </h4>
+          <h4 className="font-bold">
+            {type === "hot" ? "Địa điểm hot" : "Tất cả"}
+          </h4>
           {/* List */}
           <div className="flex flex-col mt-8 gap-6">
             {loading ? (
               <p>Đang tải dữ liệu...</p>
-            ) : destinations.length > 0 ? (
-              destinations.map((destination) => (
+            ) : filteredDestinations.length > 0 ? (
+              filteredDestinations.map((destination) => (
                 <DestinationCard key={destination._id} destination={destination} />
               ))
             ) : (
@@ -271,11 +283,10 @@ export default function DestinationPage() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page as number)}
-                    className={`px-3 py-1 border rounded-lg cursor-pointer ${
-                      currentPage === page
-                        ? "bg-primary text-white"
-                        : "bg-white hover:bg-gray-100"
-                    }`}
+                    className={`px-3 py-1 border rounded-lg cursor-pointer ${currentPage === page
+                      ? "bg-primary text-white"
+                      : "bg-white hover:bg-gray-100"
+                      }`}
                   >
                     {page}
                   </button>
