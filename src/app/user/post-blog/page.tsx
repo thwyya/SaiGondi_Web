@@ -61,26 +61,35 @@ export default function PostBlogPage() {
   //   });
   // };
 
-  const handleImageFiles = async (files: File[]) => {
+  const handleImageFiles = (files: File[]) => {
     setImageFiles((prev) => [...prev, ...files]);
+
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setImages((prev) => [...prev, ...newPreviews]);
   };
 
-  const handleVideoFiles = async (files: File[]) => {
+  const handleVideoFiles = (files: File[]) => {
     setVideoFiles((prev) => [...prev, ...files]);
+
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setVideos((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index: number) => {
+    URL.revokeObjectURL(images[index]);
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeVideo = (index: number) => {
+    URL.revokeObjectURL(videos[index]);
     setVideos((prev) => prev.filter((_, i) => i !== index));
     setVideoFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCoverChange = (file: File) => {
-    setCoverFile(file);    
+    setCoverFile(file);
+    setCover(URL.createObjectURL(file));
   };
 
   const handleSubmit = async () => {
@@ -174,6 +183,7 @@ export default function PostBlogPage() {
           cover={cover}
           onCoverChange={handleCoverChange}
           onRemove={() => {
+            if (cover) URL.revokeObjectURL(cover);
             setCover(null);
             setCoverFile(null);
           }}
