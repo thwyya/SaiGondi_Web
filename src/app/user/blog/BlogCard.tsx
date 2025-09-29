@@ -54,9 +54,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
   }, [post?.id]);
 
   const profileLink =
-    currentUserId && post.authorId === currentUserId
+    currentUserId && post.author === currentUserId
       ? "/user/profile"
-      : `/user/profile/${post.authorId}`;
+      : `/user/profile/${post.author}`;
 
   return (
     <div className="flex flex-col md:flex-row gap-6 bg-[var(--background)] p-4">
