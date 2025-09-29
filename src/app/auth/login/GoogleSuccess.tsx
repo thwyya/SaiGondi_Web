@@ -1,34 +1,58 @@
 // src/app/auth/login/GoogleSuccess.tsx
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { login } from '@/store/slices/authSlice';
+import useUser from '@/hooks/useUser';
 
-const GoogleSuccess = () => {
+const GoogleLoginHandler = () => {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const router = useRouter();
+  const { refetch } = useUser();
 
   useEffect(() => {
+    console.log("GoogleSuccess.tsx: Component mounted. Checking for tokens in URL...");
+    console.log("GoogleSuccess.tsx: Full URL search params:", searchParams.toString());
+
     const accessToken = searchParams.get('accessToken');
     const refreshToken = searchParams.get('refreshToken');
 
+    console.log("GoogleSuccess.tsx: Extracted accessToken:", accessToken);
+    console.log("GoogleSuccess.tsx: Extracted refreshToken:", refreshToken);
+
     if (accessToken) {
+      console.log("GoogleSuccess.tsx: accessToken found. Storing in localStorage...");
       localStorage.setItem('accessToken', accessToken);
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
-      // Giả sử action `login` của bạn có thể xử lý chỉ với accessToken
+      console.log("GoogleSuccess.tsx: Tokens stored. Refetching user data...");
+
       dispatch(login({ token: accessToken }));
-      router.push('/');
+
+      refetch().then(() => {
+        console.log("GoogleSuccess.tsx: User data refetched. Redirecting to home page...");
+        router.push('/');
+      });
+
     } else {
+      console.log("GoogleSuccess.tsx: accessToken NOT found in URL. Redirecting to login page.");
       router.push('/auth/login');
     }
-  }, [searchParams, dispatch, router]);
+  }, [searchParams, dispatch, router, refetch]);
 
-  return <div>Đang đăng nhập với Google...</div>;
+  return <div>Đang xử lý đăng nhập với Google... Vui lòng kiểm tra console (F12).</div>;
 };
 
-export default GoogleSuccess;
+const GoogleSuccessPage = () => {
+  return (
+    <Suspense fallback={<div>Đang tải...</div>}>
+      <GoogleLoginHandler />
+    </Suspense>
+  );
+};
+
+export default GoogleSuccessPage;
