@@ -69,7 +69,7 @@ const BlogListSection = ({ activeCategoryKey, mainCategoryKeys }: BlogListSectio
 
     fetchBlogs(currentPage);
 
-  }, [currentPage, activeCategoryKey, mainCategoryKeys]);
+  }, [currentPage, activeCategoryKey, mainCategoryKeys, type]);
 
 
   return (

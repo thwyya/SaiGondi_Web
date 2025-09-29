@@ -24,4 +24,34 @@ export const placeApi = {
     });
     return res.data.data;
   },
+
+  likePlace: async (id: string) => {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.patch(`${API_URL}/places/${id}`, {}, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    return res.data;
+  },
+
+  addToFavorites: async (id: string) => {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.post(`${API_URL}/places/${id}/favorite`, {}, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    return res.data;
+  },
+
+  removeFromFavorites: async (id: string) => {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.delete(`${API_URL}/places/${id}/favorite`, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    return res.data;
+  },
 };

@@ -25,8 +25,8 @@ export const getDestinationById = async (id: string) => {
 };
 
 // Tìm kiếm địa điểm
-export const searchDestinations = async (query: string) => {
-  const res = await axios.get(`${API_URL}/places/search`, { params: { q: query } });
+export const searchDestinations = async (params: any) => {
+  const res = await axios.get(`${API_URL}/places/search`, { params });
   return res.data;
 };
 
@@ -39,6 +39,12 @@ export const likeDestination = async (id: string) => {
 // Thêm vào danh sách yêu thích
 export const addToFavorites = async (id: string) => {
   const res = await axiosInstance.post(`/places/${id}/favorite`);
+  return res.data;
+};
+
+// Xóa khỏi danh sách yêu thích
+export const removeFromFavorites = async (id: string) => {
+  const res = await axiosInstance.delete(`/places/${id}/favorite`);
   return res.data;
 };
 

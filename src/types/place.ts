@@ -1,16 +1,10 @@
-
 export interface Ward {
   _id: string;
   name: string;
   location: {
     type: string;
     coordinates: number[];
-  };
-}
-export interface Category {
-  _id: string;
-  name: string; 
-  description?: string;
+  }
 }
 export interface Place {
   _id: string;
@@ -46,7 +40,6 @@ export interface Place {
 
   distance?: string | number; 
   serviceCount?: number;
-  reviewCount?: number;
 }
 
 export interface PlacesApiResponse {

@@ -120,8 +120,12 @@ export default function LoginPage() {
       </div>
 
       <div className="flex justify-center mt-8 space-x-4">
-        <Button variant="outline-primary"><FaFacebookF className="text-[var(--primary)] text-xl" /></Button>
-        <Button variant="outline-primary"><FcGoogle className="text-xl" /></Button>
+        <a href="http://localhost:5000/api/users/auth/facebook">
+         <Button variant="outline-primary"><FaFacebookF className="text-[var(--primary)] text-xl" /></Button>
+        </a>
+        <a href="http://localhost:5000/api/users/auth/google">
+          <Button variant="outline-primary"><FcGoogle className="text-xl" /></Button>
+        </a>
         <Button variant="outline-primary"><FaApple className="text-black text-xl" /></Button>
       </div>
     </>

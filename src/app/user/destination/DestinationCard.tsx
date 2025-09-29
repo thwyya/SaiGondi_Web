@@ -1,19 +1,24 @@
-"use client";
+'use client';
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState, useEffect } from 'react';
+import useUser from "@/hooks/useUser";
+import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+import { Place } from "@/types/place";
 
 interface Props {
-  destination: any; // để linh hoạt nhận từ cả 2 API
+  destination: Place;
 }
 
 const DestinationCard = ({ destination }: Props) => {
   const router = useRouter();
+  const { user, isAuthenticated, loading: userLoading, refetch: refetchUser } = useUser();
+  
+  const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
 
-  // Lấy id (ưu tiên _id, fallback placeId)
-  const id = destination._id || destination.placeId;
+  const id = destination._id || (destination as any).placeId;
 
-  // Nếu không có id thì không cho click
   const handleClick = () => {
     if (!id) {
       console.error("Destination không có id:", destination);
@@ -22,20 +27,38 @@ const DestinationCard = ({ destination }: Props) => {
     router.push(`/user/destination/${id}`);
   };
 
-  // Lấy ảnh (ưu tiên image, fallback images[0])
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
+      router.push('/auth/login');
+      return;
+    }
+
+    if (!destination._id) return;
+
+    try {
+      if (isFavorited) {
+        await removeFromFavorites(destination._id);
+      } else {
+        await addToFavorites(destination._id);
+      }
+      await refetchUser(); 
+    } catch (error) {
+      console.error("Failed to update favorite status", error);
+    }
+  };
+
   const imageUrl =
-    destination.image ||
-    (Array.isArray(destination.images) && destination.images[0]) ||
+    destination.images?.[0] ||
     "/image.svg";
 
-  // Một số field fallback
   const avgRating = destination.avgRating || 0;
-  const reviewCount = destination.reviewCount || destination.totalRatings || 0;
-  const location = destination.location || destination.address || "Chưa rõ";
+  const reviewCount = destination.totalRatings || 0;
+  const location = destination.address || "Chưa rõ";
 
   return (
-    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden">
-      {/* Ảnh */}
+    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
       <Image
         alt={destination.name}
         src={imageUrl}
@@ -45,7 +68,6 @@ const DestinationCard = ({ destination }: Props) => {
         className="w-full h-48 object-cover"
       />
 
-      {/* Nội dung */}
       <div className="flex flex-col p-4">
         <div className="flex justify-between">
           <div className="flex flex-col gap-1">
@@ -55,7 +77,6 @@ const DestinationCard = ({ destination }: Props) => {
             </span>
 
             <div className="flex items-center gap-4 text-sm">
-              {/* Rating sao */}
               <span className="flex items-center gap-1 text-yellow-500">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <i
@@ -71,7 +92,6 @@ const DestinationCard = ({ destination }: Props) => {
                 ))}
               </span>
 
-              {/* Số service (nếu có) */}
               {destination.services && (
                 <span className="text-[var(--primary)]">
                   <i className="ri-cup-fill"></i>{" "}
@@ -80,7 +100,6 @@ const DestinationCard = ({ destination }: Props) => {
               )}
             </div>
 
-            {/* Rating + status */}
             <div className="flex gap-4 items-center mt-2">
               <div className="border px-3 py-1 rounded-md text-[var(--primary)] font-bold">
                 {avgRating.toFixed(1)}
@@ -96,23 +115,21 @@ const DestinationCard = ({ destination }: Props) => {
             </div>
           </div>
 
-          {/* Category + distance */}
           <div className="flex flex-col items-end text-sm">
-            {destination.category && (
-              <div className="bg-[var(--secondary)] text-white px-3 py-1 rounded-md">
-                {destination.category}
-              </div>
-            )}
             {destination.distance && <p className="mt-2">{destination.distance}</p>}
           </div>
         </div>
 
-        {/* Divider */}
         <span className="block h-px bg-gray-300 my-4" />
 
-        {/* Actions */}
         <div className="flex justify-between items-center">
-          <i className="ri-heart-fill border border-[var(--primary)] rounded-md p-2 text-[var(--secondary)] cursor-pointer"></i>
+          <button 
+            onClick={handleFavoriteClick} 
+            className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={userLoading}
+          >
+              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+            </button>
           <button
             onClick={handleClick}
             disabled={!id}

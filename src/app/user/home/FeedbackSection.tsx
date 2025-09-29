@@ -8,7 +8,7 @@ const testimonials = [
   {
     name: 'THU HIỀN',
     content:
-      'SÀI GÒN điểm đến nghỉ dưỡng và vui chơi trên bản đồ Việt Nam,\nkhông chỉ thu hút với nhiều cảnh đẹp nơi đây còn tạo ấn tượng với nhiều điểm vui chơi cùng thú cưng thú vị',
+      'SÀI GÒN điểm đến nghỉ dưỡng và vui chơi trên bản đồ Việt Nam,\nkhông chỉ thu hút với nhiều cảnh đẹp nơi đây còn tạo ấn tượng',
   },
   { 
     name: 'VĂN MINH', 

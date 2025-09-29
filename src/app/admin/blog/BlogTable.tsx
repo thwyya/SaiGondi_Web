@@ -58,10 +58,10 @@ export function BlogTable({ data}: Props) {
                 const post = row.original;
                 return (
                     <div className="flex gap-2  mr-6">
-                        <img src={post.avatar} alt="" className='h-6 w-6 object-cover rounded-full'/>
+                        <img src={post.authorId.avatar} alt="" className='h-6 w-6 object-cover rounded-full'/>
                         <div className="flex flex-col">
-                          <h2 className='clamp-1'>{post.username}</h2>
-                          <h4>{post.badge}</h4>
+                          <h2 className='clamp-1'>{post.authorId.username}</h2>
+                          <h4>{post.authorId.badge}</h4>
                         </div>
                     </div>
                 )

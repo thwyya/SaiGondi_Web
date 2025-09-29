@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from 'next/link';
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
 import { Review } from "@/types/review";
@@ -11,6 +11,8 @@ import ReviewCard from "../ReviewCard";
 import { wardApi } from "@/lib/ward/wardApi";
 import { Ward } from "@/types/ward";
 import { blogApi } from "@/lib/blog/blogApi";
+import { Blog } from "@/types/blog";
+import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
 import { Post } from "@/types/post";
 import PostCard from "@/components/PostCard";
 import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
@@ -26,16 +28,18 @@ const DestinationDetail = () => {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { user, isAuthenticated, loading: userLoading } = useUser();
+  const { user, isAuthenticated, loading: userLoading, updateUser } = useUser();
 
   const [destination, setDestination] = useState<Place | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
+  const shareRef = useRef<HTMLDivElement>(null);
   const [servicesData, setServicesData] = useState<{id: string, name: string}[]>([]);
   type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
 
@@ -46,62 +50,101 @@ const DestinationDetail = () => {
   "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600"/>,
   "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
 };
+
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (user && destination) {
+      setIsFavorited(user.favorites.includes(destination._id));
+    }
+  }, [user, destination]);
+
+  const handleFavoriteClick = async () => {
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
+      router.push("/auth/login");
+      return;
+    }
+    if (!destination) return;
+    try {
+      // Here you would call your API to toggle the favorite status
+      // For now, we just update the UI
+      setIsFavorited(!isFavorited);
+      updateUser(prevUser => {
+        if (!prevUser) return null;
+        const newFavorites = isFavorited
+          ? prevUser.favorites.filter(favId => favId !== destination._id)
+          : [...prevUser.favorites, destination._id];
+        return { ...prevUser, favorites: newFavorites };
+      });
+    } catch (error) {
+      console.error("Failed to update favorite status:", error);
+      alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+    }
+  };
+
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(pageUrl);
+    alert("Đã sao chép liên kết vào clipboard!");
+  };
   useEffect(() => {
     if (id) {
       const fetchData = async () => {
         try {
           const destinationRes = await getDestinationById(id);
           const place = destinationRes?.data || destinationRes?.place || destinationRes;
-          setDestination(place);
-          setReviews(place.reviews || []);
+          if (place) {
+            setDestination(place);
+            setReviews(place.reviews || []);
 
-          // Fetch blogs by place ID
-          const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
-          const blogsByPlace = blogsByPlaceRes.data || [];
-          console.log("Blogs by place:", blogsByPlace);
+            // Fetch blogs by place ID
+            const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
+            const blogsByPlace: Blog[] = blogsByPlaceRes.data || [];
 
-          // Fetch blogs by ward ID
-          let blogsByWard = [];
-          let blogWardIdSource: any = place.ward;
+            // Fetch blogs by ward ID
+            let blogsByWard: Blog[] = [];
+            let blogWardIdSource: any = place.ward;
 
-          if (typeof blogWardIdSource === 'string' && blogWardIdSource.startsWith('[') && blogWardIdSource.endsWith(']')) {
-            try {
-              const parsed = JSON.parse(blogWardIdSource);
-              blogWardIdSource = Array.isArray(parsed) ? parsed[0] : blogWardIdSource;
-            } catch (e) {
-              console.error("Failed to parse blogWardId:", e);
+            if (typeof blogWardIdSource === 'string' && blogWardIdSource.startsWith('[') && blogWardIdSource.endsWith(']')) {
+              try {
+                const parsed = JSON.parse(blogWardIdSource);
+                blogWardIdSource = Array.isArray(parsed) ? parsed[0] : blogWardIdSource;
+              } catch (e) {
+                console.error("Failed to parse blogWardId:", e);
+              }
             }
-          }
 
-          if (Array.isArray(blogWardIdSource)) {
-            blogWardIdSource = blogWardIdSource[0];
-          }
-
-          const finalBlogWardId =
-            typeof blogWardIdSource === 'object' && blogWardIdSource !== null
-              ? (blogWardIdSource as any)._id
-              : typeof blogWardIdSource === 'string'
-                ? blogWardIdSource
-                : null;
-
-          if (finalBlogWardId) {
-            const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
-            blogsByWard = blogRes.data || [];
-            console.log("Blogs by ward:", blogsByWard);
-          }
-
-          // Combine and remove duplicates
-          const allBlogs = [...blogsByPlace, ...blogsByWard];
-          const uniqueBlogs = allBlogs.reduce((acc, current) => {
-            if (!acc.find((item: Post) => item._id === current._id)) {
-              acc.push(current);
+            if (Array.isArray(blogWardIdSource)) {
+              blogWardIdSource = blogWardIdSource[0];
             }
-            return acc;
-          }, [] as Post[]);
-          console.log("Unique blogs:", uniqueBlogs);
 
-          setRelatedBlogs(uniqueBlogs);
+            const finalBlogWardId =
+              typeof blogWardIdSource === 'object' && blogWardIdSource !== null
+                ? (blogWardIdSource as any)._id
+                : typeof blogWardIdSource === 'string'
+                  ? blogWardIdSource
+                  : null;
 
+            if (finalBlogWardId) {
+              const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
+              blogsByWard = blogRes.data || [];
+            }
+
+            // Combine and remove duplicates
+            const allBlogs: Blog[] = [...blogsByPlace, ...blogsByWard];
+            const uniqueBlogs = allBlogs.reduce((acc, current) => {
+              if (!acc.find((item) => item._id === current._id)) {
+                acc.push(current);
+              }
+              return acc;
+            }, [] as Blog[]);
+            
+            const mappedBlogs = uniqueBlogs.map(mapBlogToPost);
+
+            setRelatedBlogs(mappedBlogs);
+          }
         } catch (error) {
           console.error("Failed to fetch data:", error);
         } finally {
@@ -194,7 +237,7 @@ const DestinationDetail = () => {
       : "/image.svg";
 
   return (
-    <div className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
+    <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-500 flex gap-2 mb-4">
@@ -227,12 +270,81 @@ const DestinationDetail = () => {
           </div>
 
           <div className="flex gap-3">
-            <button className="border rounded-lg p-2 hover:bg-gray-100">
-              <i className="ri-heart-line text-gray-600 text-lg"></i>
+            <button
+              onClick={handleFavoriteClick}
+              className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || userLoading}
+            >
+              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
             </button>
-            <button className="border rounded-lg p-2 hover:bg-gray-100">
-              <i className="ri-bookmark-line text-gray-600 text-lg"></i>
-            </button>
+            <div className="relative" ref={shareRef}>
+              <button
+                onClick={() => setShowSharePopup((prev) => !prev)}
+                className="border rounded-lg p-2 hover:bg-gray-100"
+              >
+                <i className="ri-share-line text-gray-600 text-lg"></i>
+              </button>
+
+              {showSharePopup && (
+                <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-xl border z-50">
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                      Chia sẻ địa điểm
+                    </h3>
+
+                    {/* Copy link */}
+                    <div className="flex items-center border rounded-lg overflow-hidden mb-3">
+                      <input
+                        type="text"
+                        readOnly
+                        value={pageUrl}
+                        className="w-full p-2 bg-gray-50 text-gray-700 text-xs outline-none"
+                      />
+                      <button
+                        onClick={copyToClipboard}
+                        className="px-3 py-2 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+                      >
+                        Copy
+                      </button>
+                    </div>
+
+                    {/* Social icons */}
+                    <div className="flex items-center justify-around">
+                      <a
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                          pageUrl
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <i className="ri-facebook-fill text-lg"></i>
+                      </a>
+                      <a
+                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                          pageUrl
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-9 h-9 rounded-full bg-sky-500 hover:bg-sky-600 text-white"
+                      >
+                        <i className="ri-twitter-fill text-lg"></i>
+                      </a>
+                      <a
+                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                          pageUrl
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-700 hover:bg-blue-800 text-white"
+                      >
+                        <i className="ri-linkedin-fill text-lg"></i>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
               Ăn uống
             </button>
@@ -522,19 +634,18 @@ const DestinationDetail = () => {
               gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
 
               {relatedBlogs.map((post) => {
-                if (!post || !post._id) return null;
+                if (!post || !post.id) return null;
 
-                const author = typeof post.authorId === 'object' ? post.authorId : null;
-                const authorName = author ? `${author.firstName || ''} ${author.lastName || ''}`.trim() : 'Unknown Author';
-                const authorAvatar = author ? author.avatar : '/avatar.svg';
+                const authorName = post.author;
+                const authorAvatar = post.authorAvatar;
                 const postTitle = post.title || 'Untitled Post';
-                const postWard = (typeof post.ward === 'object' && post.ward !== null) ? ward?.name : 'Unknown Location';
+                const postWard = post.ward || 'Unknown Location';
 
                 return (
-                  <div key={post._id} className="relative py-6">
+                  <div key={post.id} className="relative py-6">
                     <div className="absolute bottom-0 left-0 w-full h-70 z-0">
                       <Image
-                        src={post.mainImage || "/default.jpg"}
+                        src={post.image || "/default.jpg"}
                         alt={postTitle}
                         fill
                         style={{ objectFit: "cover" }}
@@ -546,7 +657,7 @@ const DestinationDetail = () => {
                       <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
                       <div className="p-4 sm:p-6">
                         <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
-                          <span>{post.createdAt ? new Date(post.createdAt).toLocaleDateString("vi-VN") : ''}</span>
+                          <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
                         </div>
 
                         <div className="border-t border-gray-200 pt-2 mt-2">
@@ -574,7 +685,7 @@ const DestinationDetail = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <IoChatbubbles className="text-[var(--warning)]" />
-                              Bình luận({post.commentsCount || 0})
+                              Bình luận({post.totalComments || 0})
                             </span>
                           </div>
                         </div>

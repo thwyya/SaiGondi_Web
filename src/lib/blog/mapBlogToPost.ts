@@ -7,8 +7,14 @@ export function mapBlogToPost(blog: Blog): Post {
   const author = blog.authorId;
 
   const categoryNames: string[] =
-    // blog.categories?.map(c => c?._id).filter(Boolean) as string[] || [];
-    blog.categories?.map(c => c?.name).filter(Boolean) as string[] || ["Chưa phân loại"];
+    Array.isArray(blog.categories)
+      ? blog.categories.map(c => {
+          if (typeof c === 'string') {
+            return c;
+          }
+          return c?.name;
+        }).filter(Boolean) as string[]
+      : ["Chưa phân loại"];
 
 
   return {

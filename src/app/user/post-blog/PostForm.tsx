@@ -29,86 +29,6 @@ export default function PostForm({
     editorRef.current?.focus();
   };
 
-  const placeCaretInside = (el: HTMLElement, atEnd = false) => {
-    const sel = window.getSelection();
-    if (!sel) return;
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(atEnd);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    el.focus();
-  };
-
-  const moveCaretAfterFigure = (figure: Element | HTMLElement) => {
-    const htmlElement = figure as HTMLElement;
-    
-    if (!htmlElement.nextSibling && htmlElement.parentNode) {
-      const p = document.createElement("p");
-      p.innerHTML = "<br>";
-      htmlElement.parentNode.insertBefore(p, htmlElement.nextSibling);
-    }
-
-    const sel = window.getSelection();
-    if (!sel) return;
-    
-    const range = document.createRange();
-    range.setStartAfter(htmlElement);
-    range.collapse(true);
-    
-    sel.removeAllRanges();
-    sel.addRange(range);
-    editorRef.current?.focus();
-  };
-
-  const insertImage = (url: string) => {
-    const capId = `cap-${Date.now()}`;
-    execCommand(
-      "insertHTML",
-      `
-      <figure class="editor-figure" contenteditable="false" style="margin:8px 0; text-align:center;">
-        <img src="${url}" style="max-width:100%; border-radius:6px; display:inline-block;" />
-        <figcaption 
-          id="${capId}" 
-          data-caption 
-          data-placeholder="Nhập nội dung ghi chú (Không bắt buộc)" 
-          contenteditable="true" 
-          style="display:block; margin-top:6px; outline:none; min-height:1.2em;"
-        ></figcaption>
-      </figure>
-      `
-    );
-
-    setTimeout(() => {
-      const cap = editorRef.current?.querySelector<HTMLElement>(`#${capId}`);
-      if (cap) placeCaretInside(cap, false);
-    }, 50);
-  };
-
-  const insertVideo = (url: string) => {
-    const capId = `cap-${Date.now()}`;
-    execCommand(
-      "insertHTML",
-      `
-      <figure class="editor-figure" contenteditable="false" style="margin:8px 0; text-align:center;">
-        <video controls src="${url}" style="max-width:100%; border-radius:6px; display:inline-block;"></video>
-        <figcaption 
-          id="${capId}" 
-          data-caption 
-          data-placeholder="Nhập nội dung ghi chú (Không bắt buộc)" 
-          contenteditable="true" 
-          style="display:block; margin-top:6px; outline:none; min-height:1.2em;"
-        ></figcaption>
-      </figure>
-      `
-    );
-
-    setTimeout(() => {
-      const cap = editorRef.current?.querySelector<HTMLElement>(`#${capId}`);
-      if (cap) placeCaretInside(cap, false);
-    }, 50);
-  };
-
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -121,6 +41,28 @@ export default function PostForm({
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const insertImage = (url: string) => {
+    execCommand(
+      "insertHTML",
+      `
+      <figure class="editor-figure" contenteditable="false" style="margin:8px 0; text-align:center;">
+        <img src="${url}" style="max-width:100%; border-radius:6px; display:inline-block;" />
+      </figure>
+      `
+    );
+  };
+
+  const insertVideo = (url: string) => {
+    execCommand(
+      "insertHTML",
+      `
+      <figure class="editor-figure" contenteditable="false" style="margin:8px 0; text-align:center;">
+        <video controls src="${url}" style="max-width:100%; border-radius:6px; display:inline-block;"></video>
+      </figure>
+      `
+    );
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,38 +81,22 @@ export default function PostForm({
     e.target.value = "";
   };
 
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-
-    if (e.key === "Enter" && target?.hasAttribute("data-caption")) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const figure = target.closest(".editor-figure");
-      if (figure) moveCaretAfterFigure(figure);
-    }
-  };
-
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    editorRef.current?.querySelectorAll<HTMLElement>("[data-caption]").forEach((caption) => {
-      if (caption.innerHTML.trim() === "<br>" || caption.innerHTML.trim() === "&nbsp;") {
-        caption.innerHTML = "";
-      }
-    });
-    
     onContentChange((e.target as HTMLDivElement).innerHTML);
   };
+
   useEffect(() => {
     if (editorRef.current) {
-      const isFocused = document.activeElement === editorRef.current 
-        || editorRef.current.contains(document.activeElement);
+      const isFocused =
+        document.activeElement === editorRef.current ||
+        editorRef.current.contains(document.activeElement);
 
       if (!isFocused && content !== editorRef.current.innerHTML) {
         editorRef.current.innerHTML = content || "";
       }
     }
   }, [content]);
+
 
   const renderPrivacyLabel = () => {
     switch (privacy) {
@@ -241,18 +167,10 @@ export default function PostForm({
         contentEditable
         suppressContentEditableWarning
         className="w-full bg-[#F9F9FC] border border-[var(--gray-5)] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[var(--primary)] h-[600px] overflow-y-auto"
-        onKeyDown={handleKeyDown}
         onInput={handleInput}
       />
 
       <style jsx global>{`
-        [data-caption]:empty::before,
-        [data-caption]:has(> br:only-child)::before {
-          content: attr(data-placeholder);
-          color: #9ca3af;
-          font-style: italic;
-          pointer-events: none;
-        }
         .editor-figure img,
         .editor-figure video {
           max-width: 100%;

@@ -62,7 +62,7 @@ export const blogApi = {
 
   // Chia sẻ blog
   shareBlog: async (id: string) => {
-    const res = await axiosInstance.post(`/blogs/${id}/share`);
+    const res = await axiosInstance.patch(`/blogs/${id}/share`);
     return res.data;
   },
 
@@ -95,11 +95,10 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/ward/${wardId}`);
     return res.data;
   },
-  // Lấy danh sách blog xem nhiều nhất
   getPopularBlogs: async (query?: Record<string, any>) => {
-    const res = await axios.get(`${API_URL}/blogs/popular`, {
-      params: query
-    });
-    return res.data;
-  },
+  const res = await axios.get(`${API_URL}/blogs/popular`, {
+    params: query,
+  });
+  return res.data;
+},
 };

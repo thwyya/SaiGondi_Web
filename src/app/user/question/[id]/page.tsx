@@ -1,21 +1,67 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { qnaData } from '@/data/qnaData';
-import { BiDislike, BiLike } from 'react-icons/bi';
+import { BiLike } from 'react-icons/bi';
 import { FaRegCommentAlt } from 'react-icons/fa';
+import { questionApi } from '@/lib/question/questionApi';
 
 export default function QnaDetailPage() {
   const params = useParams();
-  const id = Number(params.id);
-  const question = qnaData.find((q) => q.id === id);
+  const router = useRouter();
+  const id = params.id as string;
 
-  const [answers, setAnswers] = useState(question?.answers || []);
+  const [question, setQuestion] = useState<any>(null);
+  const [answers, setAnswers] = useState<any[]>([]);
   const [newAnswer, setNewAnswer] = useState('');
-  const [likes, setLikes] = useState(question?.likes || 0);
-  const [dislikes, setDislikes] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        const res = await questionApi.getQuestionById(id);
+        setQuestion(res);
+        setAnswers(res.answers || []);
+      } catch (err) {
+        console.error('Lỗi load chi tiết câu hỏi', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchDetail();
+  }, [id]);
+
+  const handleSubmit = async () => {
+    if (!newAnswer.trim()) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        router.push('/auth/login');
+        return;
+      }
+      const res = await questionApi.addAnswer(id, { content: newAnswer });
+      setAnswers([res, ...answers]);
+      setNewAnswer('');
+    } catch (err) {
+      console.error('Lỗi gửi câu trả lời', err);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      await questionApi.likeQuestion(id);
+      const res = await questionApi.getQuestionById(id);
+      setQuestion(res);
+    } catch (err) {
+      console.error('Lỗi like câu hỏi', err);
+    }
+  };
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Đang tải...</p>;
+  }
 
   if (!question) {
     return (
@@ -24,22 +70,6 @@ export default function QnaDetailPage() {
       </div>
     );
   }
-
-  const handleSubmit = () => {
-    if (!newAnswer.trim()) return;
-    const newEntry = {
-      id: answers.length + 1,
-      author: 'Bạn',
-      avatar: '/city-2.svg',
-      content: newAnswer,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setAnswers([newEntry, ...answers]);
-    setNewAnswer('');
-  };
-
-  const handleLike = () => setLikes((prev) => prev + 1);
-  const handleDislike = () => setDislikes((prev) => prev + 1);
 
   return (
     <section className="w-full px-6 py-12 relative overflow-hidden">
@@ -54,61 +84,62 @@ export default function QnaDetailPage() {
 
       <div className="relative z-10 max-w-5xl mx-auto">
         <div className="rounded-lg p-6 mb-10 shadow-sm">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-            {question.title}
-          </h1>
           <div className="flex items-center gap-3 mb-4">
-             <img
-                src={question.image} 
-                alt={question.author}
-                className="w-10 h-10 rounded-full object-cover"
+            <img
+              src={question.author?.avatar || '/images/default.jpg'}
+              alt={question.author?.firstName}
+              className="w-10 h-10 rounded-full object-cover"
             />
             <div>
-              <p className="text-sm font-medium">{question.author}</p>
+              <p className="text-sm font-medium">
+                {question.author?.firstName} {question.author?.lastName}
+              </p>
               <p className="text-xs text-gray-500">
-                {question.createdAt} • {question.source}
+                {new Date(question.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
-          <p className="text-gray-700 whitespace-pre-line mb-4">
-            {question.description}
-          </p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 break-words">
+            {question.title}
+          </h1>
+
           <div className="flex gap-8 text-sm text-gray-600">
             <button
               onClick={handleLike}
               className="flex items-center gap-1 hover:text-blue-600"
             >
-              <BiLike /> {likes}
-            </button>
-            <button
-              onClick={handleDislike}
-              className="flex items-center gap-1 hover:text-red-500"
-            >
-              <BiDislike /> {dislikes}
+              <BiLike /> {question.totalLikes || 0}
             </button>
             <span className="flex items-center gap-1 text-red-500 font-medium">
               <FaRegCommentAlt /> {answers.length} Trả lời
             </span>
           </div>
         </div>
+
         <div className="space-y-6">
           <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
             Câu trả lời ({answers.length})
           </h3>
           {answers.map((ans) => (
-            <div key={ans.id} className="rounded-lg p-5 shadow-sm">
+            <div key={ans._id} className="rounded-lg p-5 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <img
-                  src={ans.avatar}
-                  alt={ans.author}
+                  src={ans.author?.avatar || '/images/default.jpg'}
+                  alt={ans.author?.firstName}
                   className="w-9 h-9 rounded-full object-cover"
                 />
                 <div>
-                  <p className="text-sm font-medium">{ans.author}</p>
-                  <p className="text-xs text-gray-500">{ans.createdAt}</p>
+                  <p className="text-sm font-medium">
+                    {ans.author?.firstName} {ans.author?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(ans.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
-              <p className="text-gray-800 whitespace-pre-line">{ans.content}</p>
+              <p className="text-gray-800 whitespace-pre-line break-words">
+                {ans.content}
+              </p>
             </div>
           ))}
         </div>
