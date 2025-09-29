@@ -3,27 +3,21 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from 'next/link';
-<<<<<<< HEAD
-import { useEffect, useState, useRef } from "react";
-import { getDestinationById, createReview, getReviewsByPlaceId, addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
-=======
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
->>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import { Place } from "@/types/place";
 import { Review } from "@/types/review";
 import ReviewCard from "../ReviewCard";
 import { wardApi } from "@/lib/ward/wardApi";
 import { Ward } from "@/types/ward";
 import { blogApi } from "@/lib/blog/blogApi";
+import { Blog } from "@/types/blog";
+import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
 import { Post } from "@/types/post";
 import PostCard from "@/components/PostCard";
-<<<<<<< HEAD
-=======
 import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
 
 
->>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 import useUser from "@/hooks/useUser";
 import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
@@ -45,88 +39,9 @@ const DestinationDetail = () => {
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
-<<<<<<< HEAD
   const shareRef = useRef<HTMLDivElement>(null);
-
-
-  const [isFavorited, setIsFavorited] = useState(false);
-  const copyToClipboard = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url)
-      .then(() => {
-        alert('Link copied to clipboard!');
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-      });
-  };
-
-  useEffect(() => {
-    if (user && destination) {
-      const favoriteIds = (user.favorites || []).map((fav: any) =>
-        typeof fav === "object" && fav !== null ? fav._id : fav
-      );
-      setIsFavorited(favoriteIds.includes(destination._id));
-    }
-  }, [user, destination]);
-
-
-  const handleFavoriteClick = async () => {
-    if (!isAuthenticated || !user) {
-      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
-      router.push('/auth/login');
-      return;
-    }
-
-    const previousIsFavorited = isFavorited;
-
-    try {
-      if (previousIsFavorited) {
-        await removeFromFavorites(id);
-        updateUser(currentUser => {
-          if (!currentUser) return null;
-          return {
-            ...currentUser,
-            favorites: currentUser.favorites.filter(fav => {
-              const favId = typeof fav === 'object' && fav !== null ? (fav as any)._id : fav;
-              return favId !== id;
-            })
-          };
-        });
-        setIsFavorited(false); // Cập nhật UI ngay
-      } else {
-        await addToFavorites(id);
-        updateUser(currentUser => {
-          if (!currentUser) return null;
-          return {
-            ...currentUser,
-            favorites: [...currentUser.favorites, id]
-          };
-        });
-        setIsFavorited(true); // Cập nhật UI ngay
-      }
-    } catch (error) {
-      console.error("Failed to update favorite status", error);
-      alert("Đã xảy ra lỗi khi cập nhật yêu thích. Vui lòng thử lại.");
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (shareRef.current && !shareRef.current.contains(event.target as Node)) {
-        setShowSharePopup(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [shareRef]);
-=======
   const [servicesData, setServicesData] = useState<{id: string, name: string}[]>([]);
   type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
->>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
 
   const serviceIcons: Record<ServiceKey, ReactNode> = {
   "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
@@ -135,6 +50,45 @@ const DestinationDetail = () => {
   "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600"/>,
   "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
 };
+
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (user && destination) {
+      setIsFavorited(user.favorites.includes(destination._id));
+    }
+  }, [user, destination]);
+
+  const handleFavoriteClick = async () => {
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
+      router.push("/auth/login");
+      return;
+    }
+    if (!destination) return;
+    try {
+      // Here you would call your API to toggle the favorite status
+      // For now, we just update the UI
+      setIsFavorited(!isFavorited);
+      updateUser(prevUser => {
+        if (!prevUser) return null;
+        const newFavorites = isFavorited
+          ? prevUser.favorites.filter(favId => favId !== destination._id)
+          : [...prevUser.favorites, destination._id];
+        return { ...prevUser, favorites: newFavorites };
+      });
+    } catch (error) {
+      console.error("Failed to update favorite status:", error);
+      alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+    }
+  };
+
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(pageUrl);
+    alert("Đã sao chép liên kết vào clipboard!");
+  };
   useEffect(() => {
     if (id) {
       const fetchData = async () => {
@@ -147,11 +101,10 @@ const DestinationDetail = () => {
 
             // Fetch blogs by place ID
             const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
-            const blogsByPlace = blogsByPlaceRes.data || [];
-            console.log("Blogs by place:", blogsByPlace);
+            const blogsByPlace: Blog[] = blogsByPlaceRes.data || [];
 
             // Fetch blogs by ward ID
-            let blogsByWard = [];
+            let blogsByWard: Blog[] = [];
             let blogWardIdSource: any = place.ward;
 
             if (typeof blogWardIdSource === 'string' && blogWardIdSource.startsWith('[') && blogWardIdSource.endsWith(']')) {
@@ -163,33 +116,8 @@ const DestinationDetail = () => {
               }
             }
 
-<<<<<<< HEAD
             if (Array.isArray(blogWardIdSource)) {
               blogWardIdSource = blogWardIdSource[0];
-=======
-          if (Array.isArray(blogWardIdSource)) {
-            blogWardIdSource = blogWardIdSource[0];
-          }
-
-          const finalBlogWardId =
-            typeof blogWardIdSource === 'object' && blogWardIdSource !== null
-              ? (blogWardIdSource as any)._id
-              : typeof blogWardIdSource === 'string'
-                ? blogWardIdSource
-                : null;
-
-          if (finalBlogWardId) {
-            const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
-            blogsByWard = blogRes.data || [];
-            console.log("Blogs by ward:", blogsByWard);
-          }
-
-          // Combine and remove duplicates
-          const allBlogs = [...blogsByPlace, ...blogsByWard];
-          const uniqueBlogs = allBlogs.reduce((acc, current) => {
-            if (!acc.find((item: Post) => item._id === current._id)) {
-              acc.push(current);
->>>>>>> c45c2ffc266a3ddfed98ed5ad950050320acc76a
             }
 
             const finalBlogWardId =
@@ -202,20 +130,20 @@ const DestinationDetail = () => {
             if (finalBlogWardId) {
               const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
               blogsByWard = blogRes.data || [];
-              console.log("Blogs by ward:", blogsByWard);
             }
 
             // Combine and remove duplicates
-            const allBlogs = [...blogsByPlace, ...blogsByWard];
+            const allBlogs: Blog[] = [...blogsByPlace, ...blogsByWard];
             const uniqueBlogs = allBlogs.reduce((acc, current) => {
-              if (!acc.find((item: Post) => item._id === current._id)) {
+              if (!acc.find((item) => item._id === current._id)) {
                 acc.push(current);
               }
               return acc;
-            }, [] as Post[]);
-            console.log("Unique blogs:", uniqueBlogs);
+            }, [] as Blog[]);
+            
+            const mappedBlogs = uniqueBlogs.map(mapBlogToPost);
 
-            setRelatedBlogs(uniqueBlogs);
+            setRelatedBlogs(mappedBlogs);
           }
         } catch (error) {
           console.error("Failed to fetch data:", error);
@@ -307,8 +235,6 @@ const DestinationDetail = () => {
     Array.isArray(destination.images) && destination.images.length > 0
       ? destination.images[0]
       : "/image.svg";
-
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
@@ -708,19 +634,18 @@ const DestinationDetail = () => {
               gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
 
               {relatedBlogs.map((post) => {
-                if (!post || !post._id) return null;
+                if (!post || !post.id) return null;
 
-                const author = typeof post.authorId === 'object' ? post.authorId : null;
-                const authorName = author ? `${author.firstName || ''} ${author.lastName || ''}`.trim() : 'Unknown Author';
-                const authorAvatar = author ? author.avatar : '/avatar.svg';
+                const authorName = post.author;
+                const authorAvatar = post.authorAvatar;
                 const postTitle = post.title || 'Untitled Post';
-                const postWard = (typeof post.ward === 'object' && post.ward !== null) ? ward?.name : 'Unknown Location';
+                const postWard = post.ward || 'Unknown Location';
 
                 return (
-                  <div key={post._id} className="relative py-6">
+                  <div key={post.id} className="relative py-6">
                     <div className="absolute bottom-0 left-0 w-full h-70 z-0">
                       <Image
-                        src={post.mainImage || "/default.jpg"}
+                        src={post.image || "/default.jpg"}
                         alt={postTitle}
                         fill
                         style={{ objectFit: "cover" }}
@@ -732,7 +657,7 @@ const DestinationDetail = () => {
                       <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
                       <div className="p-4 sm:p-6">
                         <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
-                          <span>{post.createdAt ? new Date(post.createdAt).toLocaleDateString("vi-VN") : ''}</span>
+                          <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
                         </div>
 
                         <div className="border-t border-gray-200 pt-2 mt-2">
@@ -760,7 +685,7 @@ const DestinationDetail = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <IoChatbubbles className="text-[var(--warning)]" />
-                              Bình luận({post.commentsCount || 0})
+                              Bình luận({post.totalComments || 0})
                             </span>
                           </div>
                         </div>
