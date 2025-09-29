@@ -1,5 +1,5 @@
-import ProfilePage from "./ProfilePage";
+import ProfileContainer from "./ProfileContainer";
 
 export default function Page() {
-  return <ProfilePage />
+  return <ProfileContainer isOwnProfile />;
 }

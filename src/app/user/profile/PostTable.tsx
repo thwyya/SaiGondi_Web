@@ -18,7 +18,7 @@ interface Blog {
 interface Props {
   data: Blog[]
   onDelete?: (id: string) => void
-  showActions?: boolean   
+  showActions?: boolean
 }
 
 export function PostTable({ data, onDelete, showActions = true }: Props) {
@@ -85,8 +85,8 @@ export function PostTable({ data, onDelete, showActions = true }: Props) {
                 onClick={async () => {
                   if (confirm("Bạn có chắc muốn xóa blog này?")) {
                     try {
-                      await authApi.deleteBlog(post._id); 
-                      onDelete?.(post._id); 
+                      await authApi.deleteBlog(post._id);
+                      onDelete?.(post._id);
                     } catch (err) {
                       console.error("Lỗi xóa blog:", err);
                     }
@@ -102,7 +102,7 @@ export function PostTable({ data, onDelete, showActions = true }: Props) {
     return baseColumns
   }, [router, onDelete, showActions])
 
-  const table = useReactTable({
+  useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),

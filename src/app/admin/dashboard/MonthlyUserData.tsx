@@ -1,6 +1,5 @@
 "use client";
-import {monthlyUserData } from "../../assets/data/userData";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,10 +10,11 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
-  Filler, 
+  Filler,
   ScriptableContext,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import api from "@/services/api";
 
 ChartJS.register(
   CategoryScale,
@@ -24,127 +24,165 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 );
+
+interface DayCount {
+  _id: number;
+  count: number;
+}
+
+interface MonthlyStats {
+  currentMonth: DayCount[];
+  previousMonth: DayCount[];
+}
+
 export default function MonthlyLineChart() {
+  const [stats, setStats] = useState<MonthlyStats>({
+    currentMonth: [],
+    previousMonth: [],
+  });
 
-const labels = monthlyUserData.map((item) => item.day.toString());
-const currentMonthData = monthlyUserData.map((item) => item.currentMonth);
-const previousMonthData = monthlyUserData.map((item) => item.previousMonth);
+  useEffect(() => {
+    api
+      .get("/admin/stats/monthlyUsers")
+      .then((res) => {
+        const raw = res.data?.data || { thisMonth: [], lastMonth: [] };
 
-const importantDays = [1, 5, 10, 15, 20, 25, 30];
+        setStats({
+          currentMonth: raw.thisMonth,
+          previousMonth: raw.lastMonth,
+        });
+      })
+      .catch((err) => {
+        console.error("Lỗi lấy stats:", err);
+      });
+  }, []);
 
-const data = {
-  labels,
-  datasets: [
-    {
-      label: "Tháng này",
-      data: currentMonthData,
-      borderColor: "#307AFD",     
-      backgroundColor: (context: ScriptableContext<'line'>) => {
-        const chart = context.chart;
-        const {ctx, chartArea} = chart;
+  const labels = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
+  const importantDays = [1, 5, 10, 15, 20, 25, 30];
 
-        if (!chartArea) {
-         
-          return undefined;
-        }
+  let cumulative = 0;
+  const currentMonthData = labels.map((day) => {
+    const found = stats.currentMonth.find((item) => item._id === Number(day));
+    if (found) cumulative += found.count;
+    return cumulative;
+  });
 
-        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-        gradient.addColorStop(0, '#F6F7FA'); 
-        gradient.addColorStop(0.5, '#EEF2FA'); 
+  cumulative = 0;
+  const previousMonthData = labels.map((day) => {
+    const found = stats.previousMonth.find((item) => item._id === Number(day));
+    if (found) cumulative += found.count;
+    return cumulative;
+  });
 
-        return gradient;
-      },
+  const maxValue = Math.max(...currentMonthData, ...previousMonthData, 0);
+  const stepSize = Math.ceil(maxValue / 5) || 1;
 
-      fill: true,
-      tension: 0.5,
-      pointRadius: 0,
-      borderWidth: 1,
-      order:2,
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Tháng này",
+        data: currentMonthData,
+        borderColor: "#307AFD",
+        backgroundColor: (context: ScriptableContext<"line">) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return undefined;
 
-    },
-    {
-      label: "Tháng trước",
-      data: previousMonthData,
-      borderColor: "#FFB226",
-      fill: false,
-      backgroundColor: "",
-      tension: 0.5,      
-      pointRadius: 0,
-      borderWidth: 1,
-      borderDash: [3,3],
-      order: 1,
-    },
-  ],
-};
+          const gradient = ctx.createLinearGradient(
+            0,
+            chartArea.bottom,
+            0,
+            chartArea.top
+          );
+          gradient.addColorStop(0, "#F6F7FA");
+          gradient.addColorStop(0.5, "#EEF2FA");
 
-const options: ChartOptions<"line"> = {
-  responsive: true,
-  plugins: {
-    legend: {
-        display:false,
-        position: "top",
-    },
-    tooltip: {
-      callbacks: {
-        label: (context) => {
-          const value = Number(context.raw);
-          return value >= 1000 ? (value / 1000).toFixed(0) + "K" : value.toString();
+          return gradient;
         },
+        fill: true,
+        tension: 0.5,
+        pointRadius: 0, // bỏ chấm tròn
+        borderWidth: 1,
+        order: 2,
       },
-    },
-  },
-  scales: {
-    x: {
-      ticks: {
-        callback: (val) => {
-          const day = Number(val);
-          if (importantDays.includes(day)) {
-            return day < 10 ? "0" + day : day.toString();
-          }
-          return "";
-        },
-        maxRotation: 0,
-        autoSkip: false,
+      {
+        label: "Tháng trước",
+        data: previousMonthData,
+        borderColor: "#FFB226",
+        fill: false,
+        tension: 0.5,
+        pointRadius: 0, // bỏ chấm tròn
+        borderWidth: 1,
+        borderDash: [3, 3],
+        order: 1,
       },
-      grid: {
+    ],
+  };
+
+  const options: ChartOptions<"line"> = {
+    responsive: true,
+    plugins: {
+      legend: {
         display: false,
       },
-    },
-    y: {
-      beginAtZero: true, 
-      ticks: {        
-        stepSize: 5000,  
-        callback: (val) => {
-          const num = Number(val);
-          return num >= 1000 ? (num / 1000).toFixed(0) + "K" : num.toString();
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = Number(context.raw);
+            return value + " người";
+          },
         },
       },
-      grid: {
-        display: false,
+      datalabels: {
+        display: false, // tắt số hiển thị trực tiếp trên line
       },
     },
-  },
-};
+    scales: {
+      x: {
+        ticks: {
+          callback: (val, index, ticks) => {
+            const day = Number(ticks[index].value);
+            return importantDays.includes(day)
+              ? day < 10
+                ? "0" + day
+                : day.toString()
+              : "";
+          },
+          autoSkip: false,
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize,
+          callback: (val) => val + " ",
+        },
+        suggestedMax: maxValue + stepSize,
+        grid: { display: false },
+      },
+    },
+  };
 
   return (
     <div className="w-full mb-6 overflow-hidden">
-        <div className="flex items-center gap-6">
-            <h3 className="font-bold m-4 border-r pr-6 border-gray-300">Tổng hợp người dùng</h3>
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full mr-1 bg-(--primary)"></div>
-                <h4>Tháng này</h4>                
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full mr-1 bg-(--secondary)"></div>
-                <h4>Tháng trước</h4>      
-            
-            </div>                            
-
-
+      <div className="flex items-center gap-6">
+        <h3 className="font-bold m-4 border-r pr-6 border-gray-300">
+          Tổng hợp người dùng
+        </h3>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full mr-1 bg-(--primary)"></div>
+          <h4>Tháng này</h4>
         </div>
-      <Line options={options} data={data} className='max-h-[300px]'/>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full mr-1 bg-(--secondary)"></div>
+          <h4>Tháng trước</h4>
+        </div>
+      </div>
+      <Line options={options} data={data} className="max-h-[300px]" />
     </div>
   );
 }
