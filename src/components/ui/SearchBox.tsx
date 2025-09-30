@@ -1,10 +1,19 @@
+// SearchBox.tsx
 "use client";
-
 import React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FiSearch, FiSliders } from "react-icons/fi";
 import Button from "./Button";
 
 const SearchBox = () => {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearch = () => {
+    if (searchQuery.trim() === "") return;
+    window.location.href = `/search?query=${encodeURIComponent(searchQuery)}`;
+  };
+
   return (
     <div className="relative bg-transparent flex justify-center py-12 sm:py-16 px-4">
       <div className="bg-[var(--background)] rounded-2xl shadow-md flex items-center w-full max-w-7xl gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
@@ -14,7 +23,6 @@ const SearchBox = () => {
           </span>
 
           <FiSearch className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
-
           <FiSliders className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
 
           <input
@@ -34,6 +42,7 @@ const SearchBox = () => {
           className="flex items-center justify-center gap-2
                      px-4 sm:px-6 py-2.5 sm:py-3
                      text-xs sm:text-sm font-semibold rounded-full"
+          onClick={handleSearch}
         >
           TÌM KIẾM
         </Button>

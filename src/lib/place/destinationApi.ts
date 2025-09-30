@@ -1,11 +1,19 @@
+import { de } from "zod/v4/locales";
 import axiosInstance from "../axiosInstance";
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
+export const createDestination = async (destinationData: FormData) =>{
+  const res = await axiosInstance.post(`${API_URL}/admin/places`, destinationData);
+  return res.data;
+}
+
+
 // Lấy danh sách địa điểm
 export const getDestinations = async (params?: any) => {
-  console.log("🚀 Fetching destinations with params:", params);
+  console.log(" Fetching destinations with params:", params);
   const res = await axios.get(`${API_URL}/places`, { params });
   return res.data;
 };
@@ -17,8 +25,8 @@ export const getDestinationById = async (id: string) => {
 };
 
 // Tìm kiếm địa điểm
-export const searchDestinations = async (query: string) => {
-  const res = await axios.get(`${API_URL}/places/search`, { params: { q: query } });
+export const searchDestinations = async (params: any) => {
+  const res = await axios.get(`${API_URL}/places/search`, { params });
   return res.data;
 };
 
@@ -31,6 +39,12 @@ export const likeDestination = async (id: string) => {
 // Thêm vào danh sách yêu thích
 export const addToFavorites = async (id: string) => {
   const res = await axiosInstance.post(`/places/${id}/favorite`);
+  return res.data;
+};
+
+// Xóa khỏi danh sách yêu thích
+export const removeFromFavorites = async (id: string) => {
+  const res = await axiosInstance.delete(`/places/${id}/favorite`);
   return res.data;
 };
 

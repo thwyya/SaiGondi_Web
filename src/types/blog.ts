@@ -1,3 +1,6 @@
+import { Category } from "./category";
+import { User } from "./user";
+import { Ward } from "./ward";
 
 export interface BlogContent {
   _id: string;
@@ -14,11 +17,6 @@ export interface AlbumItem {
   caption: string | null;
 }
 
-export interface Author {
-  _id: string;
-  avatar: string;
-}
-
 export interface Blog {
   _id: string;
   title: string;
@@ -26,16 +24,16 @@ export interface Blog {
   mainImage: string;
   content: BlogContent[];
   album: AlbumItem[];
-  categories: string[];
+  categories: Category[];
   tags: string[];
   privacy: "public" | "private" | "friends";
   totalLikes: number;
   likeBy: string[]; 
   shareCount: number;
   viewCount: number;
-  authorId: Author;
+  authorId: User;
   locationDetail: string;
-  ward: string;
+  ward: Ward;
   province: string;
   originalPostId: string | null;
   status: "pending" | "approved" | "rejected"; 
@@ -60,6 +58,7 @@ export interface Post {
 
   // Author
   author: string;
+  authorId?: string;
   authorAvatar: string;
 
   // Thông tin thời gian & địa điểm
@@ -69,6 +68,7 @@ export interface Post {
 
   // Nội dung chính
   content: {
+    text: string;
     type: "text" | "image" | "video";
     value?: string;
     url?: string;

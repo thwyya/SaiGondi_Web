@@ -1,10 +1,14 @@
 'use client';
 
 import { authApi } from "@/lib/auth/authApi";
+import { wardApi } from "@/lib/ward/wardApi";
+import { checkinApi } from "@/lib/checkin/checkinApi";
 import React, { useEffect, useState } from "react";
 
 export default function MapBanner() {
   const [firstName, setFirstName] = useState("Bạn");
+  const [totalWards, setTotalWards] = useState<number>(0);
+  const [visitedCount, setVisitedCount] = useState<number>(0);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -18,7 +22,27 @@ export default function MapBanner() {
         })
         .catch((err) => console.error("Profile API error:", err));
     }
+    wardApi.getAll()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setTotalWards(res.length);
+        }
+        else if (res?.wards) {
+          setTotalWards(res.wards.length);
+        }
+      })
+      .catch((err: any) => console.error("Ward API error:", err));
+
+
+    checkinApi.getUserCheckins()
+      .then((res: any) => {
+        if (res?.length >= 0) {
+          setVisitedCount(res.length);
+        }
+      })
+      .catch((err: any) => console.error("Checkin API error:", err));
   }, []);
+
   return (
     <section className="relative w-full py-10">
       <div className="max-w-6xl mx-auto flex flex-col items-center text-center px-4">
@@ -39,7 +63,7 @@ export default function MapBanner() {
             Sơ Đồ Hành Trình Của {firstName}
           </h2>
           <button className="btn-outline-primary px-4 py-2 rounded-full text-xs sm:text-sm">
-            23/126 xã, phường
+            {visitedCount}/{totalWards} xã, phường
           </button>
         </div>
       </div>

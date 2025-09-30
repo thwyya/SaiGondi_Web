@@ -1,67 +1,116 @@
 'use client'
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { GenericTable } from "@/shared/GenericTable"
-import {Post, posts} from "../../assets/data/post";
+import { useRouter } from 'next/navigation'
+import { authApi } from '@/lib/auth/authApi'
 
+interface Blog {
+  _id: string
+  title: string
+  mainImage?: string
+  viewCount?: number
+  createdAt?: string
+  slug: string
+}
 
 interface Props {
-    data: Post[]
-  }
+  data: Blog[]
+  onDelete?: (id: string) => void
+  showActions?: boolean
+}
 
+export function PostTable({ data, onDelete, showActions = true }: Props) {
+  const router = useRouter()
 
-export function PostTable({ data }: Props) {
-
-    const columns = useMemo<ColumnDef<Post>[]>(() => [
-        {
-            header: 'Bài đăng',
-            accessorKey: 'title',
-            cell: ({row}) => {
-                const post = row.original;
-                return (
-                    <div className="flex gap-3">
-                        <img src={post.cover} alt="" className='h-10 w-10 object-cover rounded-md'/>
-                        <h2>{post.title}</h2>
-                    </div>
-                )
-            },
+  const columns = useMemo<ColumnDef<Blog>[]>(() => {
+    const baseColumns: ColumnDef<Blog>[] = [
+      {
+        header: 'Bài đăng',
+        accessorKey: 'title',
+        cell: ({ row }) => {
+          const post = row.original
+          return (
+            <Link href={`/user/blog/${post.slug}`} className="flex gap-3 items-center hover:text-blue-600">
+              <img
+                src={post.mainImage || '/images/default-cover.jpg'}
+                alt={post.title}
+                className="h-10 w-10 object-cover rounded-md shadow"
+              />
+              <h2 className="font-medium">{post.title}</h2>
+            </Link>
+          )
         },
-        {
-            header: 'Lượt tiếp cận',
-            accessorKey: 'views',
-            cell: ({ getValue }) => {
-                const value = getValue() as string;
-                return <span>{value}</span>;
-              }
-          },
-          {
-            header: 'Ngày đăng',
-            accessorKey: 'createdAt',
-            cell: ({ getValue }) => {
-              const date = new Date(getValue() as string)
-              return <span>{date.toLocaleDateString('vi-VN')}</span>
-            },
-          },
-        ], [])
+      },
+      {
+        header: 'Lượt tiếp cận',
+        accessorKey: 'viewCount',
+        cell: ({ getValue }) => {
+          const value = getValue() as number
+          return <span>{value ?? 0}</span>
+        }
+      },
+      {
+        header: 'Ngày đăng',
+        accessorKey: 'createdAt',
+        cell: ({ getValue }) => {
+          const date = getValue() as string
+          return <span>{date ? new Date(date).toLocaleDateString('vi-VN') : ''}</span>
+        }
+      }
+    ]
 
-    const table = useReactTable({
-        data,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        })
+    if (showActions) {
+      baseColumns.push({
+        header: 'Action',
+        id: 'actions',
+        cell: ({ row }) => {
+          const post = row.original
+          return (
+            <div className="flex gap-3 text-gray-600">
+              <Link href={`/user/blog/${post.slug}`} title="Xem">
+                <i className="ri-eye-line hover:text-blue-500 cursor-pointer"></i>
+              </Link>
 
-    return (
-        <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none">
-            <GenericTable data={data} columns={columns} />
-        </div>
-        //<GenericTable data={data} columns={columns} />
+              <i
+                className="ri-pencil-line hover:text-green-500 cursor-pointer"
+                title="Sửa"
+                onClick={() => router.push(`/user/post-blog?id=${post._id}`)}
+              ></i>
 
-        )
-    
-    
+              <i
+                className="ri-delete-bin-line hover:text-red-500 cursor-pointer"
+                title="Xóa"
+                onClick={async () => {
+                  if (confirm("Bạn có chắc muốn xóa blog này?")) {
+                    try {
+                      await authApi.deleteBlog(post._id);
+                      onDelete?.(post._id);
+                    } catch (err) {
+                      console.error("Lỗi xóa blog:", err);
+                    }
+                  }
+                }}
+              />
+            </div>
+          )
+        }
+      })
+    }
+
+    return baseColumns
+  }, [router, onDelete, showActions])
+
+  useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
+
+  return (
+    <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none">
+      <GenericTable data={data} columns={columns} />
+    </div>
+  )
 }

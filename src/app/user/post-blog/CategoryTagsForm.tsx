@@ -1,5 +1,7 @@
 "use client";
+import { categoryApi } from "@/lib/category/categoryApi";
 import { wardApi } from "@/lib/ward/wardApi";
+import { Category } from "@/types/category";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { FiX } from "react-icons/fi";
 
@@ -15,16 +17,16 @@ interface CategoryTagsFormProps {
   onWardChange: (id: string, name: string) => void;
 }
 
-const CATEGORY_OPTIONS = [
-  "Du lịch",
-  "Ăn uống",
-  "Khách sạn",
-  "Mua sắm",
-  "Tâm linh",
-  "1",
-  "2",
-  "3",
-];
+// const CATEGORY_OPTIONS = [
+//   "Du lịch",
+//   "Ăn uống",
+//   "Khách sạn",
+//   "Mua sắm",
+//   "Tâm linh",
+//   "1",
+//   "2",
+//   "3",
+// ];
 
 export default function CategoryTagsForm({
   categories,
@@ -41,6 +43,7 @@ export default function CategoryTagsForm({
   const [openWard, setOpenWard] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [wards, setWards] = useState<{ _id: string; name: string }[]>([]); 
+  const [categoryOptions, setCategoryOptions] = useState<Category[]>([]);
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const wardRef = useRef<HTMLDivElement>(null);
@@ -58,6 +61,18 @@ export default function CategoryTagsForm({
   }, []);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryApi.getAllCategories();
+        setCategoryOptions(data);
+      } catch (err) {
+        console.error("❌ Lỗi lấy categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+  
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         categoryRef.current &&
@@ -73,13 +88,18 @@ export default function CategoryTagsForm({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleCategory = (value: string) => {
-    if (categories.includes(value)) {
-      onCategoriesChange(categories.filter((c) => c !== value));
+  const toggleCategory = (id: string) => {
+    if (categories.includes(id)) {
+      onCategoriesChange(categories.filter((c) => c !== id));
     } else {
-      onCategoriesChange([...categories, value]);
+      if (categories.length >= 2) {
+        alert("Chỉ được chọn tối đa 2 danh mục!");
+        return;
+      }
+      onCategoriesChange([...categories, id]);
     }
   };
+
 
   const handleAddTag = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === " " && tagInput.trim() !== "") {
@@ -116,7 +136,11 @@ export default function CategoryTagsForm({
           onClick={() => setOpenCategory(!openCategory)}
         >
           <span>
-            {categories.length > 0 ? categories.join(", ") : "Chọn danh mục"}
+            {categories.length > 0
+              ? categories
+                  .map((id) => categoryOptions.find((c) => c._id === id)?.name || "")
+                  .join(", ")
+              : "Chọn danh mục"}
           </span>
           <svg
             className={`w-4 h-4 transition-transform ${
@@ -136,18 +160,15 @@ export default function CategoryTagsForm({
         </div>
 
         {openCategory && (
-          <div className="absolute left-0 mt-1 w-full bg-[#F9F9FC] border border-[var(--gray-5)] rounded-lg shadow-lg p-3 max-h-40 overflow-y-auto z-10">
-            {CATEGORY_OPTIONS.map((option) => (
-              <label
-                key={option}
-                className="flex items-center gap-2 p-1 cursor-pointer"
-              >
+          <div className="absolute left-0 mt-1 w-full bg-[#F9F9FC] border border-[var(--gray-5)] rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto z-10">
+            {categoryOptions.map((option) => (
+              <label key={option._id} className="flex items-center gap-2 p-1 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={categories.includes(option)}
-                  onChange={() => toggleCategory(option)}
+                  checked={categories.includes(option._id)}
+                  onChange={() => toggleCategory(option._id)}
                 />
-                <span>{option}</span>
+                <span>{option.name}</span>
               </label>
             ))}
           </div>

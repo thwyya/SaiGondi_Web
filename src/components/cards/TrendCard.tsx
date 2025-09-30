@@ -1,12 +1,30 @@
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
+interface Place {
+  _id: string;
+  name: string;
+  district?: string;
+  ward?: string;
+  images?: { url: string }[];
+  avgRating?: number;
+  totalRatings?: number;
+  totalCheckins?: number;
+}
 
 interface TrendCardProps {
   index: number;
+  data: Place;
 }
 
-export default function TrendCard({ index }: TrendCardProps) {
+export default function TrendCard({ index, data }: TrendCardProps) {
+  const router = useRouter();
+  const handleClick = () => {
+    router.push(`/user/destination/${data._id}`);
+  };
   return (
     <div
+      onClick={handleClick}
       className="
         relative w-full 
         h-[120px] sm:h-[140px] md:h-[150px] 
@@ -35,8 +53,8 @@ export default function TrendCard({ index }: TrendCardProps) {
           "
         >
           <Image
-            src="/place.svg"
-            alt="place"
+            src={typeof data.images?.[0] === "string" ? data.images[0] : data.images?.[0]?.url || "/place.svg"}
+            alt={data.name}
             fill
             className="rounded-full object-cover border-[3px] border-blue-500"
           />
@@ -58,7 +76,7 @@ export default function TrendCard({ index }: TrendCardProps) {
                 font-bold text-blue-700 uppercase leading-tight mt-1 sm:mt-2
               "
             >
-              Phường Bàn Cờ
+              {data.name}
             </h4>
             <p
               className="
@@ -66,7 +84,7 @@ export default function TrendCard({ index }: TrendCardProps) {
                 text-blue-500 uppercase
               "
             >
-              TP.HCM
+              {data.district || 'TP.HCM'}
             </p>
           </div>
         </div>
@@ -78,7 +96,7 @@ export default function TrendCard({ index }: TrendCardProps) {
             ml-auto flex items-center justify-center h-full
           "
         >
-          9km
+          {data.avgRating ? `${data.avgRating.toFixed(1)}★` : 'N/A'}
         </div>
       </div>
     </div>
