@@ -232,6 +232,9 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         if (typeof window !== 'undefined') window.location.href = '/auth/login'
       }
     } finally {
+      form.reset()
+      setWardValue("")
+      setCategoryValue("")
       setIsSubmitting(false)
     }
   }
@@ -271,23 +274,28 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         console.error(err)
       }
     }
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/admin/categories")
-        if (!res.ok) throw new Error("Failed to fetch categories")
-        const data = await res.json()
-        console.log("categories api response:", data)
-        const formatted: CategoryOption[] = data.data.map((category: Category) => ({
-          id: category._id,
-          name: category.name
-        }))
-        setCategoryOptions(formatted)
-      } catch (err) {
-        console.error(err)
-      }
-    }
+    const fetchCategories = async (params: Record<string, string|number|boolean>) => {
+  try {
+    const url = new URL('http://localhost:5000/api/admin/categories')
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) url.searchParams.append(k, String(v))
+    })
+
+    const res = await fetch(url.toString(), { method: 'GET' })
+    if (!res.ok) throw new Error('Failed to fetch categories')
+    const data = await res.json()
+    console.log('categories api response:', data)
+    const formatted: CategoryOption[] = data.data.map((category: Category) => ({
+      id: category._id,
+      name: category.name
+    }))
+    setCategoryOptions(formatted)
+  } catch (err) {
+    console.error(err)
+  }
+}
     fetchServices()
-    fetchCategories()
+    fetchCategories({type: 'place'})
     fetchWards()
   }, [])
   return (
@@ -331,7 +339,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                   <FormItem className="mt-8">
                     <FormLabel className="text-base font-semibold text-black">Mô tả địa điểm</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
+                      <Input  placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="col-end-3 block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
                     </FormControl>
                     <FormDescription>
                     </FormDescription>

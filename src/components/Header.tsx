@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { useEffect, useRef, useState } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import { authApi } from '@/lib/auth/authApi';
+import { Label } from '@headlessui/react';
 
 export default function Header() {
   const pathname = usePathname();
@@ -77,6 +78,7 @@ export default function Header() {
   const navItems = [
     { label: 'Trang chủ', href: '/' },
     { label: 'Bài viết', href: '/user/blog' },
+    { label: 'Địa điểm', href: '/user/destination' },
     { label: 'Hành trình', href: '/user/map' },
   ];
 

@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster position="top-right" richColors />
         {children}
         {/* <DisableInspect /> */}
-        <DisableCopyPaste/>
+        {/* <DisableCopyPaste/> */}
       </body>
     </html>
   );

@@ -72,9 +72,16 @@ const DestinationCard = ({ destination }: Props) => {
         <div className="flex justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">{destination.name}</h2>
+             <div className="flex items-center gap-4 text-sm">
             <span className="text-[var(--primary)] flex items-center gap-1 text-sm">
               <i className="ri-map-pin-fill"></i> {location}
             </span>
+
+            <span className="text-[var(--primary)] flex items-center gap-1 text-sm ">
+              <i className="ri-map-2-line"></i> 
+              {destination.ward.name || 'Chưa rõ'}
+            </span>
+            </div>
 
             <div className="flex items-center gap-4 text-sm">
               <span className="flex items-center gap-1 text-yellow-500">
