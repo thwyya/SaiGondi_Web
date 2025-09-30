@@ -71,8 +71,15 @@ const useUser = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
+
+    const handleFocus = () => {
+      fetchUser();
+    };
+    window.addEventListener("focus", handleFocus);
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [fetchUser]);
 
