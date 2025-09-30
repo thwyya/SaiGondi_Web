@@ -12,6 +12,7 @@ export interface SharedBlog {
     id: string;
     firstName: string;
     lastName: string;
+    fullName: string;
     email: string;
     emailVerified: boolean;
     phone: string;
