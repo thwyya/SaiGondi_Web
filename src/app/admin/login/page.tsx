@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [stats, setStats] = useState({ users: 0, places: 0, blogs: 0, views: 0 });
 
 
+
   useEffect(() => {
     const prefillEmail = searchParams.get('email');
     if (prefillEmail) setEmail(prefillEmail);
@@ -84,7 +85,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <h2 className="heading-2 font-bold text-[var(--secondary)] mb-1">ĐĂNG NHẬP QUẢN TRỊ</h2>
+      <h2 className="heading-2 font-bold text-[var(--secondary)] mb-1">ĐĂNG NHẬP QUẢN TRỊ VIÊN</h2>
       <p className="text-sm text-gray-600 mb-5">Đăng nhập tài khoản Admin</p>
 
       <form onSubmit={handleLogin} className="space-y-5 pt-5">

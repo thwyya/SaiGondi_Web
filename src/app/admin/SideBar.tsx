@@ -18,25 +18,24 @@ const navLinks: NavLink[] = [
 
 const SideBar = () => {
   return (
-    <div className="flex flex-col my-6 justify-center w-[90%] mx-auto">
-      <img src="/logo.svg" alt="Logo" className='w-[70%] mx-auto' />
+    <div className="flex flex-col h-full px-4 py-6">
+      <img src="/logo.svg" alt="Logo" className="w-[70%] mx-auto" />
 
-      <div id="card__group" className='mt-6 flex flex-col gap-2'>
+      <nav className="mt-6 flex flex-col gap-2">
         {navLinks.map(({ display, path, icon }) => (
           <Link
             key={path}
             href={path}
-            className="flex items-center w-full rounded-3xl focus:bg-[#0000000A] hover:bg-[#0000000A] text-sm lg:text-xl py-2"
+            className="flex items-center gap-2 rounded-3xl px-3 py-2 text-sm lg:text-xl hover:bg-white/10 transition"
           >
-            <div className="flex items-center content-center">
-              {icon}
-              {display}
-            </div>
+            {icon}
+            {display}
           </Link>
         ))}
-      </div>
+      </nav>
     </div>
   )
 }
+
 
 export default SideBar
