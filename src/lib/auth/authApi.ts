@@ -1,5 +1,6 @@
 import axios from "axios";
 import axiosInstance from "../axiosInstance";
+import { reset } from "react-svg-pan-zoom";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -44,6 +45,18 @@ export const authApi = {
     return res.data;
   },
 
+  // Quên mật khẩu
+  forgotPassword: async (email: string) => {
+    const res = await axios.post(`${API_URL}/users/forgot-password`, { email});
+    return res.data;
+  },
+
+  // Đặt lại mật khẩu
+  resetPassword: async (email: string, otp: string, newPassword: string) => {
+    const res = await axiosInstance.put(`/users/reset-password`, { email, otp, newPassword });
+    return res.data;
+  },
+
   // Đổi mật khẩu
   changePassword: async (oldPassword: string, newPassword: string) => {
     const res = await axiosInstance.put("/users/change-password", {
@@ -82,6 +95,7 @@ export const authApi = {
     });
     return res.data;
   },
+  
   getUserReviews: async (userId: string) => {
     const res = await axiosInstance.get(`/users/${userId}/reviews`)
     return res.data.data
