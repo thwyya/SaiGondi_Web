@@ -5,61 +5,34 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaChevronDown } from 'react-icons/fa6';
 import Button from '@/components/ui/Button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import { authApi } from '@/lib/auth/authApi';
-import { Label } from '@headlessui/react';
+import useUser from '@/hooks/useUser'; // Import the hook
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [firstName, setFirstName] = useState(""); 
-  const [avatarUrl, setAvatarUrl] = useState("/Image.svg");
+  const { user, loading, refetch } = useUser(); // Use the hook
 
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+  // Derive state from the hook
+  const isLoggedIn = !loading && !!user;
+  const firstName = useMemo(() => {
+    if (!user?.fullName) return '';
+    return user.fullName.trim().split(' ')[0] || '';
+  }, [user?.fullName]);
+  const avatarUrl = user?.avatar || '/Image.svg';
 
-    if (!token) return;
-    authApi
-      .getProfile(token)
-      .then((res) => {
-        if (res?.user) {
-          setIsLoggedIn(true);
-
-          // lấy firstName từ fullName
-          if (res.user.fullName) {
-            const nameParts = res.user.fullName.trim().split(" ");
-            setFirstName(nameParts[0] || "");
-          }
-
-          if (res.user.avatar) {
-            setAvatarUrl(res.user.avatar);
-          }
-        }
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userId");
-      });
-  }, []);
-  
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userId");
-    setIsLoggedIn(false);
-    setFirstName("");
-    setAvatarUrl("/Image.svg"); 
-    router.push("/auth/login");
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    refetch(); // Refetch user state, which will be null
+    router.push('/auth/login');
   };
 
   useEffect(() => {
@@ -107,8 +80,8 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3 ml-auto">    
-          {!isLoggedIn && (
+        <div className="flex items-center gap-3 ml-auto">
+          {!isLoggedIn && !loading && (
             <div className="hidden md:block">
               <Link href="/auth/login">
                 <Button variant="outline-primary">Đăng nhập / Đăng ký</Button>
@@ -117,7 +90,7 @@ export default function Header() {
           )}
 
           {isLoggedIn && (
-            <>            
+            <>
               <Link href="/user/post-blog" className="hidden md:block">
                 <Button
                   variant="primary"
@@ -127,46 +100,46 @@ export default function Header() {
                 </Button>
               </Link>
 
-            <div
-              className="relative hidden md:flex items-center gap-2 cursor-pointer"
-              ref={avatarRef}
-              onClick={() => setAvatarOpen((v) => !v)}
-            >
-              <Image
+              <div
+                className="relative hidden md:flex items-center gap-2 cursor-pointer"
+                ref={avatarRef}
+                onClick={() => setAvatarOpen((v) => !v)}
+              >
+                <Image
                   src={avatarUrl}
                   alt="Avatar"
                   width={30}
                   height={30}
-                  className="rounded-xl object-contain "
+                  className="rounded-xl object-contain"
                 />
-              <span className="text-[var(--foreground)] font-inter">{firstName}</span>
-              <FaChevronDown className="text-gray-500" size={14} />
-              {avatarOpen && (
-                <div className="absolute right-0 top-[110%] w-44 bg-white rounded-xl shadow-lg py-1 border border-gray-100">
-                  <Link
-                    href="/user/profile"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAvatarOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
-                  >
-                    Trang cá nhân
-                  </Link>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLogout();
-                      setAvatarOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
+                <span className="text-[var(--foreground)] font-inter">{firstName}</span>
+                <FaChevronDown className="text-gray-500" size={14} />
+                {avatarOpen && (
+                  <div className="absolute right-0 top-[110%] w-44 bg-white rounded-xl shadow-lg py-1 border border-gray-100">
+                    <Link
+                      href="/user/profile"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAvatarOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
+                    >
+                      Trang cá nhân
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLogout();
+                        setAvatarOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                )}
               </div>
-              </>
+            </>
           )}
 
           <div className="relative md:hidden" ref={mobileMenuRef}>
@@ -208,7 +181,7 @@ export default function Header() {
 
                   <div className="border-t border-gray-200 my-2" />
 
-                  {!isLoggedIn ? (
+                  {!isLoggedIn && !loading ? (
                     <Link
                       href="/auth/login"
                       onClick={() => setMobileMenuOpen(false)}
@@ -218,7 +191,7 @@ export default function Header() {
                         Đăng nhập / Đăng ký
                       </Button>
                     </Link>
-                  ) : (
+                  ) : isLoggedIn && (
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
