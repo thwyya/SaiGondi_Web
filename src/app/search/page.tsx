@@ -2,12 +2,14 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { searchDestinations } from "@/lib/place/destinationApi";
 import DestinationCard from "@/components/cards/DestinationCard";
+import PostCard from "@/components/PostCard";
 import FilterPanel from "@/components/filters/FilterPanel";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchBox from "@/components/ui/SearchBox";
+import { Blog } from "@/types/blog";
+import { Destination } from "@/types/destination";
 
 // Define a type for the filters
 interface SearchFilters {
@@ -17,61 +19,95 @@ interface SearchFilters {
   rating: number;
 }
 
+type SearchType = "all" | "destinations" | "blogs";
+
 const SearchPage = () => {
   const searchParams = useSearchParams();
   const query = searchParams.get("query") || "";
-  const [results, setResults] = useState<any[]>([]);
+
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchType, setSearchType] = useState<SearchType>("all");
+
   const [filters, setFilters] = useState<SearchFilters>({
-    category: '',
-    district: '',
-    ward: '',
+    category: "",
+    district: "",
+    ward: "",
     rating: 0,
   });
 
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
+  const [totalDestinations, setTotalDestinations] = useState(0);
+  const [totalBlogs, setTotalBlogs] = useState(0);
   const itemsPerPage = 9; // 3x3 grid
 
   useEffect(() => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const searchParams: any = {
-          name: query,
-          page: currentPage,
-          limit: itemsPerPage,
-        };
-        if (filters.category) searchParams.category = filters.category;
-        if (filters.district) searchParams.district = filters.district;
-        if (filters.ward) searchParams.ward = filters.ward;
-        if (filters.rating > 0) searchParams.avgRating = filters.rating;
+        const params = new URLSearchParams({
+          query,
+          page: String(currentPage),
+          limit: String(itemsPerPage),
+        });
 
-        const res = await searchDestinations(searchParams);
-        setResults(res.data || []);
-        setTotalPages(res.pagination?.totalPages || 1);
-        setTotalResults(res.pagination?.total || 0);
+        if (filters.category) params.append("p_category", filters.category);
+        if (filters.district) params.append("p_district", filters.district);
+        if (filters.ward) params.append("p_ward", filters.ward);
+        if (filters.rating > 0) params.append("p_rating", String(filters.rating));
+        
+        if (searchType !== 'all') {
+          params.append("type", searchType === 'destinations' ? 'place' : 'blog');
+        }
+
+        const res = await fetch(`/api/search?${params.toString()}`);
+        const data = await res.json();
+
+        setDestinations(data.destinations || []);
+        setBlogs(data.blogs || []);
+
+        const destPagination = data.pagination?.destinations;
+        const blogPagination = data.pagination?.blogs;
+
+        setTotalDestinations(destPagination?.total || 0);
+        setTotalBlogs(blogPagination?.total || 0);
+
+        if (searchType === "destinations") {
+          setTotalPages(destPagination?.totalPages || 1);
+        } else if (searchType === "blogs") {
+          setTotalPages(blogPagination?.totalPages || 1);
+        } else { // 'all'
+          setTotalPages(Math.max(destPagination?.totalPages || 1, blogPagination?.totalPages || 1));
+        }
+
       } catch (error) {
         console.error("Failed to fetch search results:", error);
-        setResults([]);
+        setDestinations([]);
+        setBlogs([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchResults();
-  }, [query, filters, currentPage]);
+  }, [query, filters, currentPage, searchType]);
 
   const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
     setCurrentPage(1); // Reset to first page on filter change
     if (newFilters.district !== undefined) {
-      setFilters((prev) => ({ ...prev, ...newFilters, ward: '' }));
+      setFilters((prev) => ({ ...prev, ...newFilters, ward: "" }));
     } else {
       setFilters((prev) => ({ ...prev, ...newFilters }));
     }
   };
+  
+  const handleTabChange = (type: SearchType) => {
+    setSearchType(type);
+    setCurrentPage(1); // Reset page when changing tabs
+  }
 
   // Pagination helper
   function getPageNumbers(current: number, total: number): (number | string)[] {
@@ -85,6 +121,65 @@ const SearchPage = () => {
       }
     }
     return pages;
+  }
+  
+  const renderResults = () => {
+    const showDestinations = searchType === 'all' || searchType === 'destinations';
+    const showBlogs = searchType === 'all' || searchType === 'blogs';
+
+    if (loading) {
+      return <p className="text-center mt-12">Đang tải kết quả...</p>;
+    }
+
+    if (destinations.length === 0 && blogs.length === 0) {
+      return <p className="text-gray-600 text-center mt-12">Không tìm thấy kết quả nào phù hợp.</p>;
+    }
+
+    return (
+      <div className="space-y-12">
+        {showDestinations && destinations.length > 0 && (
+          <div>
+            {searchType === 'all' && <h2 className="text-xl font-bold mb-4">Địa điểm</h2>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {destinations.map((destination) => (
+                <DestinationCard
+                  key={destination._id}
+                  _id={destination._id}
+                  title={destination.name}
+                  location={destination.address}
+                  distance={"350m"}
+                  image={destination.images?.[0] || "/image.svg"}
+                  rating={destination.avgRating}
+                  totalRatings={destination.totalRatings}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        {showBlogs && blogs.length > 0 && (
+          <div>
+            {searchType === 'all' && <h2 className="text-xl font-bold mb-4">Bài viết</h2>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {blogs.map((post) => (
+                <PostCard key={post._id} post={post} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  const getTotalResultsForDisplay = () => {
+    if (searchType === 'destinations') return totalDestinations;
+    if (searchType === 'blogs') return totalBlogs;
+    return totalDestinations + totalBlogs;
+  }
+  
+  const getCurrentResultsLength = () => {
+    if (searchType === 'destinations') return destinations.length;
+    if (searchType === 'blogs') return blogs.length;
+    return destinations.length + blogs.length;
   }
 
   return (
@@ -116,24 +211,24 @@ const SearchPage = () => {
 
               {/* Tabs */}
               <div className="grid grid-cols-3 border rounded-2xl shadow bg-white mb-8">
-                <div className="flex flex-col border-r px-4 py-3 rounded-tl-2xl rounded-bl-2xl">
+                <button onClick={() => handleTabChange('all')} className={`flex flex-col border-r px-4 py-3 rounded-tl-2xl rounded-bl-2xl text-left ${searchType === 'all' ? 'bg-gray-100' : ''}`}>
                   <h4 className="font-bold">Tất cả</h4>
-                  <p className="text-gray-500">{totalResults} kết quả</p>
-                </div>
-                <div className="flex flex-col border-r px-4 py-3">
+                  <p className="text-gray-500">{totalDestinations + totalBlogs} kết quả</p>
+                </button>
+                <button onClick={() => handleTabChange('destinations')} className={`flex flex-col border-r px-4 py-3 text-left ${searchType === 'destinations' ? 'bg-gray-100' : ''}`}>
                   <h4 className="font-bold">Địa điểm</h4>
-                  <p className="text-gray-500">--</p>
-                </div>
-                <div className="flex flex-col px-4 py-3 rounded-tr-2xl rounded-br-2xl">
+                  <p className="text-gray-500">{totalDestinations} kết quả</p>
+                </button>
+                <button onClick={() => handleTabChange('blogs')} className={`flex flex-col px-4 py-3 rounded-tr-2xl rounded-br-2xl text-left ${searchType === 'blogs' ? 'bg-gray-100' : ''}`}>
                   <h4 className="font-bold">Bài viết</h4>
-                  <p className="text-gray-500">--</p>
-                </div>
+                  <p className="text-gray-500">{totalBlogs} kết quả</p>
+                </button>
               </div>
 
               {/* Sort */}
               <div className="flex justify-between items-center mb-6">
                 <h4 className="text-sm lg:text-base">
-                  Hiển thị {results.length}/{totalResults} kết quả
+                  Hiển thị {getCurrentResultsLength()}/{getTotalResultsForDisplay()} kết quả
                 </h4>
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm lg:text-base">Sắp xếp theo:</h4>
@@ -145,29 +240,8 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              {/* Results Grid */}
-              {loading ? (
-                <p className="text-center mt-12">Đang tải kết quả...</p>
-              ) : results.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {results.map((destination) => (
-                    <DestinationCard
-                      key={destination._id}
-                      _id={destination._id}
-                      title={destination.name}
-                      location={destination.address}
-                      distance={"350m"}
-                      image={destination.images?.[0] || '/image.svg'}
-                      rating={destination.avgRating}
-                      totalRatings={destination.totalRatings}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-600 text-center mt-12">
-                  Không tìm thấy kết quả nào phù hợp.
-                </p>
-              )}
+              {/* Results */}
+              {renderResults()}
 
               {/* Pagination */}
               {!loading && totalPages > 1 && (

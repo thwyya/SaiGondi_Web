@@ -20,35 +20,60 @@ export async function GET(req: NextRequest) {
   // Blog-specific filters
   const b_category = searchParams.get('b_category') || '';
 
-  let destinationsRes = { data: [], pagination: {} };
-  let blogsRes = { data: [], pagination: {} };
-
   try {
-    if (!type || type === 'place') {
-      const placeParams: any = { query, page, limit };
-      if (p_category) placeParams.category = p_category;
-      if (p_district) placeParams.district = p_district;
-      if (p_ward) placeParams.ward = p_ward;
-      if (p_rating) placeParams.rating = p_rating;
-      destinationsRes = await searchDestinations(placeParams);
-    }
-    
-    if (!type || type === 'blog') {
-      const blogParams: any = { query, page, limit };
-      if (b_category) blogParams.category = b_category;
-      blogsRes = await blogApi.searchBlogs(blogParams);
-    }
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
 
-    const results = {
-      destinations: destinationsRes.data || [],
-      blogs: blogsRes.data || [],
-      pagination: {
-        destinations: destinationsRes.pagination,
-        blogs: blogsRes.pagination,
-      },
+    let destinationResults: any[] = [];
+    let blogResults: any[] = [];
+    let destinationPagination: any = {};
+    let blogPagination: any = {};
+
+    const fetchDestinations = async () => {
+      if (!type || type === 'place') {
+        const placeParams: any = { name: query, page: pageNum, limit: limitNum };
+        if (p_category) placeParams.category = p_category;
+        if (p_district) placeParams.district = p_district;
+        if (p_ward) placeParams.ward = p_ward;
+        if (p_rating) placeParams.rating = p_rating;
+        const res = await searchDestinations(placeParams);
+        destinationResults = res.data?.places?.map((item: any) => ({ ...item, type: 'place' })) || [];
+        destinationPagination = res.data?.pagination || {};
+      }
     };
 
-    return NextResponse.json(results);
+    const fetchBlogs = async () => {
+      if (!type || type === 'blog') {
+        const blogParams: any = { name: query, page: pageNum, limit: limitNum };
+        if (b_category) blogParams.category = b_category;
+        const res = await blogApi.getBlogs(blogParams);
+        blogResults = res.data?.data?.map((item: any) => ({ ...item, type: 'blog' })) || [];
+        blogPagination = res.data?.pagination || {};
+      }
+    };
+
+    await Promise.all([fetchDestinations(), fetchBlogs()]);
+
+    const combinedResults = [...destinationResults, ...blogResults].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    // Simple combined pagination (can be improved based on actual needs)
+    const totalDestinations = destinationPagination.totalItems || 0;
+    const totalBlogs = blogPagination.totalItems || 0;
+    const totalItems = type ? (type === 'place' ? totalDestinations : totalBlogs) : totalDestinations + totalBlogs;
+    const totalPages = Math.ceil(totalItems / limitNum);
+
+    return NextResponse.json({
+      data: combinedResults,
+      pagination: {
+        currentPage: pageNum,
+        limit: limitNum,
+        totalItems,
+        totalPages,
+        // You can also include separate pagination info if needed
+        // destinationPagination, 
+        // blogPagination,
+      },
+    });
   } catch (error) {
     console.error('Failed to fetch search results:', error);
     return NextResponse.json(

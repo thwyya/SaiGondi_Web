@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Post } from '@/types/post';
+import { Blog as Post } from '@/types/blog';
 import { User } from '@/types/user';
 
 export default function PostCard({ post }: { post: Post }) {
