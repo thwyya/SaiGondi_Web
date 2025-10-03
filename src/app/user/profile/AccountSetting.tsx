@@ -3,7 +3,7 @@
 import { authApi } from '@/lib/auth/authApi';
 import { profileApi } from '@/lib/profile/profileApi';
 import { useEffect, useState } from 'react';
-import { FiX } from "react-icons/fi";
+import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { PiCamera } from 'react-icons/pi';
@@ -44,6 +44,12 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
     confirmPassword: ''
   });
 
+  const [showPassword, setShowPassword] = useState({
+  currentPassword: false,
+  newPassword: false,
+  confirmPassword: false
+  });
+  
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"view" | "edit" | "password">("view");
 
@@ -436,33 +442,80 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
 
         {view === "password" && (
           <div className="space-y-3">
-            <Input
-              type="password"
-              name="currentPassword"
-              value={passwords.currentPassword}
-              onChange={handlePasswordChange}
-              label="Mật khẩu hiện tại"
-              status={errors.currentPassword ? "error" : "default"}
-              supportText={errors.currentPassword}
-            />
-            <Input
-              type="password"
-              name="newPassword"
-              value={passwords.newPassword}
-              onChange={handlePasswordChange}
-              label="Mật khẩu mới"
-              status={errors.newPassword ? "error" : "default"}
-              supportText={errors.newPassword}
-            />
-            <Input
-              type="password"
-              name="confirmPassword"
-              value={passwords.confirmPassword}
-              onChange={handlePasswordChange}
-              label="Xác nhận mật khẩu mới"
-              status={errors.confirmPassword ? "error" : "default"}
-              supportText={errors.confirmPassword}
-            />
+            {/** Mật khẩu hiện tại */}
+            <div className="relative">
+              <Input
+                type={showPassword.currentPassword ? "text" : "password"}
+                name="currentPassword"
+                value={passwords.currentPassword}
+                onChange={handlePasswordChange}
+                label="Mật khẩu hiện tại"
+                status={errors.currentPassword ? "error" : "default"}
+                supportText={errors.currentPassword}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() =>
+                  setShowPassword(prev => ({
+                    ...prev,
+                    currentPassword: !prev.currentPassword
+                  }))
+                }
+              >
+                {showPassword.currentPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+            {/** Mật khẩu mới */}
+            <div className="relative">
+              <Input
+                type={showPassword.newPassword ? "text" : "password"}
+                name="newPassword"
+                value={passwords.newPassword}
+                onChange={handlePasswordChange}
+                label="Mật khẩu mới"
+                status={errors.newPassword ? "error" : "default"}
+                supportText={errors.newPassword}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() =>
+                  setShowPassword(prev => ({
+                    ...prev,
+                    newPassword: !prev.newPassword
+                  }))
+                }
+              >
+                {showPassword.newPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+
+            {/** Xác nhận mật khẩu mới */}
+            <div className="relative">
+              <Input
+                type={showPassword.confirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={passwords.confirmPassword}
+                onChange={handlePasswordChange}
+                label="Xác nhận mật khẩu mới"
+                status={errors.confirmPassword ? "error" : "default"}
+                supportText={errors.confirmPassword}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() =>
+                  setShowPassword(prev => ({
+                    ...prev,
+                    confirmPassword: !prev.confirmPassword
+                  }))
+                }
+              >
+                {showPassword.confirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
             
             <div className="flex justify-center mt-4 gap-4">
               <Button variant="outline-primary" onClick={() => setView("view")} className="flex items-center gap-2 rounded-xl">
