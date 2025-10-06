@@ -170,7 +170,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
       formData.append("address", values.address)
       formData.append("district", "TP.Hồ Chí Minh")
 
-      if (values.items){
+      if (values.items) {
         formData.append("services", JSON.stringify(values.items))
       }
 
@@ -264,7 +264,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         if (!res.ok) throw new Error("Failed to fetch services")
         const data = await res.json()
         console.log("services api responsse:", data)
-        
+
         const formatted = data.data.map((service: ServiceOption) => ({
           id: service.id,
           name: service.name
@@ -274,35 +274,35 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         console.error(err)
       }
     }
-    const fetchCategories = async (params: Record<string, string|number|boolean>) => {
-  try {
-    const url = new URL('http://localhost:5000/api/admin/categories')
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null) url.searchParams.append(k, String(v))
-    })
+    const fetchCategories = async (params: Record<string, string | number | boolean>) => {
+      try {
+        const url = new URL('http://localhost:5000/api/admin/categories')
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) url.searchParams.append(k, String(v))
+        })
 
-    const res = await fetch(url.toString(), { method: 'GET' })
-    if (!res.ok) throw new Error('Failed to fetch categories')
-    const data = await res.json()
-    console.log('categories api response:', data)
-    const formatted: CategoryOption[] = data.data.map((category: Category) => ({
-      id: category._id,
-      name: category.name
-    }))
-    setCategoryOptions(formatted)
-  } catch (err) {
-    console.error(err)
-  }
-}
+        const res = await fetch(url.toString(), { method: 'GET' })
+        if (!res.ok) throw new Error('Failed to fetch categories')
+        const data = await res.json()
+        console.log('categories api response:', data)
+        const formatted: CategoryOption[] = data.data.map((category: Category) => ({
+          id: category._id,
+          name: category.name
+        }))
+        setCategoryOptions(formatted)
+      } catch (err) {
+        console.error(err)
+      }
+    }
     fetchServices()
-    fetchCategories({type: 'place'})
+    fetchCategories({ type: 'place' })
     fetchWards()
   }, [])
   return (
-    
+
     <Dialog open={open} onOpenChange={setOpen} >
       <DialogContent className="max-w-2xl max-h-[100vh] flex flex-col p-0 bg-gradient-to-br from-blue-100 via-blue-50 to-white shadow-2xl border border-blue-300 rounded-2xl">
-      <div className="absolute top-[30%] -left-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#FFB226] blur-[15vw] opacity-70 z-[-1]"></div>
+        <div className="absolute top-[30%] -left-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#FFB226] blur-[15vw] opacity-70 z-[-1]"></div>
         <div className="absolute -top-[20%] -right-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[white] blur-[15vw] opacity-70 z-[-1]"></div>
         <div className="absolute -bottom-[20%] -left-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#307AFD] blur-[15vw] opacity-70 z-[-1]"></div>
         <div className="absolute bottom-[20%] -right-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#307AFD] blur-[15vw] opacity-70 z-[-1]"></div>
@@ -339,7 +339,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                   <FormItem className="mt-8">
                     <FormLabel className="text-base font-semibold text-black">Mô tả địa điểm</FormLabel>
                     <FormControl>
-                      <Input  placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="col-end-3 block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
+                      <Input placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="col-end-3 block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
                     </FormControl>
                     <FormDescription>
                     </FormDescription>

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import useUser from "@/hooks/useUser";
-import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+import { addToFavorites, addViewCount, removeFromFavorites } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
 
 interface Props {
@@ -23,6 +23,9 @@ const DestinationCard = ({ destination }: Props) => {
     if (!id) {
       console.error("Destination không có id:", destination);
       return;
+    }    
+    if (destination._id) {
+      addViewCount(destination._id);
     }
     router.push(`/user/destination/${id}`);
   };
@@ -58,15 +61,17 @@ const DestinationCard = ({ destination }: Props) => {
   const location = destination.address || "Chưa rõ";
 
   return (
-    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
-      <Image
+    <div className="grid grid-cols-[30%_70%] h-58 rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
+      <div className="h-full overflow-hidden">
+        <Image
         alt={destination.name}
         src={imageUrl}
         width={400}
         height={300}
         unoptimized
-        className="w-full h-48 object-cover"
+        className="w-full h-full object-cover"
       />
+      </div>
 
       <div className="flex flex-col p-4">
         <div className="flex justify-between">
