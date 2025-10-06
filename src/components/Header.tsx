@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import useUser from '@/hooks/useUser'; // Import the hook
+import AccountSetting from '@/app/user/profile/AccountSetting';
 
 export default function Header() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const [showAccountModal, setShowAccountModal] = useState(false);
 
   // Derive state from the hook
   const isLoggedIn = !loading && !!user;
@@ -110,7 +112,7 @@ export default function Header() {
                   alt="Avatar"
                   width={30}
                   height={30}
-                  className="rounded-xl object-contain"
+                  className="rounded-xl object-cover"
                 />
                 <span className="text-[var(--foreground)] font-inter">{firstName}</span>
                 <FaChevronDown className="text-gray-500" size={14} />
@@ -126,6 +128,16 @@ export default function Header() {
                     >
                       Trang cá nhân
                     </Link>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAccountModal(true);
+                        setAvatarOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-m text-[var(--primary)] hover:bg-gray-50 rounded-xl"
+                    >
+                      Cài đặt tài khoản
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -208,6 +220,10 @@ export default function Header() {
           </div>
         </div>
       </div>
+      <AccountSetting
+        open={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+      />
     </header>
   );
 }
