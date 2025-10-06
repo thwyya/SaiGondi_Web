@@ -76,9 +76,15 @@ export default function ProfileContainer({ isOwnProfile = false }: { isOwnProfil
 
   const handleFilter = (value: string) => {
     if (value === 'mine') {
-      setFilteredBlogs(user.blogs || []);
+      const nonSharedBlogs = (user.blogs || []).filter((b: any) =>
+        !b.title?.startsWith("Chia sẻ:")
+      );
+      setFilteredBlogs(nonSharedBlogs);
     } else if (value === 'shared') {
-      setFilteredBlogs(user.sharedBlogs || []);
+      const sharedBlogs = (user.blogs || []).filter((b: any) =>
+        b.title?.startsWith("Chia sẻ:")
+      );
+      setFilteredBlogs(sharedBlogs);
     }
   };
 
