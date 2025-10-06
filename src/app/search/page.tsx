@@ -47,40 +47,65 @@ const SearchPage = () => {
   useEffect(() => {
     const fetchResults = async () => {
       setLoading(true);
+      setDestinations([]);
+      setBlogs([]);
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
       try {
-        const params = new URLSearchParams({
+        let destPromise: Promise<any> | null = null;
+        let blogPromise: Promise<any> | null = null;
+
+        // Common params
+        const baseParams = {
           query,
           page: String(currentPage),
           limit: String(itemsPerPage),
-        });
+        };
 
-        if (filters.category) params.append("p_category", filters.category);
-        if (filters.district) params.append("p_district", filters.district);
-        if (filters.ward) params.append("p_ward", filters.ward);
-        if (filters.rating > 0) params.append("p_rating", String(filters.rating));
-        
-        if (searchType !== 'all') {
-          params.append("type", searchType === 'destinations' ? 'place' : 'blog');
+        if (searchType === 'all' || searchType === 'destinations') {
+          const destParams = new URLSearchParams(baseParams);
+          if (filters.category) destParams.append("category", filters.category);
+          if (filters.district) destParams.append("district", filters.district);
+          if (filters.ward) destParams.append("ward", filters.ward);
+          if (filters.rating > 0) destParams.append("rating", String(filters.rating));
+          
+          destPromise = fetch(`${API_URL}/places/search?${destParams.toString()}`).then(res => res.json());
         }
 
-        const res = await fetch(`/api/search?${params.toString()}`);
-        const data = await res.json();
+        if (searchType === 'all' || searchType === 'blogs') {
+          const blogParams = new URLSearchParams(baseParams);
+          // Assuming no specific blog filters from the panel for now
+          blogPromise = fetch(`${API_URL}/blogs?${blogParams.toString()}`).then(res => res.json());
+        }
 
-        setDestinations(data.destinations || []);
-        setBlogs(data.blogs || []);
+        const [destResult, blogResult] = await Promise.all([destPromise, blogPromise]);
 
-        const destPagination = data.pagination?.destinations;
-        const blogPagination = data.pagination?.blogs;
+        let totalDest = 0;
+        let totalDestPages = 1;
+        if (destResult && destResult.data) {
+          setDestinations(destResult.data.places || []);
+          totalDest = destResult.data.pagination?.total || 0;
+          totalDestPages = destResult.data.pagination?.totalPages || 1;
+        }
+        setTotalDestinations(totalDest);
 
-        setTotalDestinations(destPagination?.total || 0);
-        setTotalBlogs(blogPagination?.total || 0);
+        let totalBl = 0;
+        let totalBlogPages = 1;
+        if (blogResult && blogResult.data) {
+          // The blog API response has an extra 'data' nesting
+          setBlogs(blogResult.data.data || []);
+          totalBl = blogResult.data.pagination?.total || 0;
+          totalBlogPages = blogResult.data.pagination?.totalPages || 1;
+        }
+        setTotalBlogs(totalBl);
 
         if (searchType === "destinations") {
-          setTotalPages(destPagination?.totalPages || 1);
+          setTotalPages(totalDestPages);
         } else if (searchType === "blogs") {
-          setTotalPages(blogPagination?.totalPages || 1);
+          setTotalPages(totalBlogPages);
         } else { // 'all'
-          setTotalPages(Math.max(destPagination?.totalPages || 1, blogPagination?.totalPages || 1));
+          setTotalPages(Math.max(totalDestPages, totalBlogPages));
         }
 
       } catch (error) {

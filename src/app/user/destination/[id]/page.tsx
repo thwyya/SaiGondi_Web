@@ -23,12 +23,16 @@ import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
 import { HiLocationMarker } from 'react-icons/hi';
 import { ServiceOption } from "../addPlaceForm";
+import { useDispatch, useSelector } from "react-redux";
+import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+import { updateUser } from "@/store/slices/authSlice";
 
 const DestinationDetail = () => {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { user, isAuthenticated, loading: userLoading, updateUser } = useUser();
+  const { user, isAuthenticated, isLoading: userLoading } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
 
   const [destination, setDestination] = useState<Place | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -51,13 +55,7 @@ const DestinationDetail = () => {
   "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
 };
 
-  const [isFavorited, setIsFavorited] = useState(false);
-
-  useEffect(() => {
-    if (user && destination) {
-      setIsFavorited(user.favorites.includes(destination._id));
-    }
-  }, [user, destination]);
+  const isFavorited = user?.favorites?.includes(destination?._id);
 
   const handleFavoriteClick = async () => {
     if (!isAuthenticated) {
@@ -67,16 +65,15 @@ const DestinationDetail = () => {
     }
     if (!destination) return;
     try {
-      // Here you would call your API to toggle the favorite status
-      // For now, we just update the UI
-      setIsFavorited(!isFavorited);
-      updateUser(prevUser => {
-        if (!prevUser) return null;
-        const newFavorites = isFavorited
-          ? prevUser.favorites.filter(favId => favId !== destination._id)
-          : [...prevUser.favorites, destination._id];
-        return { ...prevUser, favorites: newFavorites };
-      });
+      let updatedFavorites;
+      if (isFavorited) {
+        await removeFromFavorites(destination._id);
+        updatedFavorites = user.favorites.filter((favId: any) => favId !== destination._id);
+      } else {
+        await addToFavorites(destination._id);
+        updatedFavorites = [...user.favorites, destination._id];
+      }
+      dispatch(updateUser({ favorites: updatedFavorites }));
     } catch (error) {
       console.error("Failed to update favorite status:", error);
       alert("Đã có lỗi xảy ra. Vui lòng thử lại.");

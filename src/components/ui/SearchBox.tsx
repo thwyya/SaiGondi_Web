@@ -1,21 +1,23 @@
 // SearchBox.tsx
 "use client";
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiSliders } from "react-icons/fi";
 import Button from "./Button";
 
 const SearchBox = () => {
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
-  const handleSearch = () => {
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
     if (searchQuery.trim() === "") return;
-    window.location.href = `/search?query=${encodeURIComponent(searchQuery)}`;
+    router.push(`/search?query=${encodeURIComponent(searchQuery)}`);
   };
 
   return (
-    <div className="relative bg-transparent flex justify-center py-12 sm:py-16 px-4">
+    <form onSubmit={handleSearch} className="relative bg-transparent flex justify-center py-12 sm:py-16 px-4">
       <div className="bg-[var(--background)] rounded-2xl shadow-md flex items-center w-full max-w-7xl gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
         <div className="relative flex-1">
           <span className="absolute -top-2.5 sm:-top-3 left-2.5 sm:left-3 bg-[var(--background)] px-1 text-[var(--primary)] text-xs sm:text-sm font-medium">
@@ -27,6 +29,8 @@ const SearchBox = () => {
 
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm địa điểm, quán ăn, khu vui chơi xung quanh bạn…"
             className="w-full border border-[var(--primary)] rounded-md
                        pl-8 sm:pl-10 pr-8 sm:pr-10 py-2.5 sm:py-3
@@ -38,16 +42,16 @@ const SearchBox = () => {
         </div>
 
         <Button
+          type="submit"
           variant="primary"
           className="flex items-center justify-center gap-2
                      px-4 sm:px-6 py-2.5 sm:py-3
                      text-xs sm:text-sm font-semibold rounded-full"
-          onClick={handleSearch}
         >
           TÌM KIẾM
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

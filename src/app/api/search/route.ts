@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { searchDestinations } from '@/lib/place/destinationApi';
 import { blogApi } from '@/lib/blog/blogApi';
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     const fetchDestinations = async () => {
       if (!type || type === 'place') {
-        const placeParams: any = { name: query, page: pageNum, limit: limitNum };
+        const placeParams: any = { query: query, page: pageNum, limit: limitNum };
         if (p_category) placeParams.category = p_category;
         if (p_district) placeParams.district = p_district;
         if (p_ward) placeParams.ward = p_ward;
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     const fetchBlogs = async () => {
       if (!type || type === 'blog') {
-        const blogParams: any = { name: query, page: pageNum, limit: limitNum };
+        const blogParams: any = { query: query, page: pageNum, limit: limitNum };
         if (b_category) blogParams.category = b_category;
         const res = await blogApi.getBlogs(blogParams);
         blogResults = res.data?.data?.map((item: any) => ({ ...item, type: 'blog' })) || [];
@@ -54,24 +55,12 @@ export async function GET(req: NextRequest) {
 
     await Promise.all([fetchDestinations(), fetchBlogs()]);
 
-    const combinedResults = [...destinationResults, ...blogResults].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-    // Simple combined pagination (can be improved based on actual needs)
-    const totalDestinations = destinationPagination.totalItems || 0;
-    const totalBlogs = blogPagination.totalItems || 0;
-    const totalItems = type ? (type === 'place' ? totalDestinations : totalBlogs) : totalDestinations + totalBlogs;
-    const totalPages = Math.ceil(totalItems / limitNum);
-
     return NextResponse.json({
-      data: combinedResults,
+      destinations: destinationResults,
+      blogs: blogResults,
       pagination: {
-        currentPage: pageNum,
-        limit: limitNum,
-        totalItems,
-        totalPages,
-        // You can also include separate pagination info if needed
-        // destinationPagination, 
-        // blogPagination,
+        destinations: destinationPagination,
+        blogs: blogPagination,
       },
     });
   } catch (error) {

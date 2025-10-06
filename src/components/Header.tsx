@@ -7,12 +7,14 @@ import { FaChevronDown } from 'react-icons/fa6';
 import Button from '@/components/ui/Button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import useUser from '@/hooks/useUser'; // Import the hook
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '@/store/slices/authSlice';
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, refetch } = useUser(); // Use the hook
+  const dispatch = useDispatch();
+  const { user, isAuthenticated, isLoading } = useSelector((state: any) => state.auth);
 
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,7 +22,7 @@ export default function Header() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Derive state from the hook
-  const isLoggedIn = !loading && !!user;
+  const isLoggedIn = !isLoading && isAuthenticated;
   const firstName = useMemo(() => {
     if (!user?.fullName) return '';
     return user.fullName.trim().split(' ')[0] || '';
@@ -28,10 +30,7 @@ export default function Header() {
   const avatarUrl = user?.avatar || '/Image.svg';
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    refetch(); // Refetch user state, which will be null
+    dispatch(logout());
     router.push('/auth/login');
   };
 
@@ -80,7 +79,7 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3 ml-auto">
-          {!isLoggedIn && !loading && (
+          {!isLoggedIn && !isLoading && (
             <div className="hidden md:block">
               <Link href="/auth/login">
                 <Button variant="outline-primary">Đăng nhập / Đăng ký</Button>
@@ -180,18 +179,17 @@ export default function Header() {
 
                   <div className="border-t border-gray-200 my-2" />
 
-                  {!isLoggedIn && !loading ? (
-                    <Link
-                      href="/auth/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="px-4 py-3"
-                    >
-                      <Button variant="outline-primary" className="w-full">
-                        Đăng nhập / Đăng ký
-                      </Button>
-                    </Link>
-                  ) : isLoggedIn && (
-                    <button
+                            {!isLoggedIn && !isLoading ? (
+                              <Link
+                                href="/auth/login"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="px-4 py-3"
+                              >
+                                <Button variant="outline-primary" className="w-full">
+                                  Đăng nhập / Đăng ký
+                                </Button>
+                              </Link>
+                            ) : isLoggedIn && (                    <button
                       onClick={() => {
                         setMobileMenuOpen(false);
                         handleLogout();

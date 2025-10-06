@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
 export const createDestination = async (destinationData: FormData) =>{
-  const res = await axiosInstance.post(`${API_URL}/admin/places`, destinationData);
+  const res = await axiosInstance.post(`${API_URL}/places`, destinationData);
   return res.data;
 }
 

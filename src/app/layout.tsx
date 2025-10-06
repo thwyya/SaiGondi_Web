@@ -1,4 +1,4 @@
-// import DisableInspect from '@/components/DisableInspect';
+import StoreProvider from '@/components/StoreProvider';
 import DisableCopyPaste from '@/components/DisableCopyPaste';
 import '@/styles/globals.css';
 import { Inter } from 'next/font/google';
@@ -20,10 +20,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
     <html lang="vi" className={inter.variable}>
       <body className="font-sans bg-[var(--background)] text-[var(--foreground)]">
-        <Toaster position="top-right" richColors />
-        {children}
-        {/* <DisableInspect /> */}
-        <DisableCopyPaste/>
+        <StoreProvider>
+          <Toaster position="top-right" richColors />
+          {children}
+          {/* <DisableInspect /> */}
+          <DisableCopyPaste/>
+        </StoreProvider>
       </body>
     </html>
   );

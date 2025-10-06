@@ -2,6 +2,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { login } from "@/store/slices/authSlice";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { FaFacebookF, FaApple } from "react-icons/fa";
@@ -11,6 +14,8 @@ import { authApi } from "@/lib/auth/authApi";
 import { AxiosError } from "axios";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,9 +41,7 @@ export default function LoginPage() {
       const res = await authApi.login(email, password);
       console.log("Đăng nhập thành công:", res);
 
-      localStorage.setItem("accessToken", res.accessToken);
-      localStorage.setItem("refreshToken", res.refreshToken);
-      localStorage.setItem("userId", res.user.userId || res.user._id);
+      dispatch(login({ user: res.user, token: res.accessToken }));
 
       if (rememberMe) {
         localStorage.setItem("remember_email", email);
@@ -48,7 +51,7 @@ export default function LoginPage() {
         localStorage.removeItem("remember_password");
       }
 
-      window.location.href = "/";
+      router.push("/");
     } catch (error: unknown) {
       const err = error as AxiosError<{ message?: string }>;
       setApiError(err.response?.data?.message || "Đăng nhập thất bại");

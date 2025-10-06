@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import useUser from "@/hooks/useUser";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "@/store/slices/authSlice";
 
 interface Props {
   destination: Place;
@@ -13,9 +15,10 @@ interface Props {
 
 const DestinationCard = ({ destination }: Props) => {
   const router = useRouter();
-  const { user, isAuthenticated, loading: userLoading, refetch: refetchUser } = useUser();
+  const { user, isAuthenticated, isLoading: userLoading } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
   
-  const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
+  const isFavorited = !userLoading && user?.favorites?.some((fav: any) => fav === destination._id);
 
   const id = destination._id || (destination as any).placeId;
 
@@ -38,12 +41,15 @@ const DestinationCard = ({ destination }: Props) => {
     if (!destination._id) return;
 
     try {
+      let updatedFavorites;
       if (isFavorited) {
         await removeFromFavorites(destination._id);
+        updatedFavorites = user.favorites.filter((fav: any) => fav !== destination._id);
       } else {
         await addToFavorites(destination._id);
+        updatedFavorites = [...user.favorites, destination._id];
       }
-      await refetchUser(); 
+      dispatch(updateUser({ favorites: updatedFavorites }));
     } catch (error) {
       console.error("Failed to update favorite status", error);
     }

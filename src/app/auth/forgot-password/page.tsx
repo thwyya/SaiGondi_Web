@@ -3,10 +3,13 @@
 import React, { useState } from "react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { FiEye, FiEyeOff, FiChevronLeft  } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiChevronLeft } from "react-icons/fi";
+import { sendPasswordResetOTP, resetPassword } from "@/services/userService";
+import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -16,26 +19,55 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleNextStep = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleNextStep = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     if (step === 1) {
-      // TODO: gọi API gửi OTP về email
-      console.log("Send OTP to:", email);
-      setStep(2);
+      try {
+        await sendPasswordResetOTP(email);
+        setStep(2);
+      } catch (err) {
+        setError("Failed to send OTP. Please check your email and try again.");
+      }
     } else if (step === 2) {
-      // TODO: gọi API verify OTP
-      console.log("Verify code:", code);
+      // The backend doesn't have a separate OTP verification step.
+      // It verifies the OTP during password reset.
       setStep(3);
     } else if (step === 3) {
-      // TODO: gọi API đổi mật khẩu
-      console.log("Reset password:", { password, confirmPassword });
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+      try {
+        await resetPassword(email, code, password);
+        router.push("/auth/login");
+      } catch (err) {
+        setError("Failed to reset password. Please check your OTP and try again.");
+      }
     }
+    setLoading(false);
+  };
+
+  const handleResendCode = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetOTP(email);
+    } catch (err) {
+      setError("Failed to resend OTP. Please try again.");
+    }
+    setLoading(false);
   };
 
     // gộp 3 bước đổi mật khẩu vào 1 trang (multi-step)
   return (
-    <> 
+    <>
       <a
         href="/auth/login"
         className="text-sm text-gray-500 hover:underline inline-flex items-center mb-4"
@@ -56,7 +88,7 @@ export default function ForgotPasswordPage() {
           </p>
         </>
       )}
-          
+
     {/* nhập mã OTP để xác thực */}
       {step === 2 && (
         <>
@@ -78,6 +110,8 @@ export default function ForgotPasswordPage() {
           </p>
         </>
       )}
+
+      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
       <form onSubmit={handleNextStep} className="space-y-5 pt-5">
         {step === 1 && (
@@ -102,9 +136,10 @@ export default function ForgotPasswordPage() {
             <button
               type="button"
               className="text-sm text-[var(--primary)] hover:underline -mt-2"
-              onClick={() => console.log("Gửi lại mã")}
+              onClick={handleResendCode}
+              disabled={loading}
             >
-              Gửi lại mã!
+              {loading ? "Sending..." : "Gửi lại mã!"}
             </button>
           </>
         )}
@@ -148,10 +183,8 @@ export default function ForgotPasswordPage() {
           </>
         )}
 
-        <Button type="submit" variant="primary" className="w-full mt-2">
-          {step === 1 && "LẤY LẠI MẬT KHẨU"}
-          {step === 2 && "XÁC THỰC"}
-          {step === 3 && "ĐỔI MẬT KHẨU"}
+        <Button type="submit" variant="primary" className="w-full mt-2" disabled={loading}>
+          {loading ? "Loading..." : (step === 1 ? "LẤY LẠI MẬT KHẨU" : (step === 2 ? "XÁC THỰC" : "ĐỔI MẬT KHẨU"))}
         </Button>
       </form>
     </>
