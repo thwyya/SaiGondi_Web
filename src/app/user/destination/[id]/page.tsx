@@ -40,16 +40,17 @@ const DestinationDetail = () => {
   const [ward, setWard] = useState<Ward | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
-  const [servicesData, setServicesData] = useState<{id: string, name: string}[]>([]);
+  const [servicesData, setServicesData] = useState<{ id: string, name: string }[]>([]);
+  const [currentMainImage, setCurrentMainImage] = useState<string>("");
   type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
 
   const serviceIcons: Record<ServiceKey, ReactNode> = {
-  "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
-  "Miễn phí ăn sáng": <Coffee className="w-4 h-4 text-gray-600" />,
-  "Miễn phí Internet": <Wifi className="w-4 h-4 text-gray-600" />,
-  "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600"/>,
-  "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
-};
+    "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
+    "Miễn phí ăn sáng": <Coffee className="w-4 h-4 text-gray-600" />,
+    "Miễn phí Internet": <Wifi className="w-4 h-4 text-gray-600" />,
+    "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600" />,
+    "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
+  };
 
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -67,8 +68,6 @@ const DestinationDetail = () => {
     }
     if (!destination) return;
     try {
-      // Here you would call your API to toggle the favorite status
-      // For now, we just update the UI
       setIsFavorited(!isFavorited);
       updateUser(prevUser => {
         if (!prevUser) return null;
@@ -98,6 +97,11 @@ const DestinationDetail = () => {
           if (place) {
             setDestination(place);
             setReviews(place.reviews || []);
+            // Set initial main image
+            const initialImage = Array.isArray(place.images) && place.images.length > 0
+              ? place.images[0]
+              : "/image.svg";
+            setCurrentMainImage(initialImage);
 
             // Fetch blogs by place ID
             const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
@@ -140,7 +144,7 @@ const DestinationDetail = () => {
               }
               return acc;
             }, [] as Blog[]);
-            
+
             const mappedBlogs = uniqueBlogs.map(mapBlogToPost);
 
             setRelatedBlogs(mappedBlogs);
@@ -202,8 +206,8 @@ const DestinationDetail = () => {
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
         console.log("services api response:", data);
-        
-        const formatted = data.data.map((service: {id: string, name: string}) => ({
+
+        const formatted = data.data.map((service: { id: string, name: string }) => ({
           id: service.id,
           name: service.name
         }));
@@ -231,10 +235,16 @@ const DestinationDetail = () => {
     return service ? service.name : serviceId; // fallback to ID if not found
   };
 
-  const mainImage =
-    Array.isArray(destination.images) && destination.images.length > 0
+  // Handle image click to change main image
+  const handleImageClick = (imageUrl: string) => {
+    setCurrentMainImage(imageUrl);
+  };
+
+  // Use currentMainImage if set, otherwise fallback to first image
+  const displayImage = currentMainImage ||
+    (Array.isArray(destination.images) && destination.images.length > 0
       ? destination.images[0]
-      : "/image.svg";
+      : "/image.svg");
 
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
@@ -345,89 +355,132 @@ const DestinationDetail = () => {
                 </div>
               )}
             </div>
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
-              Ăn uống
-            </button>
+
           </div>
         </div>
 
-        {/* Gallery */}
-        <div className="grid grid-cols-4 gap-2 mt-6">
-          <div className="col-span-2 row-span-2">
-            <Image
-              src={mainImage}
-              alt={destination.name}
-              width={800}
-              height={600}
-              className="w-full h-full object-cover rounded-lg"
-            />
+        {/* Main Content Layout */}
+        <div className="mt-6">
+          {/* Top Section: Main Image + Introduction */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Left: Main Image */}
+            <div>
+              <Image
+                src={displayImage}
+                alt={destination.name}
+                width={600}
+                height={400}
+                className="w-[600px] h-[420px] object-cover rounded-lg"
+              />
+            </div>
+
+            {/* Right: Introduction */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4 text-blue-400">GIỚI THIỆU</h2>
+              <p className="text-gray-700 leading-relaxed mb-6 text-[16px]">
+                {destination.description}
+              </p>
+
+              <p className="mb-4">
+                <i className="ri-map-pin-line mr-2"></i>
+                {destination.address}
+                {destination.address && destination.ward && `, ${destination.ward.name}`}
+              </p>
+
+
+              <p className="mb-4">
+                <span className="font-semibold">Dịch vụ nổi bật:</span>
+                {destination.services.length > 0 ? (
+                  ""
+                ) : (
+                  <span className="text-gray-600"> Chưa cập nhật dịch vụ</span>
+                )}
+              </p>
+
+
+              {/* Services */}
+              <div className="flex gap-3 flex-wrap">
+                {destination.services.map((serviceId, index) => {
+                  const serviceName = getServiceName(serviceId);
+                  return (
+                    <span
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-lg text-sm"
+                    >
+                      {/* icon fallback nếu không khớp key */}
+                      {serviceIcons[serviceName as ServiceKey] ?? (
+                        <CircleHelp className="w-4 h-4 text-gray-400" />
+                      )}
+                      {serviceName}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {Array.isArray(destination.images) &&
-            destination.images.slice(1, 5).map((img, idx) => (
-              <Image
-                key={idx}
-                src={img || "/image.svg"}
-                alt={`Ảnh ${idx + 2} của ${destination.name}`}
-                width={400}
-                height={300}
-                className="w-full h-40 object-cover rounded-lg"
-              />
-            ))}
-
-          {Array.isArray(destination.images) &&
-            destination.images.length > 5 && (
-              <div className="relative">
+          {/* Bottom Section: Additional Images */}
+          <div className="grid grid-cols-8 md:grid-cols-8 gap-4 w-full">
+            {/* First image (main image) - clickable */}
+            {Array.isArray(destination.images) && destination.images.length > 0 && (
+              <div
+                onClick={() => handleImageClick(destination.images![0])}
+                className={`cursor-pointer transition-all w-40  duration-200 hover:opacity-80 ${currentMainImage === destination.images![0] ? 'ring-2 ring-blue-400' : ''
+                  }`}
+              >
                 <Image
-                  src={destination.images[5]}
-                  alt="Xem thêm"
-                  width={400}
-                  height={300}
-                  className="w-full h-40 object-cover rounded-lg"
+                  src={destination.images[0] || "/image.svg"}
+                  alt={`Ảnh 1 của ${destination.name}`}
+                  width={300}
+                  height={200}
+                  className="w-full h-32 object-cover rounded-lg p-1.5"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white font-semibold rounded-lg cursor-pointer">
-                  Xem thêm
-                </div>
               </div>
             )}
+
+            {/* Secondary images - clickable */}
+            {Array.isArray(destination.images) &&
+              destination.images.slice(1, 10).map((img, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleImageClick(img)}
+                  className={`cursor-pointer transition-all w-40 duration-200 hover:opacity-80 ${currentMainImage === img ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                >
+                  <Image
+                    src={img || "/image.svg"}
+                    alt={`Ảnh ${idx + 2} của ${destination.name}`}
+                    width={300}
+                    height={200}
+                    className="w-full h-32 object-cover rounded-lg p-1.5"
+                  />
+                </div>
+              ))}
+
+            {/* {Array.isArray(destination.images) &&
+              destination.images.length > 5 && (
+                <div className="relative">
+                  <div
+                    onClick={() => handleImageClick(destination.images![5])}
+                    className={`cursor-pointer transition-all duration-200 hover:opacity-80 ${currentMainImage === destination.images![5] ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                  >
+                    <Image
+                      src={destination.images[5]}
+                      alt="Xem thêm"
+                      width={300}
+                      height={200}
+                      className="w-full h-32 object-cover rounded-lg p-1.5 opacity-70"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center text-white font-semibold rounded-lg">
+                      Xem thêm
+                    </div>
+                  </div>
+                </div>
+              )} */}
+          </div>
         </div>
 
-        {/* Giới thiệu */}
-        <section className="mt-8">
-          <h2 className="text-lg font-bold mb-3">GIỚI THIỆU</h2>
-          <p className="text-gray-700 leading-relaxed">
-            {destination.description}
-          </p>
-
-          {/* Rating tags */}
-          <div className="mt-6 flex items-center gap-4">
-            <div className="bg-blue-600 text-white text-center px-4 py-3 rounded-lg">
-              <p className="text-2xl font-bold">
-                {(destination.avgRating || 0).toFixed(1)}
-              </p>
-              <p className="text-sm">{destination.totalRatings} nhận xét</p>
-            </div>
-            <div className="flex gap-3 flex-wrap">
-              {destination.services.map((serviceId, index) => {
-                const serviceName = getServiceName(serviceId);
-                return (
-                  <span
-                    key={index}
-                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-sm"
-                  >
-                    {/* icon fallback nếu không khớp key */}
-                    {serviceIcons[serviceName as ServiceKey] ?? (
-                      <CircleHelp className="w-4 h-4 text-gray-400" />
-                    )}
-                    {serviceName}
-                  </span>
-                );
-              })}
-            </div>
-          </div >
-
-
-        </section>
 
         {/* Vị trí */}
 

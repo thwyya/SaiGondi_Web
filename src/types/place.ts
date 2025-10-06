@@ -36,8 +36,7 @@ export interface Place {
   comments?: any[];
   lat: number;
   lng: number;
-
-
+  viewCount?: number;
   distance?: string | number; 
   serviceCount?: number;
 }

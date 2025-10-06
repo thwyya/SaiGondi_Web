@@ -111,21 +111,33 @@ export default function HCMMap() {
 
       // Hover
       path.onmouseenter = () => {
-        setHoveredName(title);
-        path.style.fill = getRandomPastelColor();
+        if (!isDragging) {
+          setHoveredName(title);
+          path.style.fill = getRandomPastelColor();
+        }
       };
 
       path.onmouseleave = () => {
-        setHoveredName(null);
-        setMousePos(null);
-        path.style.fill = getColorByStatus(regionStatus[normTitle]);
+        if (!isDragging) {
+          setHoveredName(null);
+          setMousePos(null);
+          path.style.fill = getColorByStatus(regionStatus[normTitle]);
+        }
       };
 
-      path.onmousemove = (e) =>
-        setMousePos({ x: e.clientX + 15, y: e.clientY + 15 });
+      path.onmousemove = (e) => {
+        if (!isDragging) {
+          setMousePos({ x: e.clientX + 10, y: e.clientY + 10 });
+        }
+      };
 
       // Click
       path.onclick = async (e) => {
+        // Prevent click if we were dragging
+        if (isDragging) {
+          return;
+        }
+        
         setSelectedPath(path);
         setSelectedName(title);
         setPopupPos(clampPopupPosition(e.clientX, e.clientY));
@@ -252,6 +264,64 @@ export default function HCMMap() {
     setTranslate({ x: 0, y: 0 });
   };
 
+  // Add drag functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setLastPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !lastPos) return;
+    
+    const deltaX = e.clientX - lastPos.x;
+    const deltaY = e.clientY - lastPos.y;
+    
+    setTranslate(prev => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }));
+    
+    setLastPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setLastPos(null);
+  };
+
+  // Add global mouse events for dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !lastPos) return;
+      
+      const deltaX = e.clientX - lastPos.x;
+      const deltaY = e.clientY - lastPos.y;
+      
+      setTranslate(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setLastPos(null);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, lastPos]);
+
   return (
     <div className="w-full max-w-5xl mx-auto px-0 sm:px-4 mt-5 relative select-none">
       <div className="absolute -top-3 right-2 z-[9999] flex flex-col gap-2">
@@ -274,12 +344,19 @@ export default function HCMMap() {
           ⟳
         </button>
       </div>
-      <HCMMapSVG
-        mapRef={mapRef}
-        scale={scale}
-        translate={translate}
-        isDragging={isDragging}
-      />
+      <div 
+        className={`w-full h-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      >
+        <HCMMapSVG
+          mapRef={mapRef}
+          scale={scale}
+          translate={translate}
+          isDragging={isDragging}
+        />
+      </div>
       {hoveredName && mousePos && (
         <div
           className="fixed bg-white border border-gray-300 rounded-md px-2 py-1 text-sm shadow-md pointer-events-none z-50 max-w-[200px]"

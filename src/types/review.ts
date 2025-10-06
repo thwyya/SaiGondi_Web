@@ -5,6 +5,7 @@ export interface Review {
   userId: User; // Use the User interface
   rating: number;
   comment: string;
+  avatar?: string;
   createdAt: string;
   destinationId?: string; // placeId from backend
   status?: string;

@@ -51,6 +51,7 @@ export default function Header() {
   const navItems = [
     { label: 'Trang chủ', href: '/' },
     { label: 'Bài viết', href: '/user/blog' },
+    { label: 'Địa điểm', href: '/user/destination' },
     { label: 'Hành trình', href: '/user/map' },
   ];
 
