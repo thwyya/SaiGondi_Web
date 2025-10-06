@@ -25,7 +25,7 @@ const ReviewCard = ({ review }: ReviewCardProps) => {
     <>
       <div className="flex gap-4">
         <Image
-          src={review.userId.avatar || "/avatar.svg"}
+          src={review.userId?.avatar || "/avatar.svg"}
           alt=""
           className="rounded-full h-16 w-16"
           width={64}
@@ -36,7 +36,7 @@ const ReviewCard = ({ review }: ReviewCardProps) => {
             <div className="flex items-center border-r pr-4">
               <div className="flex">{renderStars()}</div>
             </div>
-            <h6>{review.userId.name}</h6>
+            <h6>{review.userId?.firstName || "Người dùng ẩn danh"}</h6>
           </div>
           <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
         </div>

@@ -6,7 +6,6 @@ import RecentPosts from '../RecentPosts';
 import PopularPostsSection from '../../home/PopularPostsSection';
 import CommentSection from '../CommentSection';
 import Image from 'next/image';
-import SocialShare from '../SocialShare';
 import { blogApi } from '@/lib/blog/blogApi';
 
 interface BlogDetailPageProps {
