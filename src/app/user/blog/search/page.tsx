@@ -1,4 +1,4 @@
-"use client";
+'''"use client";
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -40,7 +40,7 @@ const SearchPage = () => {
       setLoading(true);
       try {
         const searchParams: any = {
-          name: query,
+          query: query,
           page: currentPage,
           limit: itemsPerPage,
         };
@@ -214,4 +214,4 @@ const SearchPage = () => {
   );
 };
 
-export default SearchPage;
+export default SearchPage;'''

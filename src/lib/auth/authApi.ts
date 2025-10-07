@@ -1,6 +1,6 @@
 import axios from "axios";
 import axiosInstance from "../axiosInstance";
-import { reset } from "react-svg-pan-zoom";
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -58,9 +58,9 @@ export const authApi = {
   },
 
   // Đổi mật khẩu
-  changePassword: async (oldPassword: string, newPassword: string) => {
+  changePassword: async (currentPassword: string, newPassword: string) => {
     const res = await axiosInstance.put("/users/change-password", {
-      oldPassword,
+      currentPassword,
       newPassword
     });
     return res.data;
@@ -109,7 +109,7 @@ export const authApi = {
     return res.data;
   },
   getUserById: async (id: string) => {
-  const res = await axios.get(`${API_URL}/users/${id}`);
-  return res.data;
-},
+    const res = await axios.get(`${API_URL}/users/${id}`);
+    return res.data;
+  },
 };

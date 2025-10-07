@@ -5,13 +5,18 @@ import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { login } from '@/store/slices/authSlice';
-import useUser from '@/hooks/useUser';
+
 
 const GoogleLoginHandler = () => {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const router = useRouter();
-  const { refetch } = useUser();
+  const refetch = async () => { 
+    // Giả sử hàm này sẽ gọi API để lấy thông tin user mới nhất
+    console.log("Refetching user data...");
+    return Promise.resolve();
+  }
+
 
   useEffect(() => {
     console.log("GoogleSuccess.tsx: Component mounted. Checking for tokens in URL...");
@@ -42,7 +47,7 @@ const GoogleLoginHandler = () => {
       console.log("GoogleSuccess.tsx: accessToken NOT found in URL. Redirecting to login page.");
       router.push('/auth/login');
     }
-  }, [searchParams, dispatch, router, refetch]);
+  }, [searchParams, dispatch, router]);
 
   return <div>Đang xử lý đăng nhập với Google... Vui lòng kiểm tra console (F12).</div>;
 };

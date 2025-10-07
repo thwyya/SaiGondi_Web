@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import useUser from "@/hooks/useUser";
-import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+import { addToFavorites, addViewCount, removeFromFavorites } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "@/store/slices/authSlice";
 
 interface Props {
   destination: Place;
@@ -13,9 +15,10 @@ interface Props {
 
 const DestinationCard = ({ destination }: Props) => {
   const router = useRouter();
-  const { user, isAuthenticated, loading: userLoading, refetch: refetchUser } = useUser();
+  const { user, isAuthenticated, isLoading: userLoading } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
   
-  const isFavorited = !userLoading && user?.favorites?.some(fav => fav === destination._id);
+  const isFavorited = !userLoading && user?.favorites?.some((fav: any) => fav === destination._id);
 
   const id = destination._id || (destination as any).placeId;
 
@@ -23,6 +26,9 @@ const DestinationCard = ({ destination }: Props) => {
     if (!id) {
       console.error("Destination không có id:", destination);
       return;
+    }    
+    if (destination._id) {
+      addViewCount(destination._id);
     }
     router.push(`/user/destination/${id}`);
   };
@@ -38,12 +44,15 @@ const DestinationCard = ({ destination }: Props) => {
     if (!destination._id) return;
 
     try {
+      let updatedFavorites;
       if (isFavorited) {
         await removeFromFavorites(destination._id);
+        updatedFavorites = user.favorites.filter((fav: any) => fav !== destination._id);
       } else {
         await addToFavorites(destination._id);
+        updatedFavorites = [...user.favorites, destination._id];
       }
-      await refetchUser(); 
+      dispatch(updateUser({ favorites: updatedFavorites }));
     } catch (error) {
       console.error("Failed to update favorite status", error);
     }
@@ -58,23 +67,32 @@ const DestinationCard = ({ destination }: Props) => {
   const location = destination.address || "Chưa rõ";
 
   return (
-    <div className="grid grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden" onClick={handleClick}>
-      <Image
+    <div className="grid grid-cols-[30%_70%] h-58 rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
+      <div className="h-full overflow-hidden">
+        <Image
         alt={destination.name}
         src={imageUrl}
         width={400}
         height={300}
         unoptimized
-        className="w-full h-48 object-cover"
+        className="w-full h-full object-cover"
       />
+      </div>
 
       <div className="flex flex-col p-4">
         <div className="flex justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">{destination.name}</h2>
+             <div className="flex items-center gap-4 text-sm">
             <span className="text-[var(--primary)] flex items-center gap-1 text-sm">
               <i className="ri-map-pin-fill"></i> {location}
             </span>
+
+            <span className="text-[var(--primary)] flex items-center gap-1 text-sm ">
+              <i className="ri-map-2-line"></i> 
+              {destination.ward.name || 'Chưa rõ'}
+            </span>
+            </div>
 
             <div className="flex items-center gap-4 text-sm">
               <span className="flex items-center gap-1 text-yellow-500">

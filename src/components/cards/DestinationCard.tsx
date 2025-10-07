@@ -8,6 +8,8 @@ import Button from '@/components/ui/Button';
 import { useRouter } from "next/navigation";
 import useUser from "@/hooks/useUser";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
+import { useDispatch, useSelector } from 'react-redux';
+import { updateUser } from '@/store/slices/authSlice';
 
 
 type DestinationCardProps = {
@@ -30,7 +32,8 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
   totalRatings,
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated, refetch } = useUser();
+  const { user, isAuthenticated } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
@@ -56,16 +59,15 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
     setIsFavorited(!previousIsFavorited); // Optimistic UI update
 
     try {
+      let updatedFavorites;
       if (previousIsFavorited) {
         await removeFromFavorites(_id);
+        updatedFavorites = user.favorites.filter((fav: any) => fav !== _id);
       } else {
         await addToFavorites(_id);
+        updatedFavorites = [...user.favorites, _id];
       }
-      
-      // After API call, refetch user data to get the truth from the server
-      if (refetch) {
-        await refetch();
-      }
+      dispatch(updateUser({ favorites: updatedFavorites }));
     } catch (error) {
       setIsFavorited(previousIsFavorited); // Revert UI on error
       console.error("Failed to update favorite status", error);

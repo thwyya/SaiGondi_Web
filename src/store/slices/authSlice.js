@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// Thunk để lấy thông tin người dùng hiện tại từ token
+// Thunk to get the current user's information from the token
 export const fetchCurrentUser = createAsyncThunk(
   'auth/fetchCurrentUser',
   async (_, thunkAPI) => {
@@ -19,12 +19,12 @@ export const fetchCurrentUser = createAsyncThunk(
 );
 
 
-// Khởi tạo state
+// Initialize state
 const initialState = {
   user: null,
-  token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
-  isLoading: false,
+  token: null,
+  isAuthenticated: false,
+  isLoading: true, // Start with loading true
   error: null,
 };
 
@@ -32,6 +32,11 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setInitialState(state, action) {
+      state.token = action.payload.token;
+      state.isAuthenticated = !!action.payload.token;
+      state.isLoading = false;
+    },
     login(state, action) {
       state.user = action.payload.user;
       state.token = action.payload.token;
@@ -44,6 +49,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       localStorage.removeItem('token');
     },
+    updateUser(state, action) {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -52,7 +62,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.user = action.payload; // ✅ Payload là user trực tiếp
+        state.user = action.payload; // ✅ Payload is user directly
         state.isAuthenticated = true;
         state.isLoading = false;
         localStorage.setItem('user', JSON.stringify(action.payload));
@@ -68,5 +78,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { login, logout } = authSlice.actions;
+export const { setInitialState, login, logout, updateUser } = authSlice.actions;
 export default authSlice.reducer;

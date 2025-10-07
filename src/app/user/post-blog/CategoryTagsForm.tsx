@@ -64,7 +64,9 @@ export default function CategoryTagsForm({
     const fetchCategories = async () => {
       try {
         const data = await categoryApi.getAllCategories();
-        setCategoryOptions(data);
+        // Lọc chỉ các danh mục có type = "blog"
+        const blogCategories = data.filter((category: Category) => category.type === "blog");
+        setCategoryOptions(blogCategories);
       } catch (err) {
         console.error("❌ Lỗi lấy categories:", err);
       }

@@ -6,16 +6,35 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
 export const createDestination = async (destinationData: FormData) =>{
-  const res = await axiosInstance.post(`${API_URL}/admin/places`, destinationData);
+  const res = await axiosInstance.post(`${API_URL}/places`, destinationData);
   return res.data;
 }
 
 
 // Lấy danh sách địa điểm
 export const getDestinations = async (params?: any) => {
-  console.log(" Fetching destinations with params:", params);
-  const res = await axios.get(`${API_URL}/places`, { params });
-  return res.data;
+  console.log("Fetching destinations with params:", params);
+  try {
+    const res = await axios.get(`${API_URL}/places`, { 
+      params,
+      timeout: 10000, // 10 second timeout
+    });
+    return res.data;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.warn("Rate limit exceeded. Retrying after delay...");
+      // Wait 2 seconds before retrying
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      try {
+        const res = await axios.get(`${API_URL}/places`, { params });
+        return res.data;
+      } catch (retryError) {
+        console.error("Retry failed:", retryError);
+        throw retryError;
+      }
+    }
+    throw error;
+  }
 };
 
 // Lấy chi tiết địa điểm theo ID
@@ -39,6 +58,13 @@ export const likeDestination = async (id: string) => {
 // Thêm vào danh sách yêu thích
 export const addToFavorites = async (id: string) => {
   const res = await axiosInstance.post(`/places/${id}/favorite`);
+  return res.data;
+};
+
+
+// Thêm viewCount
+export const addViewCount = async (id: string) => {
+  const res = await axiosInstance.post(`/places/${id}/view`);
   return res.data;
 };
 
