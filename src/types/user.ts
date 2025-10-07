@@ -15,8 +15,6 @@ export interface SharedBlog {
     fullName: string;
     email: string;
     emailVerified: boolean;
-    phone: string;
-    phoneVerified: boolean;
     avatar: string;
     bio: string;
     role: 'user' | 'admin';
