@@ -59,15 +59,17 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
     setIsFavorited(!previousIsFavorited); // Optimistic UI update
 
     try {
-      let updatedFavorites;
+      let response;
       if (previousIsFavorited) {
-        await removeFromFavorites(_id);
-        updatedFavorites = user.favorites.filter((fav: any) => fav !== _id);
+        response = await removeFromFavorites(_id);
       } else {
-        await addToFavorites(_id);
-        updatedFavorites = [...user.favorites, _id];
+        response = await addToFavorites(_id);
       }
-      dispatch(updateUser({ favorites: updatedFavorites }));
+      // Assuming the API returns the updated user object with a favorites field
+      if (response && response.data && response.data.favorites) {
+        dispatch(updateUser({ favorites: response.data.favorites }));
+      }
+
     } catch (error) {
       setIsFavorited(previousIsFavorited); // Revert UI on error
       console.error("Failed to update favorite status", error);
