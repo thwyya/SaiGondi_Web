@@ -1,316 +1,209 @@
-"use client";
+'use client';
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import DestinationCard from "@/components/cards/DestinationCard";
-import PostCard from "@/components/PostCard";
-import FilterPanel from "@/components/filters/FilterPanel";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import SearchBox from "@/components/ui/SearchBox";
-import { Blog } from "@/types/blog";
-import { Destination } from "@/types/destination";
+import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { searchDestinations } from '@/lib/place/destinationApi';
+import { blogApi } from '@/lib/blog/blogApi';
+import DestinationCard from '@/components/cards/DestinationCard';
+import PostCard from '@/components/PostCard';
+import { Destination } from '@/types/destination';
+import { Blog } from '@/types/blog';
+import { FiAlertCircle } from 'react-icons/fi';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import SearchBox from '@/components/ui/SearchBox';
 
-// Define a type for the filters
-interface SearchFilters {
-  category: string;
-  district: string;
-  ward: string;
-  rating: number;
-}
+// Skeleton component for loading state
+const SkeletonCard = () => (
+  <div className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse border border-[var(--gray-5)]">
+    <div className="w-full h-48 bg-[var(--gray-5)]"></div>
+    <div className="p-4">
+      <div className="h-6 bg-[var(--gray-5)] rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-[var(--gray-5)] rounded w-1/2"></div>
+    </div>
+  </div>
+);
 
-type SearchType = "all" | "destinations" | "blogs";
+// No results component
+const NoResults = ({ query }: { query: string | null }) => (
+    <div className="text-center py-16 px-4 bg-[var(--gray-6)] rounded-lg col-span-full">
+        <FiAlertCircle className="mx-auto h-12 w-12 text-[var(--gray-3)]" />
+        <h3 className="mt-2 text-lg font-medium text-[var(--foreground)]">No results found</h3>
+        <p className="mt-1 text-sm text-[var(--gray-2)]">
+            We couldn&apos;t find anything for &quot;{query}&quot;. Try a different search.
+        </p>
+    </div>
+);
 
-const SearchPage = () => {
+
+function SearchResults() {
   const searchParams = useSearchParams();
-  const query = searchParams.get("query") || "";
+  const query = searchParams.get('q');
+  const type = searchParams.get('type') || 'all';
 
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [results, setResults] = useState<{ destinations: Destination[], blogs: Blog[] }>({ destinations: [], blogs: [] });
   const [loading, setLoading] = useState(true);
-  const [searchType, setSearchType] = useState<SearchType>("all");
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(type);
 
-  const [filters, setFilters] = useState<SearchFilters>({
-    category: "",
-    district: "",
-    ward: "",
-    rating: 0,
-  });
-
-  // State for pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalDestinations, setTotalDestinations] = useState(0);
-  const [totalBlogs, setTotalBlogs] = useState(0);
-  const itemsPerPage = 9; // 3x3 grid
+  useEffect(() => {
+    setActiveTab(type);
+  }, [type]);
 
   useEffect(() => {
     const fetchResults = async () => {
-      setLoading(true);
-      setDestinations([]);
-      setBlogs([]);
+      if (!query) {
+        setLoading(false);
+        return;
+      }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      setLoading(true);
+      setError(null);
 
       try {
-        let destPromise: Promise<any> | null = null;
-        let blogPromise: Promise<any> | null = null;
+        const [destResponse, blogResponse] = await Promise.all([
+          searchDestinations({ query: query }),
+          blogApi.searchBlogs({ query: query })
+        ]);
 
-        // Common params
-        const baseParams = {
-          query,
-          page: String(currentPage),
-          limit: String(itemsPerPage),
-        };
+        setResults({
+          destinations: destResponse?.data || [],
+          blogs: blogResponse?.data || [],
+        });
 
-        if (searchType === 'all' || searchType === 'destinations') {
-          const destParams = new URLSearchParams(baseParams);
-          if (filters.category) destParams.append("category", filters.category);
-          if (filters.district) destParams.append("district", filters.district);
-          if (filters.ward) destParams.append("ward", filters.ward);
-          if (filters.rating > 0) destParams.append("rating", String(filters.rating));
-          
-          destPromise = fetch(`${API_URL}/places/search?${destParams.toString()}`).then(res => res.json());
-        }
-
-        if (searchType === 'all' || searchType === 'blogs') {
-          const blogParams = new URLSearchParams(baseParams);
-          // Assuming no specific blog filters from the panel for now
-          blogPromise = fetch(`${API_URL}/blogs?${blogParams.toString()}`).then(res => res.json());
-        }
-
-        const [destResult, blogResult] = await Promise.all([destPromise, blogPromise]);
-
-        let totalDest = 0;
-        let totalDestPages = 1;
-        if (destResult && destResult.data) {
-          setDestinations(destResult.data.places || []);
-          totalDest = destResult.data.pagination?.total || 0;
-          totalDestPages = destResult.data.pagination?.totalPages || 1;
-        }
-        setTotalDestinations(totalDest);
-
-        let totalBl = 0;
-        let totalBlogPages = 1;
-        if (blogResult && blogResult.data) {
-          // The blog API response has an extra 'data' nesting
-          setBlogs(blogResult.data.data || []);
-          totalBl = blogResult.data.pagination?.total || 0;
-          totalBlogPages = blogResult.data.pagination?.totalPages || 1;
-        }
-        setTotalBlogs(totalBl);
-
-        if (searchType === "destinations") {
-          setTotalPages(totalDestPages);
-        } else if (searchType === "blogs") {
-          setTotalPages(totalBlogPages);
-        } else { // 'all'
-          setTotalPages(Math.max(totalDestPages, totalBlogPages));
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch search results:", error);
-        setDestinations([]);
-        setBlogs([]);
+      } catch (err) {
+        setError('Failed to fetch search results.');
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchResults();
-  }, [query, filters, currentPage, searchType]);
+  }, [query]);
 
-  const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
-    setCurrentPage(1); // Reset to first page on filter change
-    if (newFilters.district !== undefined) {
-      setFilters((prev) => ({ ...prev, ...newFilters, ward: "" }));
-    } else {
-      setFilters((prev) => ({ ...prev, ...newFilters }));
+  const filteredResults = useMemo(() => {
+    const { destinations, blogs } = results;
+    switch (activeTab) {
+      case 'destinations':
+        return { items: destinations, type: 'destination' };
+      case 'blogs':
+        return { items: blogs, type: 'blog' };
+      case 'all':
+      default:
+        return { items: [...destinations, ...blogs], type: 'all' };
     }
-  };
-  
-  const handleTabChange = (type: SearchType) => {
-    setSearchType(type);
-    setCurrentPage(1); // Reset page when changing tabs
-  }
+  }, [activeTab, results]);
 
-  // Pagination helper
-  function getPageNumbers(current: number, total: number): (number | string)[] {
-    const delta = 2;
-    const pages: (number | string)[] = [];
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
-        pages.push(i);
-      } else if (pages[pages.length - 1] !== "...") {
-        pages.push("...");
-      }
-    }
-    return pages;
-  }
-  
-  const renderResults = () => {
-    const showDestinations = searchType === 'all' || searchType === 'destinations';
-    const showBlogs = searchType === 'all' || searchType === 'blogs';
-
+  const renderGridItems = () => {
     if (loading) {
-      return <p className="text-center mt-12">Đang tải kết quả...</p>;
+      return Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />);
     }
 
-    if (destinations.length === 0 && blogs.length === 0) {
-      return <p className="text-gray-600 text-center mt-12">Không tìm thấy kết quả nào phù hợp.</p>;
+    if (filteredResults.items.length === 0) {
+      return <NoResults query={query} />;
     }
 
-    return (
-      <div className="space-y-12">
-        {showDestinations && destinations.length > 0 && (
-          <div>
-            {searchType === 'all' && <h2 className="text-xl font-bold mb-4">Địa điểm</h2>}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {destinations.map((destination) => (
+    return filteredResults.items.map((item) => {
+        if ('address' in item) { // It's a Destination
+            const dest = item as Destination;
+            return (
                 <DestinationCard
-                  key={destination._id}
-                  _id={destination._id}
-                  title={destination.name}
-                  location={destination.address}
-                  distance={"350m"}
-                  image={destination.images?.[0] || "/image.svg"}
-                  rating={destination.avgRating}
-                  totalRatings={destination.totalRatings}
+                    key={`dest-${dest._id}`}
+                    _id={dest._id}
+                    title={dest.name}
+                    location={dest.address}
+                    distance={`${dest.ward}, ${dest.district}`}
+                    image={dest.images[0] || '/placeholder.jpg'}
+                    rating={dest.avgRating}
+                    totalRatings={dest.totalRatings}
                 />
-              ))}
-            </div>
-          </div>
-        )}
-        {showBlogs && blogs.length > 0 && (
-          <div>
-            {searchType === 'all' && <h2 className="text-xl font-bold mb-4">Bài viết</h2>}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {blogs.map((post) => (
-                <PostCard key={post._id} post={post} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
+            );
+        }
+        if ('content' in item) { // It's a Blog
+            const post = item as Blog;
+            return <PostCard key={`blog-${post._id}`} post={post} />;
+        }
+        return null;
+    });
   };
-  
-  const getTotalResultsForDisplay = () => {
-    if (searchType === 'destinations') return totalDestinations;
-    if (searchType === 'blogs') return totalBlogs;
-    return totalDestinations + totalBlogs;
-  }
-  
-  const getCurrentResultsLength = () => {
-    if (searchType === 'destinations') return destinations.length;
-    if (searchType === 'blogs') return blogs.length;
-    return destinations.length + blogs.length;
-  }
+
+  const tabs = [
+    { name: 'Tất cả', id: 'all' },
+    { name: 'Địa điểm', id: 'destinations' },
+    { name: 'Bài viết', id: 'blogs' },
+  ];
 
   return (
-    <>
-      <Header />
-      <main className="relative overflow-hidden min-h-screen bg-white z-10">
-        {/* Background Blurs */}
-        <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "200px", left: "-420px" }} />
-        <div className="absolute w-[500px] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "700px", right: "-400px" }} />
-        <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "1400px", left: "-300px" }} />
+    <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
+        {/* Decorative background elements from homepage */}
+        <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none -top-20 -left-96" />
+        <div className="absolute w-[500px] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none top-1/4 -right-96" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <SearchBox />
-
-          <div className="flex gap-12 mt-8">
-            {/* Filter Panel */}
-            <aside className="hidden lg:block w-[30%]">
-              <FilterPanel
-                filters={filters}
-                onFilterChange={handleFilterChange}
-              />
-            </aside>
-
-            {/* Main Content */}
-            <div className="w-full lg:w-[70%]">
-              <h1 className="text-2xl font-bold mb-4">
-                Kết quả tìm kiếm {query && <>cho: &quot;{query}&quot;</>}
-              </h1>
-
-              {/* Tabs */}
-              <div className="grid grid-cols-3 border rounded-2xl shadow bg-white mb-8">
-                <button onClick={() => handleTabChange('all')} className={`flex flex-col border-r px-4 py-3 rounded-tl-2xl rounded-bl-2xl text-left ${searchType === 'all' ? 'bg-gray-100' : ''}`}>
-                  <h4 className="font-bold">Tất cả</h4>
-                  <p className="text-gray-500">{totalDestinations + totalBlogs} kết quả</p>
-                </button>
-                <button onClick={() => handleTabChange('destinations')} className={`flex flex-col border-r px-4 py-3 text-left ${searchType === 'destinations' ? 'bg-gray-100' : ''}`}>
-                  <h4 className="font-bold">Địa điểm</h4>
-                  <p className="text-gray-500">{totalDestinations} kết quả</p>
-                </button>
-                <button onClick={() => handleTabChange('blogs')} className={`flex flex-col px-4 py-3 rounded-tr-2xl rounded-br-2xl text-left ${searchType === 'blogs' ? 'bg-gray-100' : ''}`}>
-                  <h4 className="font-bold">Bài viết</h4>
-                  <p className="text-gray-500">{totalBlogs} kết quả</p>
-                </button>
-              </div>
-
-              {/* Sort */}
-              <div className="flex justify-between items-center mb-6">
-                <h4 className="text-sm lg:text-base">
-                  Hiển thị {getCurrentResultsLength()}/{getTotalResultsForDisplay()} kết quả
-                </h4>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm lg:text-base">Sắp xếp theo:</h4>
-                  <select className="rounded-md focus:outline-none text-sm lg:text-base border px-2 py-1">
-                    <option value="popular">Phổ biến nhất</option>
-                    <option value="rating">Đánh giá cao nhất</option>
-                    <option value="newest">Mới nhất</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Results */}
-              {renderResults()}
-
-              {/* Pagination */}
-              {!loading && totalPages > 1 && (
-                <div className="flex justify-center mt-12 gap-2 flex-wrap">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 border rounded-lg disabled:opacity-50"
-                  >
-                    Trước
-                  </button>
-                  {getPageNumbers(currentPage, totalPages).map((page, idx) =>
-                    page === "..." ? (
-                      <span key={idx} className="px-3 py-1">...</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page as number)}
-                        className={`px-3 py-1 border rounded-lg ${
-                          currentPage === page
-                            ? "bg-primary text-white"
-                            : "bg-white hover:bg-gray-100"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 border rounded-lg disabled:opacity-50"
-                  >
-                    Sau
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <div className="max-w-3xl mx-auto text-center mb-4">
+            <h1 className="text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
+                {loading ? (
+                    'Đang tìm kiếm...'
+                ) : (
+                    <>
+                        Tìm thấy {filteredResults.items.length} kết quả cho 
+                        <span className="text-[var(--primary)]"> &quot;{query}&quot;</span>
+                    </>
+                )}
+            </h1>
         </div>
-      </main>
-      <Footer />
-    </>
-  );
-};
 
-export default SearchPage;
+        <SearchBox searchType={activeTab as 'all' | 'destinations' | 'blogs'} />
+
+        <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
+            <nav className="-mb-px flex justify-center space-x-8" aria-label="Tabs">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.name}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`${
+                            activeTab === tab.id
+                            ? 'border-[var(--primary)] text-[var(--primary)]'
+                            : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:border-[var(--gray-4)]'
+                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
+                    >
+                        {tab.name} ({ 
+                            tab.id === 'all' ? results.destinations.length + results.blogs.length :
+                            tab.id === 'destinations' ? results.destinations.length :
+                            results.blogs.length
+                        })
+                    </button>
+                ))}
+            </nav>
+        </div>
+
+        {error && <div className="text-center text-[var(--error)] col-span-full">{error}</div>}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {renderGridItems()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <main>
+        <Header />
+        <Suspense fallback={
+            <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)}
+                    </div>
+                </div>
+            </div>
+        }>
+        <SearchResults />
+        </Suspense>
+        <Footer />
+    </main>
+  );
+}

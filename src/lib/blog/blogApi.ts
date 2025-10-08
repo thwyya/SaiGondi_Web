@@ -5,15 +5,7 @@ import axiosInstance from "../axiosInstance";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const blogApi = {
-  // Lấy danh sách blog (có phân trang + lọc theo query)
-  // getBlogs: async (token: string, query?: Record<string, any>) => { //có token
-  //   const res = await axios.get(`${API_URL}/blogs`, {
-  //     headers: { Authorization: `Bearer ${token}` },
-  //     params: query
-  //   });
-  //   return res.data;
-  // },
-  getBlogs: async (query?: Record<string, any>) => { //không token
+  getBlogs: async (query?: Record<string, any>) => { 
     const res = await axios.get(`${API_URL}/blogs`, {
       params: query
     });
@@ -31,6 +23,11 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/slug/${slug}`);
     return res.data.data;
   },
+
+  searchBlogs: async (params: any) => {
+    const res = await axios.get(`${API_URL}/blogs/search`, { params });
+    return res.data;
+  } ,
 
   // Tạo blog mới
   createBlog: async (formData: FormData) => {

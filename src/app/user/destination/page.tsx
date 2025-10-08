@@ -234,7 +234,7 @@ export default function DestinationPage() {
   return (
     <main className="relative min-h-screen bg-white z-10 w-[90%] mx-auto">
       <BackgroundBlur />
-      <SearchBox />
+      <SearchBox searchType="destinations" />
 
       <div className="flex gap-12 mb-12">
         {/* Bộ lọc */}
