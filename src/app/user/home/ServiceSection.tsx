@@ -4,9 +4,9 @@ import React from 'react';
 import Image from 'next/image';
 
 const services = [
-  { title: 'Tính thời tiết', description: 'Lorem ipsum dolor sit amet, adipisicing elit.', icon: '/weather.svg' },
-  { title: 'Hướng dẫn du lịch tốt nhất', description: 'Lorem ipsum dolor sit amet, adipisicing elit.', icon: '/guide.svg' },
-  { title: 'Mạng xã hội du lịch', description: 'Lorem ipsum dolor sit amet, adipisicing elit.', icon: '/social.svg' },
+  { title: 'Tính thời tiết', description: 'Xem dự báo thời tiết nhanh và chính xác cho điểm đến của bạn.', icon: '/weather.svg' },
+  { title: 'Hướng dẫn du lịch tốt nhất', description: 'Khám phá địa điểm, ẩm thực và trải nghiệm thú vị.', icon: '/guide.svg' },
+  { title: 'Mạng xã hội du lịch', description: 'Kết nối và chia sẻ hành trình với cộng đồng yêu du lịch.', icon: '/social.svg' },
 ];
 
 const ServiceSection = () => {
@@ -17,10 +17,10 @@ const ServiceSection = () => {
           
           <div className="w-full lg:w-[320px] flex-shrink-0 text-center lg:text-left">
             <p className="text-[var(--error)] font-medium font-inter text-lg sm:text-xl mb-2">
-              What we serve
+              Dịch vụ của chúng tôi
             </p>
             <h2 className="font-bold font-inter text-[22px] sm:text-[28px] leading-snug text-[var(--black-1)]">
-              Chúng tôi cung cấp <br /> dịch vụ tốt nhất
+              Khám phá, kết nối <br /> và trải nghiệm dễ dàng
             </h2>
           </div>
 
