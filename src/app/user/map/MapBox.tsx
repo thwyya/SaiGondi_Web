@@ -6,7 +6,7 @@ import { LuTag } from "react-icons/lu";
 import { PiMapPinAreaLight } from "react-icons/pi";
 import { LiaShoePrintsSolid } from "react-icons/lia";
 import { useRouter } from "next/navigation";
-import { placeApi } from "@/lib/place/placeApi";
+import { getAllDestinations } from "@/lib/place/destinationApi";
 import { checkinApi } from "@/lib/checkin/checkinApi";
 import { AxiosError } from "axios";
 import { HCMMapSVG } from "./HCMMapSVG";
@@ -143,7 +143,7 @@ export default function HCMMap() {
         setPopupPos(clampPopupPosition(e.clientX, e.clientY));
 
         try {
-          const res = await placeApi.getAll();
+          const res = await getAllDestinations();
           const places: Place[] = Array.isArray(res) ? res : res.places || [];
 
           const matched: Place | undefined = places.find((p: any) => {

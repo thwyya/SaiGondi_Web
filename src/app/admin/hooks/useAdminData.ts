@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import api from "@/services/api";
-import { placeApi } from "@/lib/place/placeApi";
+import { getAllDestinations } from "@/lib/place/destinationApi";
 import { useRouter } from "next/navigation";
 import { TopPlace, TopUser } from "@/app/assets/data/topPlace";
 
@@ -57,7 +57,7 @@ export function useAdminData() {
       .then((res) => setTopUsers(res.data?.data || []))
       .catch(() => console.log("Lỗi lấy TOP users"));
 
-    placeApi.getAll()
+    getAllDestinations()
       .then((places) => {
         if (Array.isArray(places)) {
           const sorted = [...places]

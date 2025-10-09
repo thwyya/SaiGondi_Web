@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import TrendCard from '@/components/cards/TrendCard';
-import { placeApi } from '@/lib/place/placeApi';
+import { getAllDestinations } from '@/lib/place/destinationApi';
 
 export default function TrendSection() {
   const [topRated, setTopRated] = useState<any[]>([]);
@@ -11,7 +11,7 @@ export default function TrendSection() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const places = await placeApi.getAll();
+        const places = await getAllDestinations();
 
         if (!Array.isArray(places)) {
           console.error("API /places không trả về mảng:", places);

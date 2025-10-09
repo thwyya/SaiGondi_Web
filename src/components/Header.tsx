@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
-import useUser from '@/hooks/useUser'; // Import the hook
+import useUser from '@/hooks/useUser'; 
 import AccountSetting from '@/app/user/profile/AccountSetting';
 
 export default function Header() {
