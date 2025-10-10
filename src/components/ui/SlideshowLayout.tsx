@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function SlideshowLayout({
   children,
@@ -46,13 +47,15 @@ export default function SlideshowLayout({
               xl:w-[350px] xl:h-[100px] /* 1280px+ */
               mb-6"
             >
-              <Image
-                src="/logo.svg"
-                alt="Sài Gòn Đi"
-                fill
-                className="object-contain"
-                priority
-              />
+              <Link href="/">
+                <Image
+                  src="/logo.svg"
+                  alt="Sài Gòn Đi"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </Link>
             </div>
             <div className="w-full max-w-sm md:max-w-md">{children}</div>
           </div>

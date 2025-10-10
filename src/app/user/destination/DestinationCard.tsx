@@ -110,8 +110,8 @@ const DestinationCard = ({ destination }: Props) => {
             </span>
 
             <span className="text-[var(--primary)] flex items-center gap-1 text-sm ">
-              <i className="ri-map-2-line"></i> 
-              {destination.ward.name || 'Chưa rõ'}
+                <i className="ri-map-2-line"></i> 
+                {destination.ward?.name || 'Chưa rõ'}
             </span>
             </div>
 
