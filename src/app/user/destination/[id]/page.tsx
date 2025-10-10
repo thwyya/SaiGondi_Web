@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from 'next/link';
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
@@ -14,15 +13,18 @@ import { blogApi } from "@/lib/blog/blogApi";
 import { Blog } from "@/types/blog";
 import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
 import { Post } from "@/types/post";
-import PostCard from "@/components/PostCard";
-import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
+import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
-
-import useUser from "@/hooks/useUser";
 import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
 import { HiLocationMarker } from 'react-icons/hi';
-import { ServiceOption } from "../addPlaceForm";
 import { useDispatch, useSelector } from "react-redux";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 import { updateUser } from "@/store/slices/authSlice";
@@ -258,8 +260,8 @@ const DestinationDetail = () => {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div >
             <h1 className="text-3xl font-bold text-gray-800">
               {destination.name}
             </h1>
@@ -295,7 +297,7 @@ const DestinationDetail = () => {
               </button>
 
               {showSharePopup && (
-                <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-xl border z-50">
+                <div className="absolute right-0 mt-2 w-64 sm:w-72 max-w-[90vw] bg-white shadow-lg rounded-xl border z-50">
                   <div className="p-4">
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">
                       Chia sẻ địa điểm
@@ -363,13 +365,13 @@ const DestinationDetail = () => {
           {/* Top Section: Main Image + Introduction */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Left: Main Image */}
-            <div>
+            <div className="relative w-full aspect-[3/2] sm:aspect-[4/3] lg:aspect-[3/2]">
               <Image
                 src={displayImage}
                 alt={destination.name}
-                width={600}
-                height={400}
-                className="w-[600px] h-[420px] object-cover rounded-lg"
+                fill
+                sizes="(min-width:1024px) 50vw, 100vw"
+                className="object-cover rounded-lg"
               />
             </div>
 
@@ -419,64 +421,50 @@ const DestinationDetail = () => {
           </div>
 
           {/* Bottom Section: Additional Images */}
-          <div className="grid grid-cols-8 md:grid-cols-8 gap-4 w-full">
-            {/* First image (main image) - clickable */}
-            {Array.isArray(destination.images) && destination.images.length > 0 && (
-              <div
-                onClick={() => handleImageClick(destination.images![0])}
-                className={`cursor-pointer transition-all w-40  duration-200 hover:opacity-80 ${currentMainImage === destination.images![0] ? 'ring-2 ring-blue-400' : ''
-                  }`}
-              >
-                <Image
-                  src={destination.images[0] || "/image.svg"}
-                  alt={`Ảnh 1 của ${destination.name}`}
-                  width={300}
-                  height={200}
-                  className="w-full h-32 object-cover rounded-lg p-1.5"
-                />
-              </div>
-            )}
+          <div className="relative overflow-hidden">
+            {/* Edge gradients */}
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white/90 to-transparent z-10 hidden sm:block" />
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white/90 to-transparent z-10 hidden sm:block" />
+            <Carousel opts={{
+              align: "start",
+            }}
+              className="w-full ">
+              <CarouselContent className="gap-4">
+                {/* First image (main image) - clickable */}
+                {Array.isArray(destination.images) && destination.images.length > 0 && (
+                  destination.images.slice(0, 20).map((img, idx) => (
+                    
+                    <CarouselItem
+                      key={idx}
+                      onClick={() => handleImageClick(img)}
+                      className={` basis-[128px] sm:basis-[144px] lg:basis-[160px]  relative aspect-[4/3] overflow-hidden rounded-lg bg-white hover:opacity-80  transition ${currentMainImage === img ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-200'
+                        }`}
+                      aria-label={`Ảnh ${idx + 1} của ${destination.name}`}
+                    >
+                      <Image
+                        src={img || "/image.svg"}
+                        alt={`Ảnh ${idx + 1} của ${destination.name}`}
+                        fill
+                        sizes="(min-width:1024px) 160px, (min-width:768px) 144px, 128px"
+                        className="object-cover rounded-md"
+                      />
+                      
+                    </CarouselItem>
+                  ))
+                )}
+              </CarouselContent>
+            <CarouselPrevious
+              className="flex absolute left-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+            >
+              <ChevronLeft className="mx-auto w-4 h-4" />
+            </CarouselPrevious>
 
-            {/* Secondary images - clickable */}
-            {Array.isArray(destination.images) &&
-              destination.images.slice(1, 10).map((img, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleImageClick(img)}
-                  className={`cursor-pointer transition-all w-40 duration-200 hover:opacity-80 ${currentMainImage === img ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                >
-                  <Image
-                    src={img || "/image.svg"}
-                    alt={`Ảnh ${idx + 2} của ${destination.name}`}
-                    width={300}
-                    height={200}
-                    className="w-full h-32 object-cover rounded-lg p-1.5"
-                  />
-                </div>
-              ))}
-
-            {/* {Array.isArray(destination.images) &&
-              destination.images.length > 5 && (
-                <div className="relative">
-                  <div
-                    onClick={() => handleImageClick(destination.images![5])}
-                    className={`cursor-pointer transition-all duration-200 hover:opacity-80 ${currentMainImage === destination.images![5] ? 'ring-2 ring-blue-500' : ''
-                      }`}
-                  >
-                    <Image
-                      src={destination.images[5]}
-                      alt="Xem thêm"
-                      width={300}
-                      height={200}
-                      className="w-full h-32 object-cover rounded-lg p-1.5 opacity-70"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center text-white font-semibold rounded-lg">
-                      Xem thêm
-                    </div>
-                  </div>
-                </div>
-              )} */}
+            <CarouselNext
+              className="flex absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+            >
+              <ChevronRight className="mx-auto w-4 h-4" />
+            </CarouselNext>
+            </Carousel>
           </div>
         </div>
 
@@ -490,7 +478,7 @@ const DestinationDetail = () => {
             src={`https://www.google.com/maps?q=${destination.location?.coordinates?.[1] ?? destination.lat},${destination.location?.coordinates?.[0] ?? destination.lng}&hl=vi&z=16&output=embed`}
             width="100%"
             height="400"
-            className="rounded-lg border"
+            className="w-full h-64 sm:h-80 md:h-96 rounded-lg border"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />

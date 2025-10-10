@@ -1,15 +1,20 @@
 import { de } from "zod/v4/locales";
 import axiosInstance from "../axiosInstance";
 import axios from "axios";
-
+import qs from "qs";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
 export const createDestination = async (destinationData: FormData) =>{
-  const res = await axiosInstance.post(`${API_URL}/places`, destinationData);
+  const res = await axiosInstance.post(`${API_URL}/places/suggest`, destinationData);
   return res.data;
 }
 
+export interface Category {
+  _id: string;
+  name: string;
+  description?: string;
+}
 
 // Lấy danh sách địa điểm
 export const getDestinations = async (params?: any) => {
@@ -18,6 +23,9 @@ export const getDestinations = async (params?: any) => {
     const res = await axios.get(`${API_URL}/places`, { 
       params,
       timeout: 10000, // 10 second timeout
+      paramsSerializer: function (params) {
+        return qs.stringify(params, { arrayFormat: 'repeat' }); // services=a&services=b
+      }
     });
     return res.data;
   } catch (error: any) {
@@ -26,7 +34,12 @@ export const getDestinations = async (params?: any) => {
       // Wait 2 seconds before retrying
       await new Promise(resolve => setTimeout(resolve, 2000));
       try {
-        const res = await axios.get(`${API_URL}/places`, { params });
+        const res = await axios.get(`${API_URL}/places`, {
+          params,
+          paramsSerializer: function (params) {
+            return qs.stringify(params, { arrayFormat: 'repeat' });
+          },
+        });
         return res.data;
       } catch (retryError) {
         console.error("Retry failed:", retryError);
@@ -43,6 +56,15 @@ export const getDestinationById = async (id: string) => {
   return res.data;
 };
 
+export const getServices = async () =>{
+  const res = await axios.get(`${API_URL}/services`);
+  return res.data;
+};
+// Lấy danh sách danh mục
+export const getCategories = async (params?: any) => {
+  const res = await axios.get(`${API_URL}/users/categories`, { params });
+  return res.data; 
+};
 // Tìm kiếm địa điểm
 export const searchDestinations = async (params: any) => {
   const res = await axios.get(`${API_URL}/places/search`, { params });

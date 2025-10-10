@@ -79,20 +79,23 @@ export default function HCMMap() {
     return { x: newX, y: newY };
   };
 
-  const normalize = (str: string) =>
-    str
+  const normalize = (str: string | undefined | null) => {
+    if (!str || typeof str !== 'string') return '';
+    return str
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/^(xa|phuong|thi tran)\s+/i, "")
       .trim()
       .toLowerCase();
+  };
 
   const getWardName = (
     ward: string | { _id: string; name: string } | null | undefined
   ): string => {
     if (!ward) return "";
     if (typeof ward === "string") return ward;
-    return ward.name;
+    if (typeof ward === "object" && ward.name) return ward.name;
+    return "";
   };
 
   // setup path click events
@@ -220,18 +223,24 @@ export default function HCMMap() {
 
         const statusMap: Record<string, { status: Status; color: string }> = {};
         checkins.forEach((c: any) => {
+          if (!c || !c.placeId) return;
+          
           const wardName =
             c.ward || 
-            (typeof c.placeId.ward === "object"
-              ? c.placeId.ward.name
-              : c.placeId.ward) ||
-            c.placeId.name;
+            (typeof c?.placeId?.ward === "object"
+              ? c.placeId.ward?.name
+              : c.placeId?.ward) ||
+            c.placeId?.name;
 
+          if (!wardName) return; 
+          
           const normWard = normalize(wardName);
-          statusMap[normWard] = {
-            status: "visited",
-            color: getRandomPastelColor(),
-          };
+          if (normWard) { 
+            statusMap[normWard] = {
+              status: "visited",
+              color: getRandomPastelColor(),
+            };
+          }
         });
 
         setRegionStatus(statusMap);
@@ -255,6 +264,7 @@ export default function HCMMap() {
     setPopupPos(null);
     setSelectedPath(null);
     setSelectedInfo(null);
+    setMessage(null);
   };
 
   const zoomIn = () => setScale((s) => Math.min(s + 0.2, 3));
@@ -323,7 +333,7 @@ export default function HCMMap() {
   }, [isDragging, lastPos]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-0 sm:px-4 mt-5 relative select-none">
+    <div className="w-full max-w-5xl mx-auto px-0 sm:px-4 mt-5 relative select-none ">
       <div className="absolute -top-3 right-2 z-[9999] flex flex-col gap-2">
         <button
           onClick={zoomIn}
