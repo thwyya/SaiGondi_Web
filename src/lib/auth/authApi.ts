@@ -20,15 +20,15 @@ export const authApi = {
     lastName: string,
     firstName: string,
     email: string,
-    phone: string,
-    password: string
+    password: string,
+    confirmPassword: string
   ) => {
     const res = await axios.post(`${API_URL}/users/register`, {
       lastName,
       firstName,
       email,
-      phone,
-      password
+      password,
+      confirmPassword
     });
     return res.data;
   },
@@ -79,7 +79,7 @@ export const authApi = {
       ? { otp, email: emailOrPhone }
       : { otp, phone: emailOrPhone };
 
-    const res = await axios.post(`${API_URL}/users/verify-otp`, payload);
+    const res = await axios.post(`${API_URL}/users/verify-email`, payload);
     return res.data;
   },
 

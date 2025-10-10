@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { Popover, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
@@ -7,18 +7,20 @@ interface FilterDropdownProps {
   options: string[];
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export default function FilterDropdown({ options, value, onChange }: FilterDropdownProps) {
+export default function FilterDropdown({ options, value, onChange, className }: FilterDropdownProps) {
   return (
-    <Popover className="relative">
+    <Popover className="relative w-full">
       {({ open }) => (
         <>
           {/* Nút bấm */}
-          <Popover.Button className="flex gap-2 border border-gray-200 rounded-md py-2 px-3 items-center bg-white shadow-sm">
-            <span>{value || "Bộ lọc"}</span>
+          <Popover.Button 
+            className={`flex justify-between items-center w-full gap-2 border border-gray-200 rounded-md py-2 px-3 bg-white shadow-sm text-sm ${className}`}>
+            <span className="truncate">{value || "Bộ lọc"}</span>
             <ChevronDownIcon
-              className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+              className={`w-4 h-4 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
             />
           </Popover.Button>
 
@@ -32,9 +34,9 @@ export default function FilterDropdown({ options, value, onChange }: FilterDropd
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 translate-y-1"
           >
-            <Popover.Panel className="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg ring-1 ring-black/5 z-50">
+            <Popover.Panel className="absolute right-0 mt-2 w-full rounded-lg bg-white shadow-lg ring-1 ring-black/5 z-50">
                 <p className="text-[#848484] text-xs px-4 pt-1">Lọc theo</p>
-              <div className="py-1">
+              <div className="py-1 max-h-60 overflow-y-auto">
                 {options.map((opt, idx) => (
                   <button
                     key={idx}

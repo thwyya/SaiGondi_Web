@@ -71,7 +71,7 @@ export default function BlogPage() {
       {featuredPosts.length > 0 && <FeaturedPost posts={featuredPosts} />}
 
       <div className="max-w-5xl mx-auto">
-        <SearchBox />
+        <SearchBox searchType="blogs" />
       </div>
 
       <CategorySection

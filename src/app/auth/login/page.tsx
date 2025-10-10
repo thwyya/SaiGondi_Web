@@ -41,7 +41,13 @@ export default function LoginPage() {
       const res = await authApi.login(email, password);
       console.log("Đăng nhập thành công:", res);
 
-      dispatch(login({ user: res.user, token: res.accessToken }));
+      dispatch(
+        login({
+          user: res.user,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        }),
+      );
 
       if (rememberMe) {
         localStorage.setItem("remember_email", email);

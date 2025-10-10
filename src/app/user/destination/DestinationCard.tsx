@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect } from 'react';
-import useUser from "@/hooks/useUser";
+import { toast } from 'sonner';
 import { addToFavorites, addViewCount, removeFromFavorites } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,8 +17,15 @@ const DestinationCard = ({ destination }: Props) => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: userLoading } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
+  
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+    const isFavoritedByRedux = !userLoading && user?.favorites?.some((fav: any) => (typeof fav === 'object' && fav._id ? fav._id : fav) === destination._id);
+  const [localIsFavorited, setLocalIsFavorited] = useState(isFavoritedByRedux);
 
-  const isFavorited = !userLoading && user?.favorites?.some((fav: any) => fav === destination._id);
+  useEffect(() => {
+    setLocalIsFavorited(isFavoritedByRedux);
+  }, [isFavoritedByRedux]);
 
   const id = destination._id || (destination as any).placeId;
 
@@ -36,25 +43,39 @@ const DestinationCard = ({ destination }: Props) => {
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
-      router.push('/auth/login');
+      toast.info("Vui lòng đăng nhập để yêu thích địa điểm.", {
+        action: {
+          label: "Đăng nhập",
+          onClick: () => router.push('/auth/login'),
+        },
+      });
       return;
     }
 
     if (!destination._id) return;
+    
+    setIsUpdating(true);
+    const previousIsFavorited = localIsFavorited;
+    setLocalIsFavorited(!previousIsFavorited);
 
     try {
-      let updatedFavorites;
-      if (isFavorited) {
-        await removeFromFavorites(destination._id);
-        updatedFavorites = user.favorites.filter((fav: any) => fav !== destination._id);
+      let response;
+      if (previousIsFavorited) {
+        response = await removeFromFavorites(destination._id);
+        toast.success("Đã xóa khỏi danh sách yêu thích!");
       } else {
-        await addToFavorites(destination._id);
-        updatedFavorites = [...user.favorites, destination._id];
+        response = await addToFavorites(destination._id);
+        toast.success("Đã thêm vào danh sách yêu thích!");
       }
-      dispatch(updateUser({ favorites: updatedFavorites }));
+      if (response && response.data && response.data.favorites) {
+        dispatch(updateUser({ favorites: response.data.favorites }));
+      }
     } catch (error) {
+      setLocalIsFavorited(previousIsFavorited);
+      toast.error("Đã xảy ra lỗi. Vui lòng thử lại.");
       console.error("Failed to update favorite status", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -147,15 +168,14 @@ const DestinationCard = ({ destination }: Props) => {
 
         <span className="block h-px bg-gray-300 my-3 sm:my-4" />
 
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center gap-3">
-          <button
-            onClick={handleFavoriteClick}
-            className="border rounded-lg p-2 sm:p-3 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-            disabled={userLoading}
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={handleFavoriteClick} 
+            className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={userLoading || isUpdating}
           >
-            <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg sm:text-xl`}></i>
-          </button>
+              <i className={`${localIsFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+            </button>
           <button
             onClick={handleClick}
             disabled={!id}

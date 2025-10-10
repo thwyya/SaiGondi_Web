@@ -1,4 +1,3 @@
-import { de } from "zod/v4/locales";
 import axiosInstance from "../axiosInstance";
 import axios from "axios";
 import qs from "qs";
@@ -130,4 +129,24 @@ export const updateReview = async (reviewId: string, reviewData: any) => {
 export const likeReview = async (reviewId: string, userId: string) => {
   const res = await axiosInstance.post(`/reviews/${reviewId}/like`, { userId });
   return res.data;
+};
+
+// Lấy tất cả địa điểm (không phân trang)
+export const getAllDestinations = async () => {
+  const res = await axios.get(`${API_URL}/places`);
+  if (Array.isArray(res.data.data)) {
+    return res.data.data;
+  }
+  if (Array.isArray(res.data.data?.places)) {
+    return res.data.data.places;
+  }
+  return [];
+};
+
+// Lấy địa điểm lân cận
+export const getNearbyPlaces = async (latitude: number, longitude: number, radius = 5000) => {
+  const res = await axiosInstance.get(`${API_URL}/places/nearby`, {
+    params: { latitude, longitude, radius },
+  });
+  return res.data.data;
 };
