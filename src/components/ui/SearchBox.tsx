@@ -7,9 +7,10 @@ import Button from "./Button";
 
 interface SearchBoxProps {
   searchType?: 'all' | 'destinations' | 'blogs';
+  showFilterIcon?: boolean;
 }
 
-const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
+const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all', showFilterIcon = false }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -48,7 +49,9 @@ const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
           </span>
 
           <FiSearch className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
-          <FiSliders className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
+          {showFilterIcon && (
+            <FiSliders className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
+          )}
 
           <input
             type="text"
@@ -84,4 +87,3 @@ const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
 };
 
 export default SearchBox;
-

@@ -1,15 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-
-const features = [
-  { icon: '/location.svg', title: 'DU LỊCH THỦ ĐỨC', description: 'Choose your favorite location', active: false },
-  { icon: '/calendar.svg', title: 'LỊCH TRÌNH QUANH SÀI GÒN', description: 'Set the date you want', active: true },
-  { icon: '/discount.svg', title: 'DU LỊCH TIẾT KIỆM NHẤT', description: 'Get discount for every services', active: false },
-];
+import Link from 'next/link';
+import { getTopSearches } from '@/services/searchService';
 
 const HotSearchSection = () => {
+  const [topSearches, setTopSearches] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTopSearches = async () => {
+      try {
+        const data = await getTopSearches();
+        setTopSearches(data);
+      } catch (error) {
+        console.error("Failed to fetch top searches:", error);
+        setTopSearches([]); // Ensure state is an array on error
+      }
+    };
+
+    fetchTopSearches();
+  }, []);
+
   return (
     <section className="px-4 py-20">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 xl:gap-16 items-center relative">
@@ -24,31 +36,30 @@ const HotSearchSection = () => {
           </div>
 
           <div className="space-y-3 md:space-y-4">
-            {features.map((item, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-3 md:gap-4 xl:gap-5 p-3 md:p-4 xl:p-5 rounded-2xl transition ${
-                  item.active ? 'bg-white shadow-md' : 'bg-white/60'
-                }`}
-              >
-                <div className="w-12 h-12 md:w-16 md:h-16 xl:w-18 xl:h-18 rounded-xl flex items-center justify-center shrink-0">
-                  <Image
-                    src={item.icon}
-                    alt="icon"
-                    width={64}
-                    height={64}
-                    className="w-8 h-8 md:w-12 md:h-12 xl:w-14 xl:h-14"
-                  />
+            {topSearches.map((item, index) => (
+              <Link href={`/search?q=${item.keyword}`} key={index}>
+                <div
+                  className={`flex items-center gap-3 md:gap-4 xl:gap-5 p-3 md:p-4 xl:p-5 rounded-2xl transition bg-white/60 hover:bg-white hover:shadow-md cursor-pointer`}
+                >
+                  <div className="w-12 h-12 md:w-16 md:h-16 xl:w-18 xl:h-18 rounded-xl flex items-center justify-center shrink-0">
+                    <Image
+                      src={"/location.svg"} // Using a generic icon for all
+                      alt="icon"
+                      width={64}
+                      height={64}
+                      className="w-8 h-8 md:w-12 md:h-12 xl:w-14 xl:h-14"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-sm md:text-base xl:text-lg font-semibold text-[var(--black-1)]">
+                      {item.keyword}
+                    </h3>
+                    <p className="text-xs md:text-sm xl:text-base text-[var(--gray-3)]">
+                      {`Có ${item.search_count} lượt tìm kiếm`}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm md:text-base xl:text-lg font-semibold text-[var(--black-1)]">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs md:text-sm xl:text-base text-[var(--gray-3)]">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
