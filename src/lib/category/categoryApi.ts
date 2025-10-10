@@ -7,5 +7,10 @@ export const categoryApi = {
   getAllCategories: async () => {
     const res = await axios.get(`${API_URL}/users/categories`);
     return res.data.data;
+  },
+
+  getById: async (id: string) => {
+    const res = await axios.get(`${API_URL}/categories/${id}`);
+    return res.data;
   }
 };

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { searchDestinations } from '@/lib/place/destinationApi';
+import { searchDestinations, getDestinations } from '@/lib/place/destinationApi';
 import { blogApi } from '@/lib/blog/blogApi';
 import DestinationCard from '@/components/cards/DestinationCard';
 import PostCard from '@/components/PostCard';
@@ -12,6 +12,10 @@ import { FiAlertCircle } from 'react-icons/fi';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SearchBox from '@/components/ui/SearchBox';
+import SearchFilter, { FilterState } from '@/components/filters/SearchFilter';
+
+// Define the possible filter types
+type FilterType = 'all' | 'destinations' | 'blogs';
 
 // Skeleton component for loading state
 const SkeletonCard = () => (
@@ -28,9 +32,9 @@ const SkeletonCard = () => (
 const NoResults = ({ query }: { query: string | null }) => (
     <div className="text-center py-16 px-4 bg-[var(--gray-6)] rounded-lg col-span-full">
         <FiAlertCircle className="mx-auto h-12 w-12 text-[var(--gray-3)]" />
-        <h3 className="mt-2 text-lg font-medium text-[var(--foreground)]">No results found</h3>
+        <h3 className="mt-2 text-lg font-medium text-[var(--foreground)]">Không tìm thấy kết quả nào</h3>
         <p className="mt-1 text-sm text-[var(--gray-2)]">
-            We couldn&apos;t find anything for &quot;{query}&quot;. Try a different search.
+            Chúng tôi không thể tìm thấy bất kỳ kết quả nào cho &quot;{query}&quot;. Hãy thử tìm kiếm khác.
         </p>
     </div>
 );
@@ -39,36 +43,59 @@ const NoResults = ({ query }: { query: string | null }) => (
 function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
-  const type = searchParams.get('type') || 'all';
+  const type = (searchParams.get('type') || 'all') as FilterType;
 
   const [results, setResults] = useState<{ destinations: Destination[], blogs: Blog[] }>({ destinations: [], blogs: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(type);
+  const [activeTab, setActiveTab] = useState<FilterType>(type);
+  const [filters, setFilters] = useState<Partial<FilterState>>({});
+
+  const handleFilterChange = (newFilters: Partial<FilterState>) => {
+    setFilters(newFilters);
+  };
 
   useEffect(() => {
-    setActiveTab(type);
+    const validTypes: FilterType[] = ['all', 'destinations', 'blogs'];
+    if (validTypes.includes(type)) {
+        setActiveTab(type);
+    } else {
+        setActiveTab('all');
+    }
   }, [type]);
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!query) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       setError(null);
 
       try {
-        const [destResponse, blogResponse] = await Promise.all([
-          searchDestinations({ query: query }),
-          blogApi.searchBlogs({ query: query })
-        ]);
+        let destResponse, blogResponse;
+
+        const destParams: any = { query: query || undefined };
+        if (filters.destRating) destParams.rating = filters.destRating;
+        if (filters.destWard) destParams.ward = filters.destWard;
+        if (filters.destCategory) destParams.category = filters.destCategory;
+
+        const blogParams: any = { query: query || undefined };
+        if (filters.blogSort) blogParams.sort = filters.blogSort;
+        if (filters.blogCategory) blogParams.category = filters.blogCategory;
+
+        if (query) {
+          [destResponse, blogResponse] = await Promise.all([
+            searchDestinations(destParams),
+            blogApi.searchBlogs(blogParams)
+          ]);
+        } else {
+          [destResponse, blogResponse] = await Promise.all([
+            getDestinations(destParams),
+            blogApi.getBlogs(blogParams)
+          ]);
+        }
 
         setResults({
-          destinations: destResponse?.data || [],
-          blogs: blogResponse?.data || [],
+          destinations: destResponse?.data?.places || destResponse?.data || [],
+          blogs: blogResponse?.data?.blogs || blogResponse?.data || [],
         });
 
       } catch (err) {
@@ -80,7 +107,7 @@ function SearchResults() {
     };
 
     fetchResults();
-  }, [query]);
+  }, [query, filters]);
 
   const filteredResults = useMemo(() => {
     const { destinations, blogs } = results;
@@ -101,7 +128,11 @@ function SearchResults() {
     }
 
     if (filteredResults.items.length === 0) {
-      return <NoResults query={query} />;
+        // Differentiate between no results for a search and the initial empty state
+        if (query) {
+            return <NoResults query={query} />;
+        } 
+        return <div className="text-center col-span-full py-16">Nhập từ khóa để bắt đầu tìm kiếm hoặc chọn bộ lọc.</div>;
     }
 
     return filteredResults.items.map((item) => {
@@ -128,11 +159,24 @@ function SearchResults() {
     });
   };
 
-  const tabs = [
+  const tabs: { name: string; id: FilterType }[] = [
     { name: 'Tất cả', id: 'all' },
     { name: 'Địa điểm', id: 'destinations' },
     { name: 'Bài viết', id: 'blogs' },
   ];
+
+  const pageTitle = () => {
+      if (loading) return 'Đang tải...';
+      if (query) {
+          return (
+              <>
+                  Tìm thấy {filteredResults.items.length} kết quả cho 
+                  <span className="text-[var(--primary)]"> &quot;{query}&quot;</span>
+              </>
+          );
+      }
+      return 'Khám phá tất cả địa điểm và bài viết';
+  }
 
   return (
     <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
@@ -143,47 +187,46 @@ function SearchResults() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="max-w-3xl mx-auto text-center mb-4">
             <h1 className="text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
-                {loading ? (
-                    'Đang tìm kiếm...'
-                ) : (
-                    <>
-                        Tìm thấy {filteredResults.items.length} kết quả cho 
-                        <span className="text-[var(--primary)]"> &quot;{query}&quot;</span>
-                    </>
-                )}
+                {pageTitle()}
             </h1>
         </div>
 
-        <SearchBox searchType={activeTab as 'all' | 'destinations' | 'blogs'} />
+        <SearchBox searchType={activeTab} />
 
-        <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
-            <nav className="-mb-px flex justify-center space-x-8" aria-label="Tabs">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.name}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`${
-                            activeTab === tab.id
-                            ? 'border-[var(--primary)] text-[var(--primary)]'
-                            : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:border-[var(--gray-4)]'
-                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
-                    >
-                        {tab.name} ({ 
-                            tab.id === 'all' ? results.destinations.length + results.blogs.length :
-                            tab.id === 'destinations' ? results.destinations.length :
-                            results.blogs.length
-                        })
-                    </button>
-                ))}
-            </nav>
-        </div>
-
-        {error && <div className="text-center text-[var(--error)] col-span-full">{error}</div>}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {renderGridItems()}
-        </div>
-      </div>
+                <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
+                    <nav className="-mb-px flex justify-center space-x-8" aria-label="Tabs">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.name}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`${
+                                    activeTab === tab.id
+                                    ? 'border-[var(--primary)] text-[var(--primary)]'
+                                    : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:hover:border-[var(--gray-4)]'
+                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
+                            >
+                                {tab.name} ({
+                                    tab.id === 'all' ? results.destinations.length + results.blogs.length :
+                                    tab.id === 'destinations' ? results.destinations.length :
+                                    results.blogs.length
+                                })
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+        
+                <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+                  <aside className="hidden lg:block lg:col-span-1">
+                    <SearchFilter filterType={activeTab} onFilterChange={handleFilterChange} />
+                  </aside>
+        
+                  <div className="lg:col-span-3">
+                    {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {renderGridItems()}
+                    </div>
+                  </div>
+                </div>      </div>
     </div>
   );
 }

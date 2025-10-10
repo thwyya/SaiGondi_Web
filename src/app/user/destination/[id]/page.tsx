@@ -26,6 +26,8 @@ import { ServiceOption } from "../addPlaceForm";
 import { useDispatch, useSelector } from "react-redux";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 import { updateUser } from "@/store/slices/authSlice";
+import { Category } from "@/types/category";
+import { categoryApi } from "@/lib/category/categoryApi";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -42,6 +44,7 @@ const DestinationDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
   const [servicesData, setServicesData] = useState<{ id: string, name: string }[]>([]);
@@ -125,6 +128,15 @@ const DestinationDetail = () => {
               ? place.images[0]
               : "/image.svg";
             setCurrentMainImage(initialImage);
+
+            if (place.category) {
+              try {
+                const categoryRes = await categoryApi.getById(place.category);
+                setCategory(categoryRes.data || categoryRes.category || categoryRes);
+              } catch (e) {
+                console.error("Failed to fetch category", e);
+              }
+            }
 
             // Fetch blogs by place ID
             const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
@@ -287,9 +299,17 @@ const DestinationDetail = () => {
             <h1 className="text-3xl font-bold text-gray-800">
               {destination.name}
             </h1>
-            <div className="flex items-center gap-2 text-blue-600 mt-2">
-              <i className="ri-map-pin-2-fill"></i>
-              <span>{ward?.name || '...'}</span>
+            <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+              <div className="flex items-center gap-1.5">
+                <i className="ri-map-pin-2-fill text-blue-500"></i>
+                <span>{ward?.name || '...'}</span>
+              </div>
+              {category && (
+                <div className="flex items-center gap-1.5">
+                  <i className="ri-folder-line text-blue-500"></i>
+                  <span>{category.name}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-2">
               <span className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold">
