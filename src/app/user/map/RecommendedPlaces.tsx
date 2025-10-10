@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import DestinationCard from '@/components/cards/DestinationCard';
 import Button from '@/components/ui/Button';
-import { placeApi } from '@/lib/place/placeApi';
+import { getNearbyPlaces } from '@/lib/place/destinationApi';
 import { Place } from '@/types/place';
 
 export default function RecommendedPlaces() {
@@ -11,13 +11,24 @@ export default function RecommendedPlaces() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchNearbyPlaces = async () => {
-      try {
-        const data = await placeApi.getNearbyPlaces();
-        setPlaces(data || []);
-      } catch (err) {
-        console.error("Lỗi khi load địa điểm gợi ý:", err);
-      } finally {
+    const fetchNearbyPlaces = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const data = await getNearbyPlaces(latitude, longitude);
+            setPlaces(data || []);
+          } catch (err) {
+            console.error("Lỗi khi load địa điểm gợi ý:", err);
+          } finally {
+            setLoading(false);
+          }
+        }, (error) => {
+          console.error("Lỗi khi lấy vị trí:", error);
+          setLoading(false);
+        });
+      } else {
+        console.error("Trình duyệt không hỗ trợ Geolocation");
         setLoading(false);
       }
     };
@@ -49,13 +60,16 @@ export default function RecommendedPlaces() {
           <p>Đang tải địa điểm gợi ý...</p>
         ) : places.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {places.map((place, idx) => (
+            {places.map((place) => (
               <DestinationCard
-                key={idx}
+                key={place._id}
+                _id={place._id}
                 title={place.name}
                 location={place.address}
                 distance="—"
                 image={place.images?.[0] || '/hot-destination.svg'}
+                rating={place.avgRating}
+                totalRatings={place.totalRatings}
               />
             ))}
           </div>

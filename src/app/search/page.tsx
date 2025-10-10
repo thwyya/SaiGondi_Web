@@ -4,10 +4,12 @@ import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { searchDestinations, getDestinations } from '@/lib/place/destinationApi';
 import { blogApi } from '@/lib/blog/blogApi';
+import { categoryApi } from '@/lib/category/categoryApi';
 import DestinationCard from '@/components/cards/DestinationCard';
 import PostCard from '@/components/PostCard';
 import { Destination } from '@/types/destination';
 import { Blog } from '@/types/blog';
+import { Category } from '@/types/category';
 import { FiAlertCircle } from 'react-icons/fi';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -50,6 +52,24 @@ function SearchResults() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterType>(type);
   const [filters, setFilters] = useState<Partial<FilterState>>({});
+  const [blogCategories, setBlogCategories] = useState<Category[]>([]);
+  const [destCategories, setDestCategories] = useState<Category[]>([]);
+  const [placeCategories, setPlaceCategories] = useState<Category[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const allCategories = await categoryApi.getAllCategories();
+        setBlogCategories(allCategories.filter((c: Category) => c.type === 'blog'));
+        setDestCategories(allCategories.filter((c: Category) => c.type === 'destination'));
+        setPlaceCategories(allCategories.filter((c: Category) => c.type === 'place'));
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters(newFilters);
@@ -68,7 +88,6 @@ function SearchResults() {
     const fetchResults = async () => {
       setLoading(true);
       setError(null);
-
       try {
         let destResponse, blogResponse;
 
@@ -76,6 +95,7 @@ function SearchResults() {
         if (filters.destRating) destParams.rating = filters.destRating;
         if (filters.destWard) destParams.ward = filters.destWard;
         if (filters.destCategory) destParams.category = filters.destCategory;
+        if (filters.placeCategory) destParams.placeCategory = filters.placeCategory;
 
         const blogParams: any = { query: query || undefined };
         if (filters.blogSort) blogParams.sort = filters.blogSort;
@@ -128,7 +148,6 @@ function SearchResults() {
     }
 
     if (filteredResults.items.length === 0) {
-        // Differentiate between no results for a search and the initial empty state
         if (query) {
             return <NoResults query={query} />;
         } 
@@ -180,53 +199,68 @@ function SearchResults() {
 
   return (
     <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
-        {/* Decorative background elements from homepage */}
         <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none -top-20 -left-96" />
         <div className="absolute w-[500px] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none top-1/4 -right-96" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="max-w-3xl mx-auto text-center mb-4">
-            <h1 className="text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
                 {pageTitle()}
             </h1>
         </div>
 
         <SearchBox searchType={activeTab} />
 
-                <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
-                    <nav className="-mb-px flex justify-center space-x-8" aria-label="Tabs">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.name}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`${
-                                    activeTab === tab.id
-                                    ? 'border-[var(--primary)] text-[var(--primary)]'
-                                    : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:hover:border-[var(--gray-4)]'
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
-                            >
-                                {tab.name} ({
-                                    tab.id === 'all' ? results.destinations.length + results.blogs.length :
-                                    tab.id === 'destinations' ? results.destinations.length :
-                                    results.blogs.length
-                                })
-                            </button>
-                        ))}
-                    </nav>
+        <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
+            <nav className="-mb-px flex justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.name}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`${
+                            activeTab === tab.id
+                            ? 'border-[var(--primary)] text-[var(--primary)]'
+                            : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:border-[var(--gray-4)]'
+                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
+                    >
+                        {tab.name} ({
+                            tab.id === 'all' ? results.destinations.length + results.blogs.length :
+                            tab.id === 'destinations' ? results.destinations.length :
+                            results.blogs.length
+                        })
+                    </button>
+                ))}
+            </nav>
+        </div>
+
+        <div className="flex flex-col lg:grid lg:grid-cols-4 lg:gap-8">
+            <div className="lg:hidden mb-4">
+                <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+                >
+                    {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+                </button>
+            </div>
+
+            <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
+                <SearchFilter 
+                    filterType={activeTab} 
+                    onFilterChange={handleFilterChange} 
+                    blogCategories={blogCategories}
+                    destCategories={destCategories}
+                    placeCategories={placeCategories}
+                />
+            </aside>
+
+            <div className="lg:col-span-3">
+                {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {renderGridItems()}
                 </div>
-        
-                <div className="lg:grid lg:grid-cols-4 lg:gap-8">
-                  <aside className="hidden lg:block lg:col-span-1">
-                    <SearchFilter filterType={activeTab} onFilterChange={handleFilterChange} />
-                  </aside>
-        
-                  <div className="lg:col-span-3">
-                    {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {renderGridItems()}
-                    </div>
-                  </div>
-                </div>      </div>
+            </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -244,7 +278,7 @@ export default function SearchPage() {
                 </div>
             </div>
         }>
-        <SearchResults />
+            <SearchResults />
         </Suspense>
         <Footer />
     </main>
