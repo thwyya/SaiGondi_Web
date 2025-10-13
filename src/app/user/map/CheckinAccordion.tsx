@@ -51,9 +51,14 @@ const CheckinAccordion = () => {
 
         const groupMap: Record<string, PlaceGroup> = {};
         checkins.forEach((c: Checkin) => {
+          // Skip checkins without valid placeId
+          if (!c.placeId) {
+            return;
+          }
+
           let wardName = "";
 
-          if (c.placeId?.ward) {
+          if (c.placeId.ward) {
             if (typeof c.placeId.ward === "object" && c.placeId.ward?.name) {
               wardName = c.placeId.ward.name;
             } else if (typeof c.placeId.ward === "string") {
@@ -61,7 +66,7 @@ const CheckinAccordion = () => {
             }
           }
           if (!wardName) {
-            wardName = c.placeId?.name || "Khác";
+            wardName = c.placeId.name || "Khác";
           }
 
           if (!groupMap[wardName]) {
@@ -69,8 +74,8 @@ const CheckinAccordion = () => {
           }
 
           groupMap[wardName].destinations.push({
-            id: c.placeId._id,
-            title: c.placeId.name,
+            id: c.placeId._id || "",
+            title: c.placeId.name || "",
             location: c.placeId.address || "",
             distance: "—",
             image: c.placeId.images?.[0] || "/hot-destination.svg",
@@ -132,8 +137,15 @@ const CheckinAccordion = () => {
                   <div className="relative">
                     <div className="absolute inset-0 bg-[#F2F7FF]" />
                     <div className="relative p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {item.destinations.map((d, idx) => (
-                        <DestinationCard key={idx} {...d} />
+                      {item.destinations.map((destination) => (
+                        <DestinationCard
+                          key={destination.id}
+                          _id={destination.id}
+                          title={destination.title}
+                          location={destination.location}
+                          distance={destination.distance}
+                          image={destination.image}
+                        />
                       ))}
                     </div>
                   </div>

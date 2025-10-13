@@ -35,7 +35,7 @@ const HotSearchSection = () => {
             </p>
           </div>
 
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-4 md:space-y-5">
             {topSearches.map((item, index) => (
               <Link href={`/search?q=${item.keyword}`} key={index}>
                 <div
@@ -43,7 +43,7 @@ const HotSearchSection = () => {
                 >
                   <div className="w-12 h-12 md:w-16 md:h-16 xl:w-18 xl:h-18 rounded-xl flex items-center justify-center shrink-0">
                     <Image
-                      src={"/location.svg"} // Using a generic icon for all
+                      src={"/Hot-Search.svg"} // Using a generic icon for all
                       alt="icon"
                       width={64}
                       height={64}
@@ -55,7 +55,7 @@ const HotSearchSection = () => {
                       {item.keyword}
                     </h3>
                     <p className="text-xs md:text-sm xl:text-base text-[var(--gray-3)]">
-                      {`Có ${item.search_count} lượt tìm kiếm`}
+                      {`Top ${index + 1} tìm kiếm trong tuần qua`}
                     </p>
                   </div>
                 </div>
