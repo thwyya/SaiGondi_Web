@@ -91,8 +91,8 @@ function SearchResults() {
       try {
         let destResponse, blogResponse;
 
+        // Parameters for API calls (rating filter is removed)
         const destParams: any = { query: query || undefined };
-        if (filters.destRating) destParams.rating = filters.destRating;
         if (filters.destWard) destParams.ward = filters.destWard;
         if (filters.destCategory) destParams.category = filters.destCategory;
         if (filters.placeCategory) destParams.placeCategory = filters.placeCategory;
@@ -113,8 +113,16 @@ function SearchResults() {
           ]);
         }
 
+        let fetchedDestinations = destResponse?.data?.places || destResponse?.data || [];
+
+        // Apply client-side rating filter
+        if (filters.destRating) {
+          const minRating = parseFloat(filters.destRating);
+          fetchedDestinations = fetchedDestinations.filter((dest: Destination) => dest.avgRating >= minRating);
+        }
+
         setResults({
-          destinations: destResponse?.data?.places || destResponse?.data || [],
+          destinations: fetchedDestinations,
           blogs: blogResponse?.data?.blogs || blogResponse?.data || [],
         });
 
