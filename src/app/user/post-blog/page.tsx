@@ -127,9 +127,9 @@ export default function PostBlogPage() {
       }
 
       // ✅ files
-      if (coverFile) formData.append("files", coverFile);
-      imageFiles.forEach((file) => formData.append("files", file));
-      videoFiles.forEach((file) => formData.append("files", file));
+      if (coverFile) formData.append("mainImage", coverFile);
+      imageFiles.forEach((file) => formData.append("album", file));
+      videoFiles.forEach((file) => formData.append("content", file));
 
       const res = await blogApi.createBlog(formData);
       console.log("✅ Blog created:", res);

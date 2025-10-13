@@ -12,7 +12,12 @@ module.exports = {
         'ml': '480px',     
         '1.5xl': '1440px', 
       },
+      animation: {
+        'spin-slow': 'spin 10s linear infinite', // quay 1 vòng trong 10 giây
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/line-clamp'),
+  ],
 }
