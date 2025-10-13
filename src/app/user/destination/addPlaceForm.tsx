@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { file, z } from "zod"
+import { z } from "zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {
   Form,
@@ -20,7 +20,6 @@ import PhotoIcon from "@heroicons/react/20/solid/PhotoIcon"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { Ward } from "@/types/place"
-import { Category } from "@/types/category"
 import {
   Command,
   CommandEmpty,
@@ -34,33 +33,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useState, useEffect } from "react"
-import { createDestination } from "@/lib/place/destinationApi"
-import { ca } from "zod/v4/locales"
-
-const frameworks = [
-  {
-    value: "cafe",
-    label: "Cà Phê",
-  },
-  {
-    value: "Food",
-    label: "Ăn uống",
-  },
-  {
-    value: "Play",
-    label: "Vui chơi",
-  },
-  {
-    value: "Sightseeing",
-    label: "Ngắm cảnh",
-  },
-  {
-    value: "Exhibition",
-    label: "Bảo tàng",
-  },
-]
-const frameworkValues = frameworks.map(f => f.value)
+import { useState, useEffect, useRef } from "react"
+import { createDestination, getCategories, getServices } from "@/lib/place/destinationApi"
+import { IoCloseOutline } from "react-icons/io5";
 
 export interface Option {
   value: string
@@ -76,36 +51,6 @@ export interface ServiceOption {
   id: string
   name: string
 }
-
-const items = [
-  {
-    id: "Free Breakfast",
-    label: "Miễn phí ăn sáng",
-  },
-  {
-    id: "Free Parking",
-    label: "Đỗ xe miễn phí",
-  },
-  {
-    id: "Free Internet",
-    label: "Miễn phí Internet",
-  },
-  {
-    id: "Free Cancel",
-    label: "Miễn phí hủy đặt trước",
-  },
-  {
-    id: "Free Shuttle",
-    label: "Đưa đón miễn phí",
-  },
-  {
-    id: "More",
-    label: "Khác",
-  }
-
-] as const
-
-
 const formSchema = z.object({
   username: z.string().min(2, {
     message: "Tên địa điểm ít nhất 2 kí tự"
@@ -122,10 +67,8 @@ const formSchema = z.object({
   items: z.array(z.string()),
   messages: z.string(),
   images: z
-    .custom<FileList>()
-    .refine((files) => files && files.length > 0, {
-      message: "Bạn phải chọn ít nhất 1 ảnh",
-    }),
+    .array(z.instanceof(File))
+    .min(1, { message: "Bạn phải chọn ít nhất 1 ảnh" }),
   category: z.string(),
 })
 
@@ -146,6 +89,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
       address: "",
       messages: "",
       items: [] as string[],
+      images: [] as File[],
       category: "",
       ward: "",
       locationLng: "",
@@ -153,6 +97,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
 
     },
   })
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false);
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -191,8 +136,8 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
       }
 
 
-      const imgs: any = Array.isArray(values.images) ? values.images : (values.images ? Array.from(values.images as any) : [])
-      imgs.forEach((file: File) => {
+      const imgs = values.images || [] // values.images is File[]
+      imgs.forEach((file) => {
         formData.append("images", file)
       })
 
@@ -205,18 +150,14 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
       await createDestination(formData)
       toast.success("Địa điểm đã được gửi cho admin phê duyệt")
       setOpen(false)
-      console.log("Submitted values:", values)
     } catch (err: any) {
       console.error('Create destination error:', err)
-      // log server validation payload if present
       if (err?.response?.data) {
         console.error('Server response data:', err.response.data)
-        // show a friendly message or validation errors
         const srv = err.response.data
         if (srv.message) {
           toast.error(srv.message)
         } else if (srv.errors) {
-          // assume errors is an object or array
           const msg = typeof srv.errors === 'string' ? srv.errors : JSON.stringify(srv.errors)
           toast.error(msg)
         } else {
@@ -259,71 +200,58 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
     }
 
     const fetchServices = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/services")
-        if (!res.ok) throw new Error("Failed to fetch services")
-        const data = await res.json()
-        console.log("services api responsse:", data)
+        try {
+          const res = await getServices();
+          console.log("services api response:", res);
 
-        const formatted = data.data.map((service: ServiceOption) => ({
-          id: service.id,
-          name: service.name
-        }))
-        setServiceOptions(formatted)
-      } catch (err) {
-        console.error(err)
+          const formatted = res.data.map((service: ServiceOption) => ({
+            id: service.id,
+            name: service.name
+          }))
+          setServiceOptions(formatted)
+        } catch (err) {
+          console.error(err)
+        }
       }
-    }
-    const fetchCategories = async (params: Record<string, string | number | boolean>) => {
-      try {
-        const url = new URL('http://localhost:5000/api/admin/categories')
-        Object.entries(params).forEach(([k, v]) => {
-          if (v !== undefined && v !== null) url.searchParams.append(k, String(v))
-        })
-
-        const res = await fetch(url.toString(), { method: 'GET' })
-        if (!res.ok) throw new Error('Failed to fetch categories')
-        const data = await res.json()
-        console.log('categories api response:', data)
-        const formatted: CategoryOption[] = data.data.map((category: Category) => ({
-          id: category._id,
-          name: category.name
-        }))
-        setCategoryOptions(formatted)
-      } catch (err) {
-        console.error(err)
-      }
-    }
+      
+    const fetchCategories= async () => {
+            try {
+              const res = await getCategories({type: 'place'});
+              const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
+              const formatted: CategoryOption[] = (list || []).map((category) => ({
+                id: category._id,
+                name: category.name,
+              }));
+              setCategoryOptions(formatted);
+            } catch (err) {
+              console.error("fetch categories error:", err);
+            }
+          };
     fetchServices()
-    fetchCategories({ type: 'place' })
+    fetchCategories()
     fetchWards()
   }, [])
   return (
-
     <Dialog open={open} onOpenChange={setOpen} >
-      <DialogContent className="max-w-2xl max-h-[100vh] flex flex-col p-0 bg-gradient-to-br from-blue-100 via-blue-50 to-white shadow-2xl border border-blue-300 rounded-2xl">
-        <div className="absolute top-[30%] -left-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#FFB226] blur-[15vw] opacity-70 z-[-1]"></div>
-        <div className="absolute -top-[20%] -right-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[white] blur-[15vw] opacity-70 z-[-1]"></div>
-        <div className="absolute -bottom-[20%] -left-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#307AFD] blur-[15vw] opacity-70 z-[-1]"></div>
-        <div className="absolute bottom-[20%] -right-[10%] w-[50vw] h-[50vh] sm:h-[15vw] rounded-full bg-[#307AFD] blur-[15vw] opacity-70 z-[-1]"></div>
-        <DialogHeader className="p-8 border-b border-blue-200 rounded-t-2xl bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md">
-          <DialogTitle className="text-2xl font-bold tracking-wide">Thêm địa điểm du lịch</DialogTitle>
-          <DialogDescription className="mt-2 text-base text-blue-100">
+      <DialogContent className="w-[95vw] max-w-2xl sm:max-h-[90vh] max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-blue-100 via-blue-50 to-white shadow-2xl border border-blue-300 rounded-2xl">
+        <DialogHeader className="p-6 sm:p-8 border-b border-blue-200 rounded-t-2xl bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md">
+          <DialogTitle className="text-xl sm:text-2xl font-bold tracking-wide">Thêm địa điểm du lịch</DialogTitle>
+          <DialogDescription className="mt-2 text-sm sm:text-base text-blue-100">
             Hãy điền đầy đủ thông tin để quảng bá điểm du lịch của bạn.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <Form {...form} >
             <form onSubmit={form.handleSubmit(onSubmit)} >
-              <div className="mt-6 space-y-8"></div>
+              <div className="mt-2 sm:mt-6 space-y-6 sm:space-y-8"></div>
               <FormField
                 control={form.control}
                 name="username"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <FormLabel className="text-base font-semibold text-black  ">Tên địa điểm</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8">
+                    <FormLabel className="text-sm sm:text-base font-semibold text-black">Tên địa điểm</FormLabel>
                     <FormControl>
-                      <Input placeholder="DuDi" {...field} className="block min-w-0 grow py-2 px-3 text-base text-black placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
+                      <Input placeholder="VD: DuDi" {...field} className="w-full py-2 sm:py-3 sm:text-base px-3 text-sm text-black placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
                     </FormControl>
                     <FormDescription>
                     </FormDescription>
@@ -336,10 +264,10 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <FormLabel className="text-base font-semibold text-black">Mô tả địa điểm</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8">
+                    <FormLabel className="text-sm sm:text-base font-semibold text-black">Mô tả địa điểm</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="col-end-3 block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
+                      <Input placeholder="Mô tả địa điểm du lịch của bạn" {...field} className="w-full py-2 sm:py-3 px-3 text-sm sm:text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
                     </FormControl>
                     <FormDescription>
                     </FormDescription>
@@ -352,10 +280,10 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 control={form.control}
                 name="address"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <FormLabel className="text-base font-semibold text-black">Địa chỉ</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8">
+                    <FormLabel className="text-sm sm:text-base font-semibold text-black">Địa chỉ</FormLabel>
                     <FormControl>
-                      <Input placeholder="39 đường số 14" {...field} className="block min-w-0 grow py-2 px-3 text-base text-blue-900 placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
+                      <Input placeholder="39 đường số 14" {...field} className="block min-w-0 grow py-2 sm:py-3 px-3 text-sm sm:text-base text-black placeholder:text-gray-400 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 shadow-sm transition-all" />
                     </FormControl>
                     <FormDescription>
                     </FormDescription>
@@ -364,33 +292,34 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 )}
               />
 
-
-
               <FormField
                 control={form.control}
                 name="ward"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <FormLabel className="text-base font-semibold text-black">Phường</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8">
+                    <FormLabel className="text-sm sm:text-base font-semibold text-black">Phường</FormLabel>
                     <FormControl>
-                      <Popover open={wardOpen} onOpenChange={setWardOpen}>
+                      <Popover open={wardOpen} onOpenChange={setWardOpen} >
                         <PopoverTrigger asChild>
                           <Button
                             role="combobox"
                             aria-expanded={wardOpen}
-                            className="w-full justify-between bg-blue-100 border border-blue-300 text-gray-400 rounded-lg shadow-sm hover:bg-blue-200 focus:ring-2 focus:ring-blue-400 transition-all"
+                            className="w-full justify-between bg-blue-50 border border-blue-300 text-black rounded-lg shadow-sm hover:bg-blue-200 focus:ring-2 focus:ring-blue-400 transition-all"
                           >
                             {wardValue
                               ? options.find((option) => option.value === wardValue)?.label
-                              : "Phường"}
+                              : <span className="text-gray-400">Chọn phường</span>}
                             <ChevronsUpDown className="opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full min-w-[450px] p-0 bg-white border border-blue-300 rounded-lg shadow-lg">
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-[90vw] p-0 bg-white border border-blue-300 rounded-lg shadow-lg" onWheel={(e) => {
+                          e.stopPropagation();
+                        }}>
+
                           <Command className="bg-blue-50">
                             <CommandInput
                               placeholder="Chọn phường"
-                              className="h-10 px-3 py-2 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                              className="h-10 px-3 py-2 rounded-lg text-black "
                               value={wardSearch}
                               onValueChange={setWardSearch}
                             />
@@ -438,32 +367,48 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 control={form.control}
                 name="items"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <div className="mb-4">
-                      <FormLabel className="text-base font-semibold text-black">Dịch vụ nổi bật</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8 ">
+                    <div className="mb-3 sm:mb-4">
+                      <FormLabel className=" text-sm sm:text-base font-semibold text-black">Dịch vụ nổi bật</FormLabel>
                       <FormDescription className="text-xs text-blue-500">
                         Chọn dịch vụ bạn muốn để hiển thị.
                       </FormDescription>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {serviceOptions.map((item) => (
-                        <div key={item.id} className="flex flex-row items-center gap-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 hover:bg-blue-100 transition-all">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, item.id])
-                                  : field.onChange(
-                                    field.value?.filter((value) => value !== item.id)
-                                  )
-                              }}
-                              className="accent-blue-500 focus:ring-2 focus:ring-blue-400"
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm font-normal text-black">{item.name}</FormLabel>
-                        </div>
-                      ))}
+                    <div className="max-h-60 sm:max-h-72 md:max-h-80 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 ">
+                      {serviceOptions.map((item) => {
+                        const checkboxId = `service-checkbox-${item.id}`;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex flex-row items-center gap-2 bg-blue-50 rounded-lg px-3 py-2 sm:py-3 border border-blue-100 hover:bg-blue-100 transition-all"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                id={checkboxId}
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = Array.isArray(field.value) ? field.value : [];
+                                  return checked
+                                    ? field.onChange([...currentValues, item.id])
+                                    : field.onChange(
+                                      currentValues.filter((value) => value !== item.id)
+                                    )
+                                }}
+                                className="accent-blue-500 focus:ring-2 focus:ring-blue-400 "
+                              />
+                            </FormControl>
+                            <FormLabel
+                              htmlFor={checkboxId}
+                              className="text-sm font-normal text-black cursor-pointer"
+                            >
+                              {item.name}
+                            </FormLabel>
+                          </div>
+                        );
+                      })}
+                      </div>
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -475,10 +420,10 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                   control={form.control}
                   name="messages"
                   render={({ field }) => (
-                    <FormItem className="mt-8">
-                      <FormLabel className="text-base font-semibold text-black">Thêm yêu cầu, góp ý, dịch vụ khác</FormLabel>
+                    <FormItem className="mt-6 sm:mt-8">
+                      <FormLabel className="text-sm sm:text-base font-semibold text-black">Thêm yêu cầu, góp ý, dịch vụ khác</FormLabel>
                       <FormControl>
-                        <textarea {...field} id="message" rows={4} className="block p-3 w-full text-sm text-blue-900 bg-blue-50 rounded-lg border border-blue-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 placeholder:text-blue-300" placeholder="Nhập yêu cầu, góp ý, dịch vụ khác..." />
+                        <textarea {...field} id="message" rows={4} className="block p-3 w-full text-sm text-black bg-blue-50 rounded-lg border border-blue-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 placeholder:text-gray-400" placeholder="Nhập yêu cầu, góp ý, dịch vụ khác..." />
                       </FormControl>
                       <FormDescription>
                       </FormDescription>
@@ -492,27 +437,29 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
-                    <FormLabel className="text-base font-semibold text-black">Danh mục</FormLabel>
+                  <FormItem className="mt-6 sm:mt-8">
+                    <FormLabel className="text-sm sm:text-base font-semibold text-black">Danh mục</FormLabel>
                     <FormControl>
                       <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             role="combobox"
                             aria-expanded={categoryOpen}
-                            className="w-[220px] justify-between bg-blue-100 border border-blue-300 text-black rounded-lg shadow-sm hover:bg-blue-200 focus:ring-2 focus:ring-blue-400 transition-all"
+                            className="w-full justify-between bg-blue-50 border border-blue-300 text-black rounded-lg shadow-sm hover:bg-blue-200 focus:ring-2 focus:ring-blue-400 transition-all"
                           >
                             {categoryValue
                               ? categoryOptions.find((opt) => opt.id === categoryValue)?.name
-                              : "Chọn danh mục"}
+                              : <span className="text-gray-400">Chọn danh mục</span>}
                             <ChevronsUpDown className="opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[220px] p-0 bg-white border border-blue-300 rounded-lg shadow-lg">
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-[90vw] p-0 bg-white border border-blue-300 rounded-lg shadow-lg" onWheel={(e) => {
+                          e.stopPropagation();
+                        }} >
                           <Command className="bg-blue-50">
                             <CommandInput
                               placeholder="Chọn danh mục"
-                              className="h-10 px-3 py-2 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                              className="bg-blue-50 text-blue-900 max-h-[40vh] overflow-y-auto"
                             />
                             <CommandList className="bg-blue-50 text-blue-900 max-h-48 overflow-y-auto">
                               <CommandEmpty>Không tìm thấy.</CommandEmpty>
@@ -522,7 +469,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                                     key={opt.id}
                                     value={opt.id}
                                     onSelect={(currentValue) => {
-                                      field.onChange(opt.id) // gán objectId cho field
+                                      field.onChange(opt.id)
                                       setCategoryValue(currentValue === categoryValue ? "" : opt.id)
                                       setCategoryOpen(false)
                                     }}
@@ -556,38 +503,40 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                 control={form.control}
                 name="images"
                 render={({ field }) => {
-                  const files = field.value ? Array.from(field.value) : [];
+                  const files = Array.isArray(field.value) ? field.value : [];
 
                   return (
-                    <FormItem className="mt-8">
-                      <FormLabel className="text-base font-semibold text-black">Thêm hình ảnh</FormLabel>
+                    <FormItem className="mt-6 sm:mt-8">
+                      <FormLabel className="text-sm sm:text-base font-semibold text-black">Thêm hình ảnh</FormLabel>
                       <FormControl>
                         <div
-                          className="mt-2 flex justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 px-8 py-12 w-full cursor-pointer hover:bg-blue-100 transition-all"
-                          onClick={() => document.getElementById("file-upload")?.click()}
+                          className="mt-2 flex justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 px-4 py-6 w-full cursor-pointer hover:bg-blue-100 transition-all"
+                          onClick={() => fileInputRef.current?.click()} // use ref
                         >
                           <input
-                            id="file-upload"
+                            ref={fileInputRef}
                             type="file"
                             multiple
                             accept="image/*"
                             className="hidden"
                             onChange={(e) => {
-                              const newFiles = e.target.files ? Array.from(e.target.files) : [];
-                              const oldFiles = field.value ? Array.from(field.value) : [];
-                              field.onChange([...oldFiles, ...newFiles]);
+                              const selected = e.target.files ? Array.from(e.target.files) : [];
+                              const merged = [...files, ...selected];
+                              field.onChange(merged);
+                              // allow re-selecting the same files
+                              e.currentTarget.value = "";
                             }}
                           />
 
                           {files.length > 0 ? (
-                            <div className="grid grid-cols-3 gap-6 w-full">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 sm:gap-4 w-full">
                               {/* Preview ảnh */}
                               {files.map((file, index) => (
                                 <div key={index} className="relative group">
                                   <img
                                     src={URL.createObjectURL(file)}
                                     alt={file.name}
-                                    className="h-28 w-full rounded-lg object-cover shadow-md border border-blue-200"
+                                    className="h-24 sm:h-28 md:h-32 w-full rounded-lg object-cover shadow-md border border-blue-200"
                                   />
                                   <p className="text-xs text-center mt-1 truncate text-black">{file.name}</p>
 
@@ -599,9 +548,9 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                                       const updated = files.filter((_, i) => i !== index);
                                       field.onChange(updated);
                                     }}
-                                    className="absolute top-1 right-1 bg-blue-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                    className="absolute  top-1 right-1 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                                   >
-                                    ✕
+                                    <IoCloseOutline className="h-12 w-12" />
                                   </button>
                                 </div>
                               ))}
@@ -609,7 +558,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                           ) : (
                             <div className="text-center">
                               <PhotoIcon aria-hidden="true" className="mx-auto size-14 text-blue-300" />
-                              <div className="mt-4 flex text-sm text-blue-600 justify-center">
+                              <div className="mt-3 sm:mt-4 flex text-xs sm:text-sm text-blue-600 justify-center">
                                 <span>Nhấn hoặc kéo thả ảnh vào đây</span>
                               </div>
                               <p className="text-xs text-blue-400">PNG, JPG — tối đa 5MB</p>

@@ -5,7 +5,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Lege
 import type { Plugin, LinearScale as LinearScaleType } from 'chart.js';
 import Image from 'next/image';
 import { FaChevronDown } from 'react-icons/fa';
-import { placeApi } from '@/lib/place/placeApi';
+import { getAllDestinations } from '@/lib/place/destinationApi';
 import { checkinApi } from '@/lib/checkin/checkinApi';
 import { Ward } from '@/types/place';
 
@@ -46,7 +46,7 @@ export default function ScoreSection() {
     const fetchData = async () => {
       try {
         const [placeList, checkinList] = await Promise.all([
-          placeApi.getAll(),
+          getAllDestinations(),
           checkinApi.getUserCheckins(),
         ]);
         setPlaces(Array.isArray(placeList) ? placeList : []);

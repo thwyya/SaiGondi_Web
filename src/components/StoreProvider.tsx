@@ -1,16 +1,24 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider } from 'react-redux';
 import { store } from '@/store';
-import { setInitialState } from '@/store/slices/authSlice';
+import { fetchCurrentUser, finishInitialLoad, setInitialState } from '@/store/slices/authSlice';
+import { useAppDispatch } from '@/store/hooks';
 
 function AppInitializer({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    dispatch(setInitialState({ token }));
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    if (accessToken && refreshToken) {
+      dispatch(setInitialState({ accessToken, refreshToken }));
+      dispatch(fetchCurrentUser()); 
+    } else {
+      dispatch(finishInitialLoad());
+    }
   }, [dispatch]);
 
   return <>{children}</>;

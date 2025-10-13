@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from 'next/link';
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
@@ -14,18 +13,23 @@ import { blogApi } from "@/lib/blog/blogApi";
 import { Blog } from "@/types/blog";
 import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
 import { Post } from "@/types/post";
-import PostCard from "@/components/PostCard";
-import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi } from "lucide-react";
+import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
-
-import useUser from "@/hooks/useUser";
 import Button from '@/components/ui/Button';
 import { IoChatbubbles } from 'react-icons/io5';
 import { HiLocationMarker } from 'react-icons/hi';
-import { ServiceOption } from "../addPlaceForm";
 import { useDispatch, useSelector } from "react-redux";
 import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
 import { updateUser } from "@/store/slices/authSlice";
+import { Category } from "@/types/category";
+import { categoryApi } from "@/lib/category/categoryApi";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -42,6 +46,7 @@ const DestinationDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [ward, setWard] = useState<Ward | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
   const [servicesData, setServicesData] = useState<{ id: string, name: string }[]>([]);
@@ -56,28 +61,52 @@ const DestinationDetail = () => {
     "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
   };
 
-  const isFavorited = user?.favorites?.includes(destination?._id);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    console.log("[Debug] Running favorite check. User:", user);
+    console.log("[Debug] Running favorite check. Destination:", destination);
+    if (user && destination?._id) {
+      const favoriteIds = (user.favorites || []).map((fav: any) =>
+        typeof fav === "object" && fav !== null ? fav._id : fav
+      );
+      console.log("[Debug] Favorite IDs from user object:", favoriteIds);
+      console.log("[Debug] Current destination ID:", destination._id);
+      const isCurrentlyFavorited = favoriteIds.includes(destination._id);
+      console.log("[Debug] Is favorited?", isCurrentlyFavorited);
+      setIsFavorited(isCurrentlyFavorited);
+    } else {
+      setIsFavorited(false);
+    }
+  }, [user, destination]);
 
   const handleFavoriteClick = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       alert("Vui lòng đăng nhập để yêu thích địa điểm.");
-      router.push("/auth/login");
+      router.push('/auth/login');
       return;
     }
     if (!destination) return;
+
+    const previousIsFavorited = isFavorited;
+    setIsFavorited(!previousIsFavorited); // Optimistic UI update
+
     try {
-      let updatedFavorites;
-      if (isFavorited) {
-        await removeFromFavorites(destination._id);
-        updatedFavorites = user.favorites.filter((favId: any) => favId !== destination._id);
+      let response;
+      if (previousIsFavorited) {
+        response = await removeFromFavorites(destination._id);
       } else {
-        await addToFavorites(destination._id);
-        updatedFavorites = [...user.favorites, destination._id];
+        response = await addToFavorites(destination._id);
       }
-      dispatch(updateUser({ favorites: updatedFavorites }));
+      // Assuming the API returns the updated user object with a favorites field
+      if (response && response.data && response.data.favorites) {
+        dispatch(updateUser({ favorites: response.data.favorites }));
+      }
+
     } catch (error) {
-      console.error("Failed to update favorite status:", error);
-      alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+      setIsFavorited(previousIsFavorited); // Revert UI on error
+      console.error("Failed to update favorite status", error);
+      alert("Đã xảy ra lỗi khi cập nhật yêu thích. Vui lòng thử lại.");
     }
   };
 
@@ -101,6 +130,15 @@ const DestinationDetail = () => {
               ? place.images[0]
               : "/image.svg";
             setCurrentMainImage(initialImage);
+
+            if (place.category) {
+              try {
+                const categoryRes = await categoryApi.getById(place.category);
+                setCategory(categoryRes.data || categoryRes.category || categoryRes);
+              } catch (e) {
+                console.error("Failed to fetch category", e);
+              }
+            }
 
             // Fetch blogs by place ID
             const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
@@ -258,14 +296,22 @@ const DestinationDetail = () => {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div >
             <h1 className="text-3xl font-bold text-gray-800">
               {destination.name}
             </h1>
-            <div className="flex items-center gap-2 text-blue-600 mt-2">
-              <i className="ri-map-pin-2-fill"></i>
-              <span>{ward?.name || '...'}</span>
+            <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+              <div className="flex items-center gap-1.5">
+                <i className="ri-map-pin-2-fill text-blue-500"></i>
+                <span>{ward?.name || '...'}</span>
+              </div>
+              {category && (
+                <div className="flex items-center gap-1.5">
+                  <i className="ri-folder-line text-blue-500"></i>
+                  <span>{category.name}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-2">
               <span className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold">
@@ -295,7 +341,7 @@ const DestinationDetail = () => {
               </button>
 
               {showSharePopup && (
-                <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-xl border z-50">
+                <div className="absolute right-0 mt-2 w-64 sm:w-72 max-w-[90vw] bg-white shadow-lg rounded-xl border z-50">
                   <div className="p-4">
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">
                       Chia sẻ địa điểm
@@ -363,13 +409,13 @@ const DestinationDetail = () => {
           {/* Top Section: Main Image + Introduction */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Left: Main Image */}
-            <div>
+            <div className="relative w-full aspect-[3/2] sm:aspect-[4/3] lg:aspect-[3/2]">
               <Image
                 src={displayImage}
                 alt={destination.name}
-                width={600}
-                height={400}
-                className="w-[600px] h-[420px] object-cover rounded-lg"
+                fill
+                sizes="(min-width:1024px) 50vw, 100vw"
+                className="object-cover rounded-lg"
               />
             </div>
 
@@ -419,64 +465,50 @@ const DestinationDetail = () => {
           </div>
 
           {/* Bottom Section: Additional Images */}
-          <div className="grid grid-cols-8 md:grid-cols-8 gap-4 w-full">
-            {/* First image (main image) - clickable */}
-            {Array.isArray(destination.images) && destination.images.length > 0 && (
-              <div
-                onClick={() => handleImageClick(destination.images![0])}
-                className={`cursor-pointer transition-all w-40  duration-200 hover:opacity-80 ${currentMainImage === destination.images![0] ? 'ring-2 ring-blue-400' : ''
-                  }`}
-              >
-                <Image
-                  src={destination.images[0] || "/image.svg"}
-                  alt={`Ảnh 1 của ${destination.name}`}
-                  width={300}
-                  height={200}
-                  className="w-full h-32 object-cover rounded-lg p-1.5"
-                />
-              </div>
-            )}
+          <div className="relative overflow-hidden">
+            {/* Edge gradients */}
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white/90 to-transparent z-10 hidden sm:block" />
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white/90 to-transparent z-10 hidden sm:block" />
+            <Carousel opts={{
+              align: "start",
+            }}
+              className="w-full ">
+              <CarouselContent className="gap-4">
+                {/* First image (main image) - clickable */}
+                {Array.isArray(destination.images) && destination.images.length > 0 && (
+                  destination.images.slice(0, 20).map((img, idx) => (
+                    
+                    <CarouselItem
+                      key={idx}
+                      onClick={() => handleImageClick(img)}
+                      className={` basis-[128px] sm:basis-[144px] lg:basis-[160px]  relative aspect-[4/3] overflow-hidden rounded-lg bg-white hover:opacity-80  transition ${currentMainImage === img ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-200'
+                        }`}
+                      aria-label={`Ảnh ${idx + 1} của ${destination.name}`}
+                    >
+                      <Image
+                        src={img || "/image.svg"}
+                        alt={`Ảnh ${idx + 1} của ${destination.name}`}
+                        fill
+                        sizes="(min-width:1024px) 160px, (min-width:768px) 144px, 128px"
+                        className="object-cover rounded-md"
+                      />
+                      
+                    </CarouselItem>
+                  ))
+                )}
+              </CarouselContent>
+            <CarouselPrevious
+              className="flex absolute left-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+            >
+              <ChevronLeft className="mx-auto w-4 h-4" />
+            </CarouselPrevious>
 
-            {/* Secondary images - clickable */}
-            {Array.isArray(destination.images) &&
-              destination.images.slice(1, 10).map((img, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleImageClick(img)}
-                  className={`cursor-pointer transition-all w-40 duration-200 hover:opacity-80 ${currentMainImage === img ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                >
-                  <Image
-                    src={img || "/image.svg"}
-                    alt={`Ảnh ${idx + 2} của ${destination.name}`}
-                    width={300}
-                    height={200}
-                    className="w-full h-32 object-cover rounded-lg p-1.5"
-                  />
-                </div>
-              ))}
-
-            {/* {Array.isArray(destination.images) &&
-              destination.images.length > 5 && (
-                <div className="relative">
-                  <div
-                    onClick={() => handleImageClick(destination.images![5])}
-                    className={`cursor-pointer transition-all duration-200 hover:opacity-80 ${currentMainImage === destination.images![5] ? 'ring-2 ring-blue-500' : ''
-                      }`}
-                  >
-                    <Image
-                      src={destination.images[5]}
-                      alt="Xem thêm"
-                      width={300}
-                      height={200}
-                      className="w-full h-32 object-cover rounded-lg p-1.5 opacity-70"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center text-white font-semibold rounded-lg">
-                      Xem thêm
-                    </div>
-                  </div>
-                </div>
-              )} */}
+            <CarouselNext
+              className="flex absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+            >
+              <ChevronRight className="mx-auto w-4 h-4" />
+            </CarouselNext>
+            </Carousel>
           </div>
         </div>
 
@@ -490,7 +522,7 @@ const DestinationDetail = () => {
             src={`https://www.google.com/maps?q=${destination.location?.coordinates?.[1] ?? destination.lat},${destination.location?.coordinates?.[0] ?? destination.lng}&hl=vi&z=16&output=embed`}
             width="100%"
             height="400"
-            className="rounded-lg border"
+            className="w-full h-64 sm:h-80 md:h-96 rounded-lg border"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />

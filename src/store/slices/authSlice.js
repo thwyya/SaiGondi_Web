@@ -1,16 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { userApi } from '@/lib/user/userApi';
 
 // Thunk to get the current user's information from the token
 export const fetchCurrentUser = createAsyncThunk(
   'auth/fetchCurrentUser',
   async (_, thunkAPI) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return res.data.data;
+      // Use the centralized userApi to fetch the user profile
+      const user = await userApi.getMe();
+      return user;
     } catch (err) {
       console.error("🔥 Error fetching user", err);
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -22,32 +20,39 @@ export const fetchCurrentUser = createAsyncThunk(
 // Initialize state
 const initialState = {
   user: null,
-  token: null,
+  accessToken: null,
+  refreshToken: null,
   isAuthenticated: false,
-  isLoading: true, // Start with loading true
+  isLoading: true,
   error: null,
 };
+
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     setInitialState(state, action) {
-      state.token = action.payload.token;
-      state.isAuthenticated = !!action.payload.token;
+      state.accessToken = action.payload.accessToken || null;
+      state.refreshToken = action.payload.refreshToken || null;
+      state.isAuthenticated = !!action.payload.accessToken;
       state.isLoading = false;
     },
     login(state, action) {
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.accessToken = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
-      localStorage.setItem('token', action.payload.token); 
+      localStorage.setItem('accessToken', action.payload.accessToken);
+      localStorage.setItem('refreshToken', action.payload.refreshToken);
     },
     logout(state) {
-      state.user = null;
-      state.token = null;
-      state.isAuthenticated = false;
-      localStorage.removeItem('token');
+      Object.assign(state, initialState, { isLoading: false });
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    },
+    finishInitialLoad(state) {
+      state.isLoading = false;
     },
     updateUser(state, action) {
       if (state.user) {
@@ -62,21 +67,18 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.user = action.payload; // ✅ Payload is user directly
+        state.user = action.payload;
         state.isAuthenticated = true;
         state.isLoading = false;
-        localStorage.setItem('user', JSON.stringify(action.payload));
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
-        state.user = null;
-        state.token = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        state.error = action.payload;
-        localStorage.removeItem('token');
+        Object.assign(state, initialState, { isLoading: false, error: action.payload });
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       });
   },
 });
 
-export const { setInitialState, login, logout, updateUser } = authSlice.actions;
+
+export const { setInitialState, login, logout, updateUser, finishInitialLoad } = authSlice.actions;
 export default authSlice.reducer;
