@@ -6,6 +6,7 @@ export interface Post {
   categories: string[];
   tags: string[];
   author: string;
+  authorId: string;
   authorAvatar: string;
   date: string;
   address: string;

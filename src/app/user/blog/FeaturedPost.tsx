@@ -28,7 +28,6 @@ export default function FeaturedPost({ posts }: { posts: Post[] }) {
   const previewText =
     post.content.find((c) => c.type === "text")?.value?.slice(0, 200) ||
     "Không có nội dung";
-
   return (
     <section className="w-full bg-[var(--background)] pt-16">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 px-4">

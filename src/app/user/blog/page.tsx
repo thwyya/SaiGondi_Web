@@ -32,7 +32,7 @@ export default function BlogPage() {
     }
     fetchBlogs();
   }, []);
-  
+  console.log("Featured posts state:", featuredPosts);
   return (
     <main className="relative overflow-hidden">
       {/* blur */}
