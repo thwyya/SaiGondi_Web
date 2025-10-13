@@ -32,11 +32,12 @@ const LocationCard = ({
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow-md overflow-hidden ${widthClass} transition duration-300`}
+      className={`bg-white rounded-2xl shadow-md overflow-hidden ${widthClass} 
+        transition duration-300 hover:shadow-lg hover:scale-105`}
     >
-      <div className="pt-1 ">
+      <div className='boder boder-white p-0.75'>
         <div
-          className="relative w-full overflow-hidden rounded-xl"
+          className="relative w-full h-full overflow-hidden rounded-xl"
           style={{ height: `${imageHeight}px` }}
         >
           <Image
@@ -49,7 +50,7 @@ const LocationCard = ({
         </div>
       </div>
 
-      <div className="p-2">
+      <div className="p-3">
         <h3 className="font-semibold text-sm text-[var(--black-1)] mb-1">
           {title}
         </h3>

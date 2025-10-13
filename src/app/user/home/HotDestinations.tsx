@@ -60,25 +60,30 @@ const HotDestinations = () => {
           {limitedDestinations.map((item) => (
             <div
               key={item.placeId}
-              className="flex flex-col h-full rounded-2xl bg-white/10 backdrop-blur-[12px] shadow-lg hover:shadow-xl transition border-2 border-white overflow-hidden"
+              className="flex flex-col h-full rounded-2xl bg-[#F0F0F0]/45 backdrop-blur-[12px] shadow-lg hover:shadow-xl transition border-2 border-white overflow-hidden"
             >
-              <div className="w-full aspect-[4/3] flex justify-center items-center">
+              <div className="w-full aspect-[4/3] overflow-hidden flex justify-center items-center">
                 <Image
                   src={item.image || '/hot-destination.svg'}
                   alt={item.name}
                   width={350}
                   height={150}
-                  className="object-cover rounded-3xl"
+                  className="object-cover rounded-2xl w-full h-full"
                 />
               </div>
 
               <div className="flex flex-col justify-between flex-1 p-4 sm:p-5">
                 <div className="space-y-1.5 sm:space-y-2.5">
-                  <p className="text-[11px] sm:text-xs text-[var(--gray-3)] flex items-center gap-1">
+                  <p className="text-[11px] sm:text-xs text-[var(--gray-3)] flex items-center gap-1 line-clamp-1 leading-snug"
+                    title={item.address}
+                  >
                     <HiLocationMarker className="w-3.5 h-3.5 text-[var(--primary)]" />
                     {item.address}
                   </p>
-                  <h3 className="text-sm sm:text-base font-bold text-[var(--black-1)]">
+                  <h3
+                    className="text-sm sm:text-base font-bold text-[var(--black-1)] line-clamp-1 leading-snug"
+                    title={item.name}
+                  >
                     {item.name}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-[var(--gray-3)]">

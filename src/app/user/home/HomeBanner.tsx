@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import React from 'react';
 import LocationCard from '@/components/cards/LocationCard';
+import { motion } from 'framer-motion';
 
 type Loc = {
   title: string;
@@ -17,7 +18,7 @@ type Loc = {
 const locations: Loc[] = [
   {
     title: 'Phố đi bộ',
-    district: 'Quận 1',
+    district: 'Phường Sài Gòn',
     image: '/pdb.svg',
     size: 'small',
     height: 75,
@@ -26,17 +27,17 @@ const locations: Loc[] = [
   },
   {
     title: 'Dinh độc lập',
-    district: 'Quận 5',
-    image: '/pdb.svg',
+    district: 'Phường Bến Thành',
+    image: '/ddl.svg',
     size: 'medium',
     height: 90,
-    position: 'top-[450px] left-[490px]',
-    positionMobile: 'top-[240px] left-[40px]',
+    position: 'top-[450px] left-[450px]',
+    positionMobile: 'top-[240px] left-[30px]',
   },
   {
     title: 'Nhà thờ Đức Bà',
-    district: 'Quận 1',
-    image: '/ntdb.svg',
+    district: 'Phường Sài Gòn',
+    image: '/nhatho.svg',
     size: 'large',
     height: 120,
     position: 'bottom-[50px] left-[60px]',
@@ -59,14 +60,19 @@ const HomeBanner = () => {
           </div>
 
           <div className="flex-1 relative flex items-center justify-center min-h-[360px] md:min-h-[520px]">
-            <Image
-              src="/banner.svg"
-              alt="Decorative Circle"
-              width={650}
-              height={650}
-              className="z-0 w-[340px] sm:w-[440px] md:w-[650px]"
-              priority
-            />
+            <motion.div              
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
+            >
+              <Image
+                src="/banner.svg"
+                alt="Decorative Circle"
+                width={650}
+                height={650}
+                className="z-0 w-[340px] sm:w-[440px] md:w-[650px]"
+                priority
+              />
+            </motion.div>
             <div
               className="
                 absolute z-10 bg-white p-2 rounded-full shadow-md
@@ -80,11 +86,12 @@ const HomeBanner = () => {
               <Image src="/camera.svg" alt="Camera Icon" width={34} height={34} />
             </div>
 
-            <div className="absolute bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow text-gray-700 font-inter text-xs md:text-sm z-10 top-[70px] right-[30px] md:top-[90px] md:right-[60px]">
-              Quận 9
+            <div className="absolute bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow text-gray-700 font-inter text-xs md:text-sm z-10 top-[70px] right-[20px] md:top-[90px] md:right-[40px]
+            transition duration-300 hover:shadow-lg hover:scale-105">
+              Phường Thủ Đức
             </div>
 
-            <div className="absolute inset-0 pointer-events-none transform scale-90 md:scale-100">
+            <div className="absolute inset-0 pointer-events-auto transform scale-90 md:scale-100">
               {locations.map((loc, index) => (
                 <div
                   key={index}
