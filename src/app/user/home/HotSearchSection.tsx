@@ -106,7 +106,11 @@ const HotSearchSection = () => {
               2xl:bottom-[5px] 2xl:left-62 2xl:w-[360px] 2xl:h-[440px] 2xl:translate-y-14 
             "
           >
-            <Image src="/city-2.svg" alt="City 2" fill className="object-cover" />
+            <div className="relative w-full h-full rounded-2xl bg-white p-[15px] shadow-xl">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                <Image src="/city-2.svg" alt="City 2" fill className="object-cover rounded-2xl" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
