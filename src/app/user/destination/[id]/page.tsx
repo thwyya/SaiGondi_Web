@@ -715,6 +715,10 @@ const DestinationDetail = () => {
                   const authorAvatar = post.authorAvatar;
                   const postTitle = post.title || 'Untitled Post';
                   const postWard = post.ward || 'Unknown Location';
+                  const authorName = post.author;
+                  const authorAvatar = post.authorAvatar;
+                  const postTitle = post.title || 'Untitled Post';
+                  const postWard = post.ward || 'Unknown Location';
 
                   return (
                     <Link key={post.id} href={`/user/blog/${post.slug}`} className="group">

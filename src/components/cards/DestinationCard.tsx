@@ -77,14 +77,24 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
     }
   };
 
+  const handleViewDetailClick = () => {
+    if (_id) {
+      router.push(`/user/destination/${_id}`);
+    }
+  };
+
   return (
-    <div key={user?._id} className="flex flex-col h-full rounded-2xl bg-white/10 backdrop-blur-[12px] shadow-lg hover:shadow-xl transition border-2 border-white overflow-hidden">
-      <div className="relative w-full aspect-[4/3] top-2">
-        <Image src={image} alt={title} fill className="object-cover rounded-3xl" />
+    <div 
+      key={user?._id} 
+      className="flex flex-col h-full rounded-2xl bg-white/10 backdrop-blur-[12px] shadow-lg hover:shadow-xl transition border-2 border-white overflow-hidden cursor-pointer"
+      onClick={handleViewDetailClick}
+    >
+        <div className="relative w-full aspect-[4/3] ">
+        <Image src={image} alt={title} fill className="object-cover rounded-3xl p-3" />
         {/* Favorite Button */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md"
+          className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-md z-10 hover:scale-110 transition-transform"
         >
           <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-lg`}></i>
         </button>
@@ -92,13 +102,13 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
       <div className="flex flex-col justify-between flex-1 p-4 sm:p-5">
         <div className="space-y-1.5 sm:space-y-2.5">
           <p className="text-[11px] sm:text-xs text-[var(--gray-3)] flex items-center gap-1">
-            <HiLocationMarker className="w-4 h-4 text-blue-500" />
-            {location}
+            <HiLocationMarker className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            <span className="truncate">{location}</span>
           </p>
-          <h3 className="text-sm sm:text-lg font-bold text-[var(--black-1)]">
+          <h3 className="text-sm sm:text-lg font-bold text-[var(--black-1)] truncate">
             {title}
           </h3>
-          <p className="text-[11px] sm:text-xs text-[var(--gray-3)]">{distance}</p>
+          
           {(rating !== undefined || totalRatings !== undefined) && (
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
               {rating !== undefined && (
@@ -116,7 +126,10 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
         <div className="mt-3 sm:mt-4">
           <Button
             variant="outline-primary"
-            onClick={handleFavoriteClick}  
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetailClick();
+            }}
             className="bg-[var(--white)] text-[var(--primary)] text-xs sm:text-sm font-medium px-4 py-1.5 w-full justify-center rounded-none border-none"
           >
             XEM CHI TIẾT
