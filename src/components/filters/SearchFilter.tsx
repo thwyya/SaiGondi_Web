@@ -16,6 +16,7 @@ export interface FilterState {
 }
 
 interface SearchFilterProps {
+    filters: Partial<FilterState>;
     filterType: 'all' | 'destinations' | 'blogs';
     onFilterChange: (filters: Partial<FilterState>) => void;
     blogCategories: { id: string; name: string; }[];
@@ -24,6 +25,7 @@ interface SearchFilterProps {
 }
 
 const SearchFilter = ({
+    filters,
     filterType,
     onFilterChange,
     blogCategories,
@@ -34,11 +36,14 @@ const SearchFilter = ({
     const [internalFilterType, setInternalFilterType] = useState(filterType);
     const [isExpanded, setIsExpanded] = useState(true);
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
-    const [filters, setFilters] = useState<Partial<FilterState>>({});
 
     useEffect(() => {
+        // Reset filters when the filter type changes (e.g., switching from "destinations" to "blogs")
+        if (internalFilterType !== filterType) {
+            onFilterChange({});
+        }
         setInternalFilterType(filterType);
-    }, [filterType]);
+    }, [filterType, internalFilterType, onFilterChange]);
 
     useEffect(() => {
         const fetchWards = async () => {
@@ -77,20 +82,11 @@ const SearchFilter = ({
 
     const handleFilterUpdate = (newFilter: Partial<FilterState>) => {
         const updatedFilters = { ...filters, ...newFilter };
-        // Remove undefined keys
-        Object.keys(updatedFilters).forEach(key => {
-            if (updatedFilters[key as keyof FilterState] === undefined) {
-                delete updatedFilters[key as keyof FilterState];
-            }
-        });
-        setFilters(updatedFilters);
         onFilterChange(updatedFilters);
     }
 
     const handleResetFilters = () => {
-        setFilters({});
         onFilterChange({});
-        setActiveFilters([]);
     };
 
     const removeFilter = (filterToRemove: string) => {
@@ -98,23 +94,34 @@ const SearchFilter = ({
 
         if (filters.blogSort === filterToRemove) {
             updatedFilters.blogSort = undefined;
-        } else if (blogCategories.find(c => c.name === filterToRemove)?.id === filters.blogCategory) {
+        }
+        if (blogCategories.find(c => c.name === filterToRemove)?.id === filters.blogCategory) {
             updatedFilters.blogCategory = undefined;
-        } else if (destCategories.find(c => c.name === filterToRemove)?.id === filters.destCategory) {
+        }
+        if (destCategories.find(c => c.name === filterToRemove)?.id === filters.destCategory) {
             updatedFilters.destCategory = undefined;
-        } else if (placeCategories.find(c => c.name === filterToRemove)?.id === filters.placeCategory) {
+        }
+        if (placeCategories.find(c => c.name === filterToRemove)?.id === filters.placeCategory) {
             updatedFilters.placeCategory = undefined;
-        } else if (`${filters.destRating} sao` === filterToRemove) {
+        }
+        if (`${filters.destRating} sao` === filterToRemove) {
             updatedFilters.destRating = undefined;
-        } else if (wards.find(w => w.name === filterToRemove)?._id === filters.destWard) {
+        }
+        if (wards.find(w => w.name === filterToRemove)?._id === filters.destWard) {
             updatedFilters.destWard = undefined;
         }
 
-        handleFilterUpdate(updatedFilters);
+        onFilterChange(updatedFilters);
     };
 
+
     const wardNames = wards.map(w => w.name);
-    const blogSortOptions = ['Bài viết mới nhất', 'Bài viết cũ nhất', 'Tương tác nhiều nhất', 'Tương tác ít nhất'];
+    const blogSortOptions = [
+        { label: 'Bài viết mới nhất', value: 'newest' },
+        { label: 'Bài viết cũ nhất', value: 'createdAt' },
+        { label: 'Tương tác nhiều nhất', value: 'popular' },
+        { label: 'Tương tác ít nhất', value: 'views' }
+    ];
     const destRatingOptions = ['5', '4', '3', '2', '1'].map(r => `${r} sao`);
 
     const FilterSection = ({ title, icon: Icon, gradient, children }: { title: string; icon: any; gradient: string; children: React.ReactNode; }) => (
@@ -164,9 +171,16 @@ const SearchFilter = ({
                 <FilterSection title="Bộ lọc Bài viết" icon={FolderOpen} gradient="bg-gradient-to-br from-blue-400 to-cyan-400">
                     <FilterGroup label="Sắp xếp theo" icon={Calendar}>
                         <FilterDropdown
-                            options={['Chọn thứ tự', ...blogSortOptions]}
-                            value={filters.blogSort || 'Chọn thứ tự'}
-                            onChange={(value) => handleFilterUpdate({ blogSort: value === 'Chọn thứ tự' ? undefined : value })}
+                            options={['Chọn thứ tự', ...blogSortOptions.map(o => o.label)]}
+                            value={blogSortOptions.find(o => o.value === filters.blogSort)?.label || 'Chọn thứ tự'}
+                            onChange={(selectedLabel) => {
+                                if (selectedLabel === 'Chọn thứ tự') {
+                                    handleFilterUpdate({ blogSort: undefined });
+                                } else {
+                                    const selectedValue = blogSortOptions.find(o => o.label === selectedLabel)?.value;
+                                    handleFilterUpdate({ blogSort: selectedValue });
+                                }
+                            }}
                             className={dropdownClassName}
                         />
                     </FilterGroup>
@@ -185,14 +199,6 @@ const SearchFilter = ({
         if (currentType === 'destinations') {
             return (
                 <FilterSection title="Bộ lọc Địa điểm" icon={MapPin} gradient="bg-gradient-to-br from-emerald-500 to-teal-600">
-                    <FilterGroup label="Danh mục điểm đến" icon={FolderOpen}>
-                        <FilterDropdown
-                            options={['Tất cả danh mục', ...destCategories.map(c => c.name)]}
-                            value={destCategories.find(c => c.id === filters.destCategory)?.name || 'Tất cả danh mục'}
-                            onChange={createCategoryHandler('destCategory', destCategories, 'Tất cả danh mục')}
-                            className={dropdownClassName}
-                        />
-                    </FilterGroup>
                     <FilterGroup label="Danh mục địa điểm" icon={FolderOpen}>
                         <FilterDropdown
                             options={['Tất cả danh mục', ...placeCategories.map(c => c.name)]}
@@ -253,9 +259,16 @@ const SearchFilter = ({
                 <FilterSection title="Bộ lọc Bài viết" icon={FolderOpen} gradient="bg-gradient-to-br from-blue-400 to-cyan-400">
                     <FilterGroup label="Sắp xếp theo" icon={Calendar}>
                         <FilterDropdown
-                            options={['Chọn thứ tự', ...blogSortOptions]}
-                            value={filters.blogSort || 'Chọn thứ tự'}
-                            onChange={(value) => handleFilterUpdate({ blogSort: value === 'Chọn thứ tự' ? undefined : value })}
+                            options={['Chọn thứ tự', ...blogSortOptions.map(o => o.label)]}
+                            value={blogSortOptions.find(o => o.value === filters.blogSort)?.label || 'Chọn thứ tự'}
+                            onChange={(selectedLabel) => {
+                                if (selectedLabel === 'Chọn thứ tự') {
+                                    handleFilterUpdate({ blogSort: undefined });
+                                } else {
+                                    const selectedValue = blogSortOptions.find(o => o.label === selectedLabel)?.value;
+                                    handleFilterUpdate({ blogSort: selectedValue });
+                                }
+                            }}
                             className={dropdownClassName}
                         />
                     </FilterGroup>
