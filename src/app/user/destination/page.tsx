@@ -384,7 +384,7 @@ export default function DestinationPage() {
                       setCurrentPage(1);
                     }}
                     options={options}
-                    placeholder="Sắp xếp"
+                    placeholder="Sắp xếp theo"
                     styles={{
                       control: (b, s) => ({
                         ...b,
@@ -396,7 +396,7 @@ export default function DestinationPage() {
                         "&:hover": { borderColor: "#9ca3af" },
                         cursor: "pointer",
                       }),
-                      valueContainer: (b) => ({ ...b, padding: "2px 8px", fontSize: 14, color: "#555" }),
+                      valueContainer: (b) => ({ ...b, padding: "2px 8px", fontSize: 14, color: "#364153" }),
                       menu: (b) => ({ ...b, zIndex: 50 }),
                       option: (b, s) => ({
                         ...b,

@@ -135,9 +135,11 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
           />
         </div>
         <div>
+          <a href={`/user/profile/${comment.userId?._id}`} className="hover:underline">
           <p className="font-semibold pr-12">
             {comment.userId?.firstName || "Ẩn danh"} {comment.userId?.lastName || ""}
           </p>
+          </a>
           <p className="text-sm text-[var(--gray-2)] whitespace-pre-line">{comment.comment}</p>
           {comment.images && comment.images.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

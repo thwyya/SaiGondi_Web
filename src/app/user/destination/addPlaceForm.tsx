@@ -375,19 +375,42 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                       </FormDescription>
                     </div>
                     <div className="max-h-60 sm:max-h-72 md:max-h-80 overflow-y-auto pr-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 ">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 ">
                       {serviceOptions.map((item) => {
                         const checkboxId = `service-checkbox-${item.id}`;
+                        const isChecked = Array.isArray(field.value) && field.value.includes(item.id);
+
+                        const toggle = () => {
+                          const currentValues = Array.isArray(field.value) ? field.value : [];
+                          if (currentValues.includes(item.id)) {
+                            field.onChange(currentValues.filter((v) => v !== item.id));
+                          } else {
+                            field.onChange([...currentValues, item.id]);
+                          }
+                        };
 
                         return (
                           <div
                             key={item.id}
-                            className="flex flex-row items-center gap-2 bg-blue-50 rounded-lg px-3 py-2 sm:py-3 border border-blue-100 hover:bg-blue-100 transition-all"
+                            role="checkbox"
+                            aria-checked={isChecked}
+                            tabIndex={0}
+                            onClick={() => toggle()}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggle();
+                              }
+                            }}
+                            className={cn(
+                              "flex flex-row items-center gap-2 rounded-lg px-3 py-2 sm:py-3 border transition-all",
+                              isChecked ? "bg-blue-100 border-blue-500" : "bg-blue-50 border-blue-100 hover:bg-blue-100"
+                            )}
                           >
-                            <FormControl>
+                            <div onClick={(e) => e.stopPropagation()}>
                               <Checkbox
                                 id={checkboxId}
-                                checked={field.value?.includes(item.id)}
+                                checked={isChecked}
                                 onCheckedChange={(checked) => {
                                   const currentValues = Array.isArray(field.value) ? field.value : [];
                                   return checked
@@ -396,15 +419,10 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                                       currentValues.filter((value) => value !== item.id)
                                     )
                                 }}
-                                className="accent-blue-500 focus:ring-2 focus:ring-blue-400 "
+                                className="accent-blue-500 focus:ring-2 focus:ring-blue-400"
                               />
-                            </FormControl>
-                            <FormLabel
-                              htmlFor={checkboxId}
-                              className="text-sm font-normal text-black cursor-pointer"
-                            >
-                              {item.name}
-                            </FormLabel>
+                            </div>
+                            <span className="text-sm font-normal text-black select-none">{item.name}</span>
                           </div>
                         );
                       })}
@@ -548,9 +566,9 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
                                       const updated = files.filter((_, i) => i !== index);
                                       field.onChange(updated);
                                     }}
-                                    className="absolute  top-1 right-1 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                    className="absolute top-1 right-1 text-white rounded-full  opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-gray-800 bg-gray-500 "
                                   >
-                                    <IoCloseOutline className="h-12 w-12" />
+                                    <IoCloseOutline className="h-6 w-6" />
                                   </button>
                                 </div>
                               ))}
