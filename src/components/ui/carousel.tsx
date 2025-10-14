@@ -212,6 +212,7 @@ const CarouselPrevious = React.forwardRef<
         className
       )}
       disabled={!canScrollPrev}
+      hidden={!canScrollPrev}
       onClick={scrollPrev}
       {...props}
     >
@@ -240,6 +241,7 @@ const CarouselNext = React.forwardRef<
         className
       )}
       disabled={!canScrollNext}
+      hidden={!canScrollNext}
       onClick={scrollNext}
       {...props}
     >

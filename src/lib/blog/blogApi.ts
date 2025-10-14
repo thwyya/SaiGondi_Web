@@ -12,6 +12,14 @@ export const blogApi = {
     return res.data;
   },
 
+  // Lấy danh sách blog phổ biến
+  getPopularBlogs: async (query?: Record<string, any>) => {
+    const res = await axios.get(`${API_URL}/blogs/popular`, {
+      params: query
+    });
+    return res.data;
+  },
+
   // Lấy chi tiết blog theo id
   getBlogById: async (id: string) => {
     const res = await axios.get(`${API_URL}/blogs/${id}`);
@@ -92,10 +100,4 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/ward/${wardId}`);
     return res.data;
   },
-  getPopularBlogs: async (query?: Record<string, any>) => {
-  const res = await axios.get(`${API_URL}/blogs/popular`, {
-    params: query,
-  });
-  return res.data;
-},
 };

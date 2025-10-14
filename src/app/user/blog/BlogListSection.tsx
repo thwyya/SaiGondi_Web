@@ -71,7 +71,6 @@ const BlogListSection = ({ activeCategoryKey, mainCategoryKeys }: BlogListSectio
 
   }, [currentPage, activeCategoryKey, mainCategoryKeys, type]);
 
-
   return (
     <section className="px-4 pb-10 max-w-7xl mx-auto">
       <div className="space-y-2 shadow-lg">

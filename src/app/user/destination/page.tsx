@@ -63,6 +63,9 @@ export default function DestinationPage() {
     { value: "newest", label: "Mới nhất" },
   ];
 
+  // react-select option type for districts
+  type RSOption = { value: string; label: string };
+
   const handleFilterChange = useCallback(
     (name: string, value: string | string[]) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -262,9 +265,12 @@ export default function DestinationPage() {
             
             {/* District Filter */}
             <h4 className="font-semibold mb-3">Khu vực</h4>
-            <Select
-              value={districts.find(d => d.id === selectedDistrict)}
-              onChange={(o) => handleFilterChange('district', o?.id || '')}
+            <Select<RSOption, false>
+              value={(() => {
+                const opts = districts.map(d => ({ value: d.id, label: d.name }));
+                return opts.find(o => o.value === selectedDistrict) || null;
+              })()}
+              onChange={(o) => handleFilterChange('district', o?.value || '')}
               options={districts.map(d => ({ value: d.id, label: d.name }))}
               placeholder="Chọn khu vực"
               isClearable
@@ -359,10 +365,19 @@ export default function DestinationPage() {
                     value={options.find((o) => o.value === sortBy)}
                     onChange={(o) => handleFilterChange('sortBy', o?.value || 'rating')}
                     options={options}
-                    placeholder="Sắp xếp"
+                    placeholder="Sắp xếp theo"
                     styles={{
-                      control: (b, s) => ({ ...b, width: '100%', minHeight: 36, borderRadius: 8, borderColor: s.isFocused ? "#3b82f6" : "#d1d5db", boxShadow: s.isFocused ? "0 0 0 2px rgba(59,130,246,0.3)" : "none", "&:hover": { borderColor: "#9ca3af" }, cursor: "pointer" }),
-                      valueContainer: (b) => ({ ...b, padding: "2px 8px", fontSize: 14, color: "#555" }),
+                      control: (b, s) => ({
+                        ...b,
+                        width: '100%',
+                        minHeight: 36,
+                        borderRadius: 8,
+                        borderColor: s.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: s.isFocused ? "0 0 0 2px rgba(59,130,246,0.3)" : "none",
+                        "&:hover": { borderColor: "#9ca3af" },
+                        cursor: "pointer",
+                      }),
+                      valueContainer: (b) => ({ ...b, padding: "2px 8px", fontSize: 14, color: "#364153" }),
                       menu: (b) => ({ ...b, zIndex: 50 }),
                       option: (b, s) => ({ ...b, fontSize: 14, backgroundColor: s.isSelected ? "#3b82f6" : s.isFocused ? "#f3f4f6" : "white", color: s.isSelected ? "white" : "#374151", cursor: "pointer" }),
                       indicatorSeparator: () => ({ display: "none" }),

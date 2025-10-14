@@ -136,7 +136,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       {/* Thông tin tác giả + like/share */}
       <div className="flex items-center justify-between flex-wrap text-sm text-[var(--gray-1)] mb-4">
         <div className="flex items-center gap-2">
-          <Link href={`/user/profile`} className="flex items-center gap-2">
+          <Link href={`/user/profile/${post.authorId}`} className="flex items-center gap-2">
             <Image
               src={post.authorAvatar || '/Logo.svg'}
               alt={post.author || 'Ẩn danh'}

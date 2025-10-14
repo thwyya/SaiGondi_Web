@@ -31,7 +31,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
-        setCurrentUserId(decoded.id); // BE phải trả về `id` trong payload
+        setCurrentUserId(decoded.id);
       } catch (err) {
         console.error("Decode token error:", err);
       }
@@ -54,9 +54,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
   }, [post?.id]);
 
   const profileLink =
-    currentUserId && post.author === currentUserId
+    currentUserId && post.authorId === currentUserId
       ? "/user/profile"
-      : `/user/profile/${post.author}`;
+      : `/user/profile/${post.authorId}`;
 
   return (
     <div className="flex flex-col md:flex-row gap-6 bg-[var(--background)] p-4">
@@ -97,7 +97,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-sm text-[var(--gray-2)] gap-2">
-          <Link href={profileLink} className="flex items-center gap-2">
+          <Link href={`/user/profile/${post.authorId}`} className="flex items-center gap-2">
             <Image
               src={post.authorAvatar}
               alt={post.author}
