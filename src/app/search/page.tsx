@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { searchDestinations, getDestinations } from '@/lib/place/destinationApi';
 import { blogApi } from '@/lib/blog/blogApi';
 import { categoryApi } from '@/lib/category/categoryApi';
@@ -43,6 +43,8 @@ const NoResults = ({ query }: { query: string | null }) => (
 
 
 function SearchResults() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
   const type = (searchParams.get('type') || 'all') as FilterType;
@@ -51,11 +53,19 @@ function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterType>(type);
-  const [filters, setFilters] = useState<Partial<FilterState>>({});
   const [blogCategories, setBlogCategories] = useState<Category[]>([]);
   const [destCategories, setDestCategories] = useState<Category[]>([]);
   const [placeCategories, setPlaceCategories] = useState<Category[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+
+  const filters: Partial<FilterState> = useMemo(() => ({
+    blogSort: searchParams.get('blogSort') || undefined,
+    blogCategory: searchParams.get('blogCategory') || undefined,
+    destRating: searchParams.get('destRating') || undefined,
+    destCategory: searchParams.get('destCategory') || undefined,
+    destWard: searchParams.get('destWard') || undefined,
+    placeCategory: searchParams.get('placeCategory') || undefined,
+  }), [searchParams]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -71,9 +81,21 @@ function SearchResults() {
     fetchCategories();
   }, []);
 
-  const handleFilterChange = (newFilters: Partial<FilterState>) => {
-    setFilters(newFilters);
-  };
+  const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
+    const params = new URLSearchParams();
+    const query = searchParams.get('q');
+    const type = searchParams.get('type');
+
+    if (query) params.set('q', query);
+    if (type) params.set('type', type);
+
+    Object.entries(newFilters).forEach(([key, value]) => {
+        if (value) { // Only add truthy values
+            params.set(key, value as string);
+        }
+    });
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
 
   useEffect(() => {
     const validTypes: FilterType[] = ['all', 'destinations', 'blogs'];
@@ -92,14 +114,14 @@ function SearchResults() {
         let destResponse, blogResponse;
 
         const destParams: any = { query: query || undefined };
-        if (filters.destRating) destParams.rating = filters.destRating;
-        if (filters.destWard) destParams.ward = filters.destWard;
-        if (filters.destCategory) destParams.category = filters.destCategory;
-        if (filters.placeCategory) destParams.placeCategory = filters.placeCategory;
+        if (filters.destWard && filters.destWard.trim() !== '') destParams.ward = filters.destWard;
+        if (filters.destCategory && filters.destCategory.trim() !== '') destParams.category = filters.destCategory;
+        if (filters.placeCategory && filters.placeCategory.trim() !== '') destParams.placeCategory = filters.placeCategory;
+        if (filters.destRating) destParams.minRating = parseFloat(filters.destRating);
 
         const blogParams: any = { query: query || undefined };
         if (filters.blogSort) blogParams.sort = filters.blogSort;
-        if (filters.blogCategory) blogParams.category = filters.blogCategory;
+        if (filters.blogCategory && filters.blogCategory.trim() !== '') blogParams.category = filters.blogCategory;
 
         if (query) {
           [destResponse, blogResponse] = await Promise.all([
@@ -113,9 +135,12 @@ function SearchResults() {
           ]);
         }
 
+        const fetchedDestinations = destResponse?.data?.places || destResponse?.data || [];
+        const fetchedBlogs = blogResponse?.data?.blogs || blogResponse?.data || [];
+
         setResults({
-          destinations: destResponse?.data?.places || destResponse?.data || [],
-          blogs: blogResponse?.data?.blogs || blogResponse?.data || [],
+          destinations: fetchedDestinations,
+          blogs: fetchedBlogs,
         });
 
       } catch (err) {
@@ -127,7 +152,7 @@ function SearchResults() {
     };
 
     fetchResults();
-  }, [query, filters]);
+  }, [searchParams, filters]);
 
   const filteredResults = useMemo(() => {
     const { destinations, blogs } = results;
@@ -245,6 +270,7 @@ function SearchResults() {
 
             <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
                 <SearchFilter 
+                    filters={filters}
                     filterType={activeTab} 
                     onFilterChange={handleFilterChange} 
                     blogCategories={blogCategories}
