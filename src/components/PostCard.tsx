@@ -27,7 +27,7 @@ export default function PostCard({ post }: { post: Post }) {
           src={imageUrl}
           alt={post.title}
           fill
-          className="object-cover rounded-3xl"
+          className="object-cover rounded-3xl p-3"
         />
       </div>
       <div className="flex flex-col justify-between flex-1 p-4 sm:p-5">

@@ -717,67 +717,71 @@ const DestinationDetail = () => {
               gap-x-6 lg:gap-x-8 xl:gap-x-10
               gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
 
-              {relatedBlogs.map((post) => {
-                if (!post || !post.id) return null;
+              {relatedBlogs.length > 0 ? (
+                relatedBlogs.map((post) => {
+                  if (!post || !post.id) return null;
 
-                const authorName = post.author;
-                const authorAvatar = post.authorAvatar;
-                const postTitle = post.title || 'Untitled Post';
-                const postWard = post.ward || 'Unknown Location';
+                  const authorName = post.author;
+                  const authorAvatar = post.authorAvatar;
+                  const postTitle = post.title || 'Untitled Post';
+                  const postWard = post.ward || 'Unknown Location';
 
-                return (
-                  <div key={post.id} className="relative py-6">
-                    <div className="absolute bottom-0 left-0 w-full h-70 z-0">
-                      <Image
-                        src={post.image || "/default.jpg"}
-                        alt={postTitle}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
+                  return (
+                    <div key={post.id} className="relative py-6">
+                      <div className="absolute bottom-0 left-0 w-full h-70 z-0">
+                        <Image
+                          src={post.image || "/default.jpg"}
+                          alt={postTitle}
+                          fill
+                          style={{ objectFit: "cover" }}
+                        />
+                      </div>
 
-                    <div className="bg-white left-3 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[85%] ml-0 mt-8 mb-6">
+                      <div className="bg-white left-3 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[85%] ml-0 mt-8 mb-6">
 
-                      <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
-                          <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
-                        </div>
-
-                        <div className="border-t border-gray-200 pt-2 mt-2">
-                          <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug">
-                            {postTitle}
-                          </h3>
-
-                          <div className="flex items-center space-x-2">
-                            <Image
-                              src={authorAvatar}
-                              alt={authorName}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                            />
-                            <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
-                              {authorName}
-                            </p>
+                        <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
+                            <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
                           </div>
 
-                          <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
-                            <span className="flex items-center gap-1 min-w-0">
-                              <HiLocationMarker className="text-[var(--warning)] shrink-0" />
-                              <span className="truncate">{postWard}</span>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <IoChatbubbles className="text-[var(--warning)]" />
-                              Bình luận({post.totalComments || 0})
-                            </span>
+                          <div className="border-t border-gray-200 pt-2 mt-2">
+                            <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug">
+                              {postTitle}
+                            </h3>
+
+                            <div className="flex items-center space-x-2">
+                              <Image
+                                src={authorAvatar}
+                                alt={authorName}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                              <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
+                                {authorName}
+                              </p>
+                            </div>
+
+                            <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
+                              <span className="flex items-center gap-1 min-w-0">
+                                <HiLocationMarker className="text-[var(--warning)] shrink-0" />
+                                <span className="truncate">{postWard}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <IoChatbubbles className="text-[var(--warning)]" />
+                                Bình luận({post.totalComments || 0})
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              ) : (
+                <p className="text-gray-600 col-span-full">Chưa có bài viết liên quan.</p>
+              )}
             </div>
           </div>
 
