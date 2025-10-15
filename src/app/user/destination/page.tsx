@@ -245,12 +245,20 @@ export default function DestinationPage() {
       <div className="absolute w-[500px] h-[500px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none -z-10" style={{ top: '2000px', left: '1300px' }} />
       <div className="absolute w-[500px] h-[500px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none -z-10" style={{ top: '2500px', left: '-60px' }} />
 
-      <div className="relative min-h-screen z-10 w-[95%] sm:w-[90%] mx-auto px-4 sm:px-0">
+      <div className="relative min-h-screen z-10 w-[95%] sm:w-[90%] lg:w-[95%] xl:w-[90%] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6 xl:px-8">
         <SearchBox />
 
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-12 mb-12">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 xl:gap-8 mb-12">
+          {/* Backdrop */}
+          {isFilterOpen && (
+            <div 
+              className="fixed top-[80px] left-0 right-0 bottom-0 bg-opacity-50 z-40 lg:hidden"
+              onClick={() => setIsFilterOpen(false)}
+            />
+          )}
+
           {/* Bộ lọc */}
-          <div ref={filterRef} id="filter" className={`lg:flex flex-col w-full lg:w-[30%] bg-white lg:bg-transparent p-4 lg:p-0 rounded-lg lg:rounded-none shadow-lg lg:shadow-none ${isFilterOpen ? 'flex' : 'hidden'}`}>
+          <div ref={filterRef} id="filter" className={`${isFilterOpen ? 'fixed top-[80px] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md max-h-[calc(100vh-80px)]' : 'hidden'} lg:flex lg:static lg:translate-x-0 lg:translate-y-0 lg:z-auto flex-col lg:w-[260px] xl:w-[300px] shrink-0 bg-white p-4 lg:p-0 rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none lg:bg-transparent overflow-y-auto`}>
             <div className="flex justify-between items-center mb-2 lg:hidden">
                <h2 className="font-bold text-lg">BỘ LỌC</h2>
               <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-700 text-xl">
@@ -330,10 +338,10 @@ export default function DestinationPage() {
 
 
           {/* Danh sách điểm đến */}
-          <div className="flex flex-col w-full lg:flex-1">
+          <div className="flex flex-col w-full lg:flex-1 min-w-0">
             {/* Tabs (render fetched categories) */}
-            <div className="overflow-x-auto no-scrollbar mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="flex items-stretch gap-2 px-2 lg:px-3 py-2 min-w-max">
+            <div className="overflow-x-auto no-scrollbar mb-4">
+              <div className="flex items-stretch gap-2 py-2 min-w-max">
                 <button
                   onClick={() => handleFilterChange('category', 'all')}
                   className={`flex flex-col min-w-[80px] lg:min-w-[100px] items-center gap-1 px-3 lg:px-4 py-2  lg:py-3 rounded-xl transition-all shrink-0 text-sm lg:text-base  ${selectedCategory === 'all' ? ' text-black shadow-md border-b-4 border-blue-500' : 'bg-auto border border-[var(--gray-5)] hover:bg-blue-50'}`}

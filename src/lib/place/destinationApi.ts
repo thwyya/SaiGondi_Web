@@ -131,6 +131,11 @@ export const likeReview = async (reviewId: string, userId: string) => {
   return res.data;
 };
 
+export const reportReview = async (reviewId: string, reason: string) => {
+  const res = await axiosInstance.post(`/reviews/${reviewId}/report`, { reason });
+  return res.data;
+}
+
 // Lấy tất cả địa điểm (không phân trang)
 export const getAllDestinations = async () => {
   const res = await axios.get(`${API_URL}/places`);
