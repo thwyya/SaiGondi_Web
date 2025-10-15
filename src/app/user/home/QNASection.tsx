@@ -76,7 +76,7 @@ export default function QNASection() {
                 <QnaCard
                   title={item.title}
                   description={item.title}
-                  author={`${item.author?.firstName || ''} ${item.author?.lastName || ''}`}
+                  author={`${item.author?.lastName || ''} ${item.author?.firstName|| ''}`}
                   sourceText="Google"
                   imageUrl={images[index % images.length]}
                 />

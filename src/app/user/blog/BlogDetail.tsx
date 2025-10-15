@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import { blogApi } from '@/lib/blog/blogApi';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { Post } from '@/types/post';
+import { getCurrentUserId } from '@/lib/auth/auth';
 
 type BlogDetailProps = {
   post: any;
@@ -19,11 +20,18 @@ type BlogDetailProps = {
 
 export default function BlogDetail({ post }: BlogDetailProps) {
   post = mapBlogToPost(post);
-  const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userId") : null; //đang lấy userId từ localStorage
+  const currentUserId = getCurrentUserId();
 
-  const [liked, setLiked] = useState(
-    currentUserId ? post.likeBy.includes(currentUserId) : false
-  );
+  const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    if (currentUserId && post.likeBy) {
+      setLiked(post.likeBy.map(String).includes(currentUserId));
+    } else {
+      setLiked(false);
+    }
+  }, [currentUserId, post.likeBy]);
+
   const [likeCount, setLikeCount] = useState(post.totalLikes);
   const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -55,8 +63,9 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     try {
       const updatedBlog = await blogApi.likeBlog(post.id);
       setLikeCount(updatedBlog.totalLikes);
+
       if (currentUserId) {
-        setLiked(updatedBlog.likeBy.includes(currentUserId));
+        setLiked(updatedBlog.likeBy.map(String).includes(currentUserId));
       }
     } catch (err) {
       console.error("Lỗi khi like blog:", err);
@@ -64,8 +73,15 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   };
 
   const scrollToComments = () => {
-    commentRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (commentRef.current) {
+      const y =
+        commentRef.current.getBoundingClientRect().top +
+        window.scrollY -
+        100; 
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   };
+
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);

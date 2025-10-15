@@ -17,8 +17,8 @@ export default function UserHomePage() {
     <div className="absolute w-[500] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "770px", left: "1470px" }} />
     <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "1350px", left: "-300px" }} />
     <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "2050px", left: "1470px" }} />
-    <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "2980px", left: "-150px" }} />
-    <div className="absolute w-[500px] h-[550px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "4750px", left: "1470px" }} />
+    <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "3000px", left: "-100px" }} />
+    <div className="absolute w-[600px] h-[650px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "4800px", left: "1450px" }} />
       <HomeBanner />
       <SearchBox searchType="all" showFilterIcon={true} />
       <ServiceSection />
