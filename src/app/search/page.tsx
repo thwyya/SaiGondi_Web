@@ -41,12 +41,12 @@ const NoResults = ({ query }: { query: string | null }) => (
     </div>
 );
 
-
 function SearchResults() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
+  const tag = searchParams.get('tag');
   const type = (searchParams.get('type') || 'all') as FilterType;
 
   const [results, setResults] = useState<{ destinations: Destination[], blogs: Blog[] }>({ destinations: [], blogs: [] });
@@ -54,7 +54,6 @@ function SearchResults() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterType>(type);
   const [blogCategories, setBlogCategories] = useState<Category[]>([]);
-  const [destCategories, setDestCategories] = useState<Category[]>([]);
   const [placeCategories, setPlaceCategories] = useState<Category[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -62,7 +61,6 @@ function SearchResults() {
     blogSort: searchParams.get('blogSort') || undefined,
     blogCategory: searchParams.get('blogCategory') || undefined,
     destRating: searchParams.get('destRating') || undefined,
-    destCategory: searchParams.get('destCategory') || undefined,
     destWard: searchParams.get('destWard') || undefined,
     placeCategory: searchParams.get('placeCategory') || undefined,
   }), [searchParams]);
@@ -72,7 +70,6 @@ function SearchResults() {
       try {
         const allCategories = await categoryApi.getAllCategories();
         setBlogCategories(allCategories.filter((c: Category) => c.type === 'blog'));
-        setDestCategories(allCategories.filter((c: Category) => c.type === 'destination'));
         setPlaceCategories(allCategories.filter((c: Category) => c.type === 'place'));
       } catch (error) {
         console.error("Failed to fetch categories:", error);
@@ -82,20 +79,24 @@ function SearchResults() {
   }, []);
 
   const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
-    const params = new URLSearchParams();
-    const query = searchParams.get('q');
-    const type = searchParams.get('type');
-
-    if (query) params.set('q', query);
-    if (type) params.set('type', type);
+    const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(newFilters).forEach(([key, value]) => {
-        if (value) { // Only add truthy values
+        if (value) {
             params.set(key, value as string);
+        } else {
+            params.delete(key);
         }
     });
+
+    const type = params.get('type');
+    if (type) {
+        params.delete('type');
+        params.set('type', type);
+    }
+
     router.push(`${pathname}?${params.toString()}`);
-  }, [searchParams, router, pathname]);
+}, [searchParams, router, pathname]);
 
   useEffect(() => {
     const validTypes: FilterType[] = ['all', 'destinations', 'blogs'];
@@ -111,29 +112,27 @@ function SearchResults() {
       setLoading(true);
       setError(null);
       try {
-        let destResponse, blogResponse;
-
-        const destParams: any = { query: query || undefined };
-        if (filters.destWard && filters.destWard.trim() !== '') destParams.ward = filters.destWard;
-        if (filters.destCategory && filters.destCategory.trim() !== '') destParams.category = filters.destCategory;
-        if (filters.placeCategory && filters.placeCategory.trim() !== '') destParams.placeCategory = filters.placeCategory;
+        // Build Destination Params
+        const destParams: any = { limit: 200 };
+        if (filters.destWard) destParams.ward = filters.destWard;
+        if (filters.placeCategory) destParams.category = filters.placeCategory;
         if (filters.destRating) destParams.minRating = parseFloat(filters.destRating);
 
-        const blogParams: any = { query: query || undefined };
-        if (filters.blogSort) blogParams.sort = filters.blogSort;
-        if (filters.blogCategory && filters.blogCategory.trim() !== '') blogParams.category = filters.blogCategory;
-
-        if (query) {
-          [destResponse, blogResponse] = await Promise.all([
-            searchDestinations(destParams),
-            blogApi.searchBlogs(blogParams)
-          ]);
-        } else {
-          [destResponse, blogResponse] = await Promise.all([
-            getDestinations(destParams),
-            blogApi.getBlogs(blogParams)
-          ]);
+        // Build Blog Params
+        const blogParams: any = { limit: 200 };
+        if (tag) blogParams.tag = tag;
+        if (filters.blogCategory) blogParams.category = filters.blogCategory;
+        if (filters.blogSort) {
+            const [sort, order] = filters.blogSort.split(',');
+            blogParams.sort = sort;
+            if (order) blogParams.order = order;
         }
+
+        // Decide which API calls to make
+        const destPromise = query ? searchDestinations({ ...destParams, query }) : getDestinations(destParams);
+        const blogPromise = query ? blogApi.searchBlogs({ ...blogParams, query }) : blogApi.getBlogs(blogParams);
+
+        const [destResponse, blogResponse] = await Promise.all([destPromise, blogPromise]);
 
         const fetchedDestinations = destResponse?.data?.places || destResponse?.data || [];
         const fetchedBlogs = blogResponse?.data?.blogs || blogResponse?.data || [];
@@ -152,7 +151,7 @@ function SearchResults() {
     };
 
     fetchResults();
-  }, [searchParams, filters]);
+  }, [searchParams, filters, tag, query]);
 
   const filteredResults = useMemo(() => {
     const { destinations, blogs } = results;
@@ -173,8 +172,8 @@ function SearchResults() {
     }
 
     if (filteredResults.items.length === 0) {
-        if (query) {
-            return <NoResults query={query} />;
+        if (query || tag) {
+            return <NoResults query={query || `#${tag}`} />;
         } 
         return <div className="text-center col-span-full py-16">Nhập từ khóa để bắt đầu tìm kiếm hoặc chọn bộ lọc.</div>;
     }
@@ -219,6 +218,14 @@ function SearchResults() {
               </>
           );
       }
+      if (tag) {
+        return (
+            <>
+                Tìm thấy {filteredResults.items.length} kết quả cho tag
+                <span className="text-[var(--primary)]"> &quot;#{tag}&quot;</span>
+            </>
+        );
+    }
       return 'Khám phá tất cả địa điểm và bài viết';
   }
 
@@ -258,28 +265,31 @@ function SearchResults() {
             </nav>
         </div>
 
-        <div className="flex flex-col lg:grid lg:grid-cols-4 lg:gap-8">
-            <div className="lg:hidden mb-4">
-                <button 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
-                >
-                    {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
-                </button>
-            </div>
+        <div className={`flex flex-col ${activeTab !== 'all' ? 'lg:grid lg:grid-cols-4 lg:gap-8' : ''}`}>
+            {activeTab !== 'all' && (
+                <div className="lg:hidden mb-4">
+                    <button 
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+                    >
+                        {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+                    </button>
+                </div>
+            )}
 
-            <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
-                <SearchFilter 
-                    filters={filters}
-                    filterType={activeTab} 
-                    onFilterChange={handleFilterChange} 
-                    blogCategories={blogCategories}
-                    destCategories={destCategories}
-                    placeCategories={placeCategories}
-                />
-            </aside>
+            {activeTab !== 'all' && (
+                <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
+                    <SearchFilter 
+                        filters={filters}
+                        filterType={activeTab} 
+                        onFilterChange={handleFilterChange} 
+                        blogCategories={blogCategories}
+                        placeCategories={placeCategories}
+                    />
+                </aside>
+            )}
 
-            <div className="lg:col-span-3">
+            <div className={activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}>
                 {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {renderGridItems()}
