@@ -213,7 +213,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       <article className="prose prose-lg max-w-none text-justify text-[var(--foreground)] space-y-6">
         {post.content?.map((block: Post['content'][0], idx: number) => {
           if (block.type === 'text') {
-            return <p key={idx}>{renderWithHashtags(block.value)}</p>;
+            return <p key={idx}>{renderWithHashtags(block.value || '')}</p>;
           }
           if (block.type === 'image' && block.url) {
             return (
