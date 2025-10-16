@@ -267,11 +267,13 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                     className="object-cover"
                   />
                 ) : (
-                  <video
-                    src={item.url}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
+                  item.url && (
+                    <video
+                      src={item.url}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
+                  )
                 )}
               </div>
             ))}
