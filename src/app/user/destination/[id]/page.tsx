@@ -727,42 +727,47 @@ const DestinationDetail = () => {
                   const postWard = post.ward || 'Unknown Location';
 
                   return (
-                    <Link key={post.id} href={`/user/blog/${post.slug}`} className="group">
-                      <div className="relative py-6 hover:shadow-lg hover:scale-[1.02] transition-transform cursor-pointer ">
-                        <div className="absolute bottom-0 left-0 w-full h-70 z-0 rounded-md overflow-hidden">
-                          <Image
-                            src={post.image || "/default.jpg"}
-                            alt={postTitle}
-                            fill
-                            style={{objectFit: "cover"}}
-                          />
-                        </div>
+                    <div className="group">
+                      <div className="relative py-6 hover:shadow-lg hover:scale-[1.02] transition-transform ">
+                        <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                          <div className="absolute bottom-0 left-0 w-full h-70 z-0 overflow-hidden cursor-pointer ">
+                            <Image
+                              src={post.image || "/default.jpg"}
+                              alt={postTitle}
+                              fill
+                              style={{objectFit: "cover"}}
+                            />
+                          </div>
+                        </Link>
 
-                        <div className="bg-white left-3 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[85%] ml-0 mt-8 mb-6 rounded-md">
-
-                          <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
+                    <div className="bg-white left-0 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[90%] ml-0 mt-8 mb-6">
+                      <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
                           <div className="p-4 sm:p-6">
                             <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
                               <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
                             </div>
 
                             <div className="border-t border-gray-200 pt-2 mt-2">
-                              <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug">
-                                {postTitle}
-                              </h3>
+                              <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                                <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem] cursor-pointer">
+                                  {postTitle}
+                                </h3>
+                              </Link>
 
-                              <div className="flex items-center space-x-2">
-                                <Image
-                                  src={authorAvatar}
-                                  alt={authorName}
-                                  width={24}
-                                  height={24}
-                                  className="rounded-full"
-                                />
-                                <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
-                                  {authorName}
-                                </p>
-                              </div>
+                              <Link key={post.authorId} href={`/user/profile/${post.authorId}`}>
+                                <div className="flex items-center space-x-2 cursor-pointer">
+                                  <Image
+                                    src={authorAvatar}
+                                    alt={authorName}
+                                    width={24}
+                                    height={24}
+                                    className="rounded-full"
+                                  />
+                                  <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
+                                    {authorName}
+                                  </p>
+                                </div>
+                              </Link>
 
                               <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
                                 <span className="flex items-center gap-1 min-w-0">
@@ -778,7 +783,7 @@ const DestinationDetail = () => {
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   )
                 })
               })()}

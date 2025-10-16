@@ -79,7 +79,7 @@ export default function DestinationPage() {
           params.delete(name);
           value.forEach(v => params.append(name, v));
         } else if (value) {
-          params.set(name, value);
+params.set(name, value);
         } else {
           params.delete(name);
         }
@@ -182,7 +182,7 @@ export default function DestinationPage() {
     const fetchCategories = async () => {
       try {
         const res = await getCategories({ type: 'place' });
-        const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
+const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
         const formatted: CategoryOption[] = (list || []).map((category) => ({
           id: category._id,
           name: category.name,
@@ -313,7 +313,7 @@ export default function DestinationPage() {
                     onChange={() => {
                       const newServices = selectedServices.includes(option.id)
                         ? selectedServices.filter(item => item !== option.id)
-                        : [...selectedServices, option.id];
+: [...selectedServices, option.id];
                       handleFilterChange('services', newServices);
                     }}
                     className="h-4 w-4"
@@ -372,7 +372,7 @@ export default function DestinationPage() {
                   <Select
                     value={options.find((o) => o.value === sortBy)}
                     onChange={(o) => handleFilterChange('sortBy', o?.value || 'rating')}
-                    options={options}
+options={options}
                     placeholder="Sắp xếp theo"
                     styles={{
                       control: (b, s) => ({
@@ -430,7 +430,7 @@ export default function DestinationPage() {
 
             {/* Pagination */}
             {!loading && totalPages > 1 && (
-              <div className="flex justify-center mt-6 lg:mt-8 gap-1 lg:gap-2 flex-wrap px-2">
+<div className="flex justify-center mt-6 lg:mt-8 gap-1 lg:gap-2 flex-wrap px-2">
                 <button onClick={() => handleFilterChange('page', String(Math.max(currentPage - 1, 1)))} disabled={currentPage === 1} className="px-2 lg:px-3 py-1 lg:py-2 text-sm lg:text-base border rounded-lg disabled:opacity-50 cursor-pointer">
                   Trước
                 </button>

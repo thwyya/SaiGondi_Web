@@ -8,6 +8,7 @@ import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { FiX } from 'react-icons/fi';
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import Button from '@/components/ui/Button';
+import { getCurrentUserId } from '@/lib/auth/auth';
 
 type CommentCardProps = {
   comment: BlogComment;
@@ -24,7 +25,7 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
-  const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const currentUserId = getCurrentUserId();
 
   useEffect(() => {
     if (currentUserId && comment.likeBy.includes(currentUserId)) {

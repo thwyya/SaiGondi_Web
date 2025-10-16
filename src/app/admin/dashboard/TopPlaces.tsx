@@ -12,7 +12,7 @@ export default function TopPlaces({ topPlaces }: { topPlaces: TopPlace[] }) {
     }
   };
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
+    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col m-6">
       <h2 className="text-[#343C6A] text-lg font-bold mb-4">
         TOP 5 ĐỊA ĐIỂM NỔI BẬT
       </h2>
@@ -20,7 +20,7 @@ export default function TopPlaces({ topPlaces }: { topPlaces: TopPlace[] }) {
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex items-center gap-4 overflow-x-auto scrollbar-hide pr-12"
+          className="flex items-center gap-10 overflow-x-auto scrollbar-hide pr-20 pl-2"
         >
           {topPlaces.map((place, i) => (
             <Link
@@ -48,11 +48,12 @@ export default function TopPlaces({ topPlaces }: { topPlaces: TopPlace[] }) {
             </Link>
           ))}
         </div>
+
         <button
           onClick={scrollRight}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10
-                     flex items-center justify-center h-10 w-10 rounded-full
-                     bg-gray-100 hover:bg-gray-200"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20
+                    flex items-center justify-center h-10 w-10 rounded-full
+                    bg-gray-100 hover:bg-gray-200 shadow-md"
         >
           <FaChevronRight className="text-gray-600" />
         </button>
