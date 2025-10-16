@@ -69,10 +69,9 @@ const PopularPostsSection = () => {
           {posts.map((item, index) => (
             <div
               key={index}
-              className="relative py-6 cursor-pointer"
-              onClick={() => router.push(`/user/blog/${item.slug || item.id}`)}
+              className="relative py-6"              
             >
-              <div className="absolute bottom-0 left-0 w-full h-70 z-0">
+              <div className="absolute bottom-0 left-0 w-full h-70 z-0 cursor-pointer" onClick={() => router.push(`/user/blog/${item.slug || item.id}`)}>
                 <Image
                   src={item.image || '/city-2.svg'}
                   alt={item.title}
@@ -89,10 +88,10 @@ const PopularPostsSection = () => {
                   </div>
 
                 <div className="border-t border-gray-200 pt-2 mt-2">
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem]">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem] cursor-pointer" onClick={() => router.push(`/user/blog/${item.slug || item.id}`)}>
                     {item.title}
                   </h3>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 cursor-pointer" onClick={() => router.push(`/user/profile/${item.authorId}`)}>
                       <Image
                         src={item.authorAvatar || '/avatar.svg'}
                         alt={item.author}

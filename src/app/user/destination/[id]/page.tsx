@@ -30,6 +30,9 @@ import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi"
 import { updateUser } from "@/store/slices/authSlice";
 import { Category } from "@/types/category";
 import { categoryApi } from "@/lib/category/categoryApi";
+import Link from "next/link";
+import { blogCommentApi } from "@/lib/blogComment/blogCommentApi";
+import { toast } from "sonner";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -62,18 +65,12 @@ const DestinationDetail = () => {
   };
 
   const [isFavorited, setIsFavorited] = useState(false);
-
   useEffect(() => {
-    console.log("[Debug] Running favorite check. User:", user);
-    console.log("[Debug] Running favorite check. Destination:", destination);
     if (user && destination?._id) {
       const favoriteIds = (user.favorites || []).map((fav: any) =>
         typeof fav === "object" && fav !== null ? fav._id : fav
       );
-      console.log("[Debug] Favorite IDs from user object:", favoriteIds);
-      console.log("[Debug] Current destination ID:", destination._id);
       const isCurrentlyFavorited = favoriteIds.includes(destination._id);
-      console.log("[Debug] Is favorited?", isCurrentlyFavorited);
       setIsFavorited(isCurrentlyFavorited);
     } else {
       setIsFavorited(false);
@@ -139,15 +136,13 @@ const DestinationDetail = () => {
                 console.error("Failed to fetch category", e);
               }
             }
-
             // Fetch blogs by place ID
             const blogsByPlaceRes = await blogApi.getBlogsByPlaceId(id);
+            console.log("Blogs by place response:", blogsByPlaceRes);
             const blogsByPlace: Blog[] = blogsByPlaceRes.data || [];
-
             // Fetch blogs by ward ID
             let blogsByWard: Blog[] = [];
             let blogWardIdSource: any = place.ward;
-
             if (typeof blogWardIdSource === 'string' && blogWardIdSource.startsWith('[') && blogWardIdSource.endsWith(']')) {
               try {
                 const parsed = JSON.parse(blogWardIdSource);
@@ -167,12 +162,11 @@ const DestinationDetail = () => {
                 : typeof blogWardIdSource === 'string'
                   ? blogWardIdSource
                   : null;
-
             if (finalBlogWardId) {
               const blogRes = await blogApi.getBlogsByWard(finalBlogWardId);
               blogsByWard = blogRes.data || [];
             }
-
+            console.log("Blogs by ward:", blogsByWard);
             // Combine and remove duplicates
             const allBlogs: Blog[] = [...blogsByPlace, ...blogsByWard];
             const uniqueBlogs = allBlogs.reduce((acc, current) => {
@@ -183,7 +177,6 @@ const DestinationDetail = () => {
             }, [] as Blog[]);
 
             const mappedBlogs = uniqueBlogs.map(mapBlogToPost);
-
             setRelatedBlogs(mappedBlogs);
           }
         } catch (error) {
@@ -224,7 +217,6 @@ const DestinationDetail = () => {
 
           if (finalWardId) {
             const wardRes = await wardApi.getById(finalWardId);
-            console.log("Ward response:", wardRes);
             setWard(wardRes.ward || wardRes);
           }
         } catch (error) {
@@ -242,8 +234,6 @@ const DestinationDetail = () => {
         const res = await fetch("http://localhost:5000/api/services");
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
-        console.log("services api response:", data);
-
         const formatted = data.data.map((service: { id: string, name: string }) => ({
           id: service.id,
           name: service.name
@@ -264,7 +254,6 @@ const DestinationDetail = () => {
     return <div className="text-center py-10">Destination not found.</div>;
   }
 
-  console.log("Destination data:", destination); // For browser console debugging
 
   // Helper function to get service name by ID
   const getServiceName = (serviceId: string) => {
@@ -283,6 +272,7 @@ const DestinationDetail = () => {
       ? destination.images[0]
       : "/image.svg");
 
+  
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -327,15 +317,15 @@ const DestinationDetail = () => {
           <div className="flex gap-3">
             <button
               onClick={handleFavoriteClick}
-              className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              className="border w-[50px] h-[50px] rounded-lg flex items-center justify-center hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
               disabled={loading || userLoading}
             >
-              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+              <i className={`${isFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line text-gray-600'} text-xl`}></i>
             </button>
             <div className="relative" ref={shareRef}>
               <button
                 onClick={() => setShowSharePopup((prev) => !prev)}
-                className="border rounded-lg p-2 hover:bg-gray-100"
+                className="border w-[50px] h-[50px] rounded-lg items-center justify-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-gray-100"
               >
                 <i className="ri-share-line text-gray-600 text-lg"></i>
               </button>
@@ -467,17 +457,16 @@ const DestinationDetail = () => {
           {/* Bottom Section: Additional Images */}
           <div className="relative overflow-hidden">
             {/* Edge gradients */}
-            <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white/90 to-transparent z-10 hidden sm:block" />
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white/90 to-transparent z-10 hidden sm:block" />
+            
             <Carousel opts={{
               align: "start",
             }}
               className="w-full ">
-              <CarouselContent className="gap-4">
+              <CarouselContent className="gap-3 p-8">
                 {/* First image (main image) - clickable */}
                 {Array.isArray(destination.images) && destination.images.length > 0 && (
                   destination.images.slice(0, 20).map((img, idx) => (
-                    
+
                     <CarouselItem
                       key={idx}
                       onClick={() => handleImageClick(img)}
@@ -492,22 +481,22 @@ const DestinationDetail = () => {
                         sizes="(min-width:1024px) 160px, (min-width:768px) 144px, 128px"
                         className="object-cover rounded-md"
                       />
-                      
+
                     </CarouselItem>
                   ))
                 )}
               </CarouselContent>
-            <CarouselPrevious
-              className="flex absolute left-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
-            >
-              <ChevronLeft className="mx-auto w-4 h-4" />
-            </CarouselPrevious>
+              <CarouselPrevious
+                className="flex absolute left-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+              >
+                <ChevronLeft className="mx-auto w-4 h-4" />
+              </CarouselPrevious>
 
-            <CarouselNext
-              className="flex absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
-            >
-              <ChevronRight className="mx-auto w-4 h-4" />
-            </CarouselNext>
+              <CarouselNext
+                className="flex absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 text-gray-800 shadow border hover:bg-white z-30"
+              >
+                <ChevronRight className="mx-auto w-4 h-4" />
+              </CarouselNext>
             </Carousel>
           </div>
         </div>
@@ -612,19 +601,27 @@ const DestinationDetail = () => {
                         rating: rating,
                         comment: comment,
                       };
-                      await createReview(id, reviewData);
-
-                      // Refetch reviews sau khi tạo mới
-                      const reviewsRes = await getReviewsByPlaceId(id);
-                      setReviews(reviewsRes.reviews || []);
+                      const createRes = await createReview(id, reviewData);
+                      if (createRes && (createRes.review || createRes.data || createRes)) {
+                        const newReview = createRes.review || createRes.data || createRes;
+                        if (newReview && typeof newReview === 'object' && newReview._id) {
+                          setReviews((prev) => [newReview as any, ...prev]);
+                        } else {
+                          const reviewsRes = await getReviewsByPlaceId(id);
+                          setReviews(reviewsRes.reviews || []);
+                        }
+                      } else {
+                        const reviewsRes = await getReviewsByPlaceId(id);
+                        setReviews(reviewsRes.reviews || []);
+                      }
 
                       setShowReviewForm(false);
                       setRating(0);
                       setComment("");
-                      alert("Gửi đánh giá thành công!");
+                      toast.success("Gửi đánh giá thành công!");
                     } catch (error) {
                       console.error("Failed to submit review:", error);
-                      alert("Gửi đánh giá thất bại. Vui lòng thử lại.");
+                      toast.error("Gửi đánh giá thất bại. Vui lòng thử lại.");
                     }
                   }}
                 >
@@ -694,7 +691,8 @@ const DestinationDetail = () => {
               </h1>
               <Button
                 variant="outline-primary"
-                className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 h-fit rounded-none"
+                onClick={() => router.push('/user/blog')}
+                className="text-sm px-4 py-2"
               >
                 Xem tất cả
               </Button>
@@ -712,13 +710,15 @@ const DestinationDetail = () => {
             >
               Cùng xem các trải nghiệm của khách hàng
             </p>
-
+            {relatedBlogs.length === 0 ? (
+              <p className="text-gray-600">Chưa có bài viết liên quan.</p>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
               gap-x-6 lg:gap-x-8 xl:gap-x-10
               gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
-
-              {relatedBlogs.length > 0 ? (
-                relatedBlogs.map((post) => {
+              {(() => {
+                const limitedRelated = relatedBlogs.slice(0, 4);
+                return limitedRelated.map((post) => {
                   if (!post || !post.id) return null;
 
                   const authorName = post.author;
@@ -727,51 +727,58 @@ const DestinationDetail = () => {
                   const postWard = post.ward || 'Unknown Location';
 
                   return (
-                    <div key={post.id} className="relative py-6">
-                      <div className="absolute bottom-0 left-0 w-full h-70 z-0">
-                        <Image
-                          src={post.image || "/default.jpg"}
-                          alt={postTitle}
-                          fill
-                          style={{ objectFit: "cover" }}
-                        />
-                      </div>
-
-                      <div className="bg-white left-3 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[85%] ml-0 mt-8 mb-6">
-
-                        <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
-                        <div className="p-4 sm:p-6">
-                          <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
-                            <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
+                    <div className="group">
+                      <div className="relative py-6 hover:shadow-lg hover:scale-[1.02] transition-transform ">
+                        <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                          <div className="absolute bottom-0 left-0 w-full h-70 z-0 overflow-hidden cursor-pointer ">
+                            <Image
+                              src={post.image || "/default.jpg"}
+                              alt={postTitle}
+                              fill
+                              style={{objectFit: "cover"}}
+                            />
                           </div>
+                        </Link>
 
-                          <div className="border-t border-gray-200 pt-2 mt-2">
-                            <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug">
-                              {postTitle}
-                            </h3>
-
-                            <div className="flex items-center space-x-2">
-                              <Image
-                                src={authorAvatar}
-                                alt={authorName}
-                                width={24}
-                                height={24}
-                                className="rounded-full"
-                              />
-                              <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
-                                {authorName}
-                              </p>
+                    <div className="bg-white left-0 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[90%] ml-0 mt-8 mb-6">
+                      <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
+                          <div className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
+                              <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
                             </div>
 
-                            <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
-                              <span className="flex items-center gap-1 min-w-0">
-                                <HiLocationMarker className="text-[var(--warning)] shrink-0" />
-                                <span className="truncate">{postWard}</span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <IoChatbubbles className="text-[var(--warning)]" />
-                                Bình luận({post.totalComments || 0})
-                              </span>
+                            <div className="border-t border-gray-200 pt-2 mt-2">
+                              <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                                <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem] cursor-pointer">
+                                  {postTitle}
+                                </h3>
+                              </Link>
+
+                              <Link key={post.authorId} href={`/user/profile/${post.authorId}`}>
+                                <div className="flex items-center space-x-2 cursor-pointer">
+                                  <Image
+                                    src={authorAvatar}
+                                    alt={authorName}
+                                    width={24}
+                                    height={24}
+                                    className="rounded-full"
+                                  />
+                                  <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
+                                    {authorName}
+                                  </p>
+                                </div>
+                              </Link>
+
+                              <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
+                                <span className="flex items-center gap-1 min-w-0">
+                                  <HiLocationMarker className="text-[var(--warning)] shrink-0" />
+                                  <span className="truncate">{postWard}</span>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <IoChatbubbles className="text-[var(--warning)]" />
+                                  Bình luận({post.totalComments || 0})
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -779,12 +786,10 @@ const DestinationDetail = () => {
                     </div>
                   )
                 })
-              ) : (
-                <p className="text-gray-600 col-span-full">Chưa có bài viết liên quan.</p>
-              )}
+              })()}
             </div>
+            )}
           </div>
-
           <div className="hidden md:block absolute top-42 right-3 sm:right-6 lg:right-9 w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] lg:w-[220px] lg:h-[220px] pointer-events-none -z-10">
             <Image src="/Graphic_Elements.svg" alt="Background" fill className="object-contain" />
           </div>

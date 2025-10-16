@@ -88,7 +88,7 @@ const DestinationCard = ({ destination }: Props) => {
   const location = destination.address || "Chưa rõ";
 
   return (
-    <div className="flex flex-col sm:grid sm:grid-cols-[35%_65%] lg:grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
+    <div className="flex flex-col sm:grid sm:grid-cols-[35%_65%] lg:grid-cols-[30%_70%]  rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
       <div className="h-48 sm:h-full overflow-hidden">
         <Image
           alt={destination.name}
@@ -168,13 +168,13 @@ const DestinationCard = ({ destination }: Props) => {
 
         <span className="block h-px bg-gray-300 my-3 sm:my-4" />
 
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-3">
           <button 
             onClick={handleFavoriteClick} 
-            className="border rounded-lg p-2 hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            className="border w-[50px] h-[50px] rounded-lg flex items-center justify-center hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             disabled={userLoading || isUpdating}
           >
-              <i className={`${localIsFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line'} text-gray-600 text-lg`}></i>
+              <i className={`${localIsFavorited ? 'ri-heart-fill text-red-500' : 'ri-heart-line text-gray-600'} text-xl`}></i>
             </button>
           <button
             onClick={handleClick}

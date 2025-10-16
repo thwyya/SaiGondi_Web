@@ -32,8 +32,8 @@ export default function QnaCard({
         "
       />
 
-      <div className="flex flex-col h-full bg-white rounded-[20px] p-4 sm:p-5 shadow-lg transition-all duration-300">
-        <h3 className="text-base sm:text-[17px] md:text-[18px] font-bold text-gray-900 mb-3 sm:mb-4 leading-snug line-clamp-2">
+      <div className="flex flex-col h-full bg-white rounded-[20px] p-4 sm:p-5 shadow-2xl transition-all duration-300">
+        <h3 className="text-center text-base sm:text-[17px] md:text-[18px] font-bold text-gray-900 mb-3 sm:mb-4 leading-snug line-clamp-2">
           {title}
         </h3>
 

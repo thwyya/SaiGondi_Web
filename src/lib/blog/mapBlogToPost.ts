@@ -29,6 +29,7 @@ export function mapBlogToPost(blog: Blog): Post {
 
     // author
     author: author ? `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Ẩn danh" : "Ẩn danh",
+    authorId: author?._id || "",
     authorAvatar: author?.avatar || "/Logo.svg",
 
     // time & location

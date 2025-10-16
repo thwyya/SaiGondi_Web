@@ -34,7 +34,6 @@ const FeaturedBloggers = () => {
   if (loading) {
     return <p>Đang tải danh sách blogger...</p>;
   }
-
   return (
     <div className="mt-10">
       <h3 className="text-xl font-bold mb-4">CÁC BLOGGER NỔI BẬT</h3>
@@ -42,6 +41,7 @@ const FeaturedBloggers = () => {
         {bloggers.map((blogger) => (
           <BloggerCard
             key={blogger.author._id}
+            _id={blogger.author._id}
             avatar={blogger.author.avatar || "/Logo.svg"}
             name={`${blogger.author.firstName} ${blogger.author.lastName}`}
             description={blogger.author.bio}

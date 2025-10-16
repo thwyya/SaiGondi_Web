@@ -8,6 +8,7 @@ import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { FiX } from 'react-icons/fi';
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import Button from '@/components/ui/Button';
+import { getCurrentUserId } from '@/lib/auth/auth';
 
 type CommentCardProps = {
   comment: BlogComment;
@@ -24,7 +25,7 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
-  const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const currentUserId = getCurrentUserId();
 
   useEffect(() => {
     if (currentUserId && comment.likeBy.includes(currentUserId)) {
@@ -135,9 +136,11 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
           />
         </div>
         <div>
+          <a href={`/user/profile/${comment.userId?._id}`} className="hover:underline">
           <p className="font-semibold pr-12">
             {comment.userId?.firstName || "Ẩn danh"} {comment.userId?.lastName || ""}
           </p>
+          </a>
           <p className="text-sm text-[var(--gray-2)] whitespace-pre-line">{comment.comment}</p>
           {comment.images && comment.images.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

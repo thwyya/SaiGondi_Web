@@ -50,14 +50,14 @@ export default function TopUsers({ topUsers }: { topUsers: TopUser[] }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
+    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col m-6">
       <h2 className="text-[#343C6A] text-lg font-bold mb-4">
         TOP 5 NGƯỜI DÙNG NỔI BẬT
       </h2>
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex items-center gap-4 overflow-x-auto scrollbar-hide pr-12"
+          className="flex items-center gap-10 overflow-x-auto scrollbar-hide pr-12"
         >
           {topUsers.map((user, i) => {
             const isCurrentUser =
