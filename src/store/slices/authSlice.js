@@ -7,7 +7,8 @@ export const fetchCurrentUser = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       // Use the centralized userApi to fetch the user profile
-      const user = await userApi.getMe();
+      const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      const user = isAdmin ? await userApi.getAdminMe() : await userApi.getMe();
       return user;
     } catch (err) {
       console.error("🔥 Error fetching user", err);

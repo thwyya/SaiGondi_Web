@@ -27,6 +27,7 @@ export function useAdminData() {
   useEffect(() => {
     const savedName = localStorage.getItem("firstName");
     const savedAvatar = localStorage.getItem("avatar");
+    const token = localStorage.getItem("accessToken");
     if (savedName) setFirstName(savedName);
     if (savedAvatar) setAvatarUrl(savedAvatar);
 
@@ -34,6 +35,7 @@ export function useAdminData() {
       .then((res) => setStats(res.data?.data || {}))
       .catch(() => console.log("Lỗi lấy thống kê"));
 
+    if (token) {  
     api.get("/admin/me")
       .then((res) => {
         const fullName = res.data?.fullName || "";
@@ -52,7 +54,7 @@ export function useAdminData() {
         localStorage.removeItem("refreshToken");
         router.push("/admin/login");
       });
-
+    }
     api.get("/admin/stats/topUsers")
       .then((res) => setTopUsers(res.data?.data || []))
       .catch(() => console.log("Lỗi lấy TOP users"));
