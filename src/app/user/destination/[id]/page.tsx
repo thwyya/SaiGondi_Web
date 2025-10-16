@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ReactNode, useEffect, useState, useRef } from "react";
-import { getDestinationById, createReview, getReviewsByPlaceId } from "@/lib/place/destinationApi";
+import { getDestinationById, createReview, getReviewsByPlaceId, getServices } from "@/lib/place/destinationApi";
 import { Place } from "@/types/place";
 import { Review } from "@/types/review";
 import ReviewCard from "../ReviewCard";
@@ -227,17 +227,14 @@ const DestinationDetail = () => {
     }
   }, [destination]);
 
-  // Fetch services data
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/services");
-        if (!res.ok) throw new Error("Failed to fetch services");
-        const data = await res.json();
-        const formatted = data.data.map((service: { id: string, name: string }) => ({
-          id: service.id,
-          name: service.name
-        }));
+        const res = await getServices();
+        const services = res?.data || res || [];
+        const formatted = Array.isArray(services)
+          ? services.map((service: any) => ({ id: service.id || service._id || service._id, name: service.name }))
+          : [];
         setServicesData(formatted);
       } catch (err) {
         console.error("Failed to fetch services:", err);

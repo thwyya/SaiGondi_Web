@@ -1,5 +1,5 @@
 "use client";
-import {useState, useEffect} from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
 import SearchBar from '../SearchBar'
 import { DestinationTable } from './DestinationTable';
@@ -16,11 +16,23 @@ export default function Page() {
   const [filter, setFilter] = useState('')
   const [destinations, setDestinations] = useState<Destination[]>([])
 
-  const {data, isLoading, error} = useQuery({
-    queryKey: ["destinations"],
-    queryFn:getDestinations,
-  })
-  
+
+  const mapFiterToParams = (filter: string) => {
+    switch (filter) {
+      case "Đã phê duyệt":
+        return "approved";
+      case "Chưa phê duyệt":
+        return "pending";
+      default:
+        return {};
+    }
+  };
+  const { data, isLoading } = useQuery({
+    queryKey: ['destinations', { filter: mapFiterToParams(filter) }],
+    queryFn: getDestinations
+  });
+
+
   useEffect(() => {
     if (data) setDestinations(data);
   }, [data]);
@@ -28,22 +40,21 @@ export default function Page() {
   const handleSearch = async (value: string) => {
     try {
       const res = await api.get(`/places/search?name=${encodeURIComponent(value)}`);
-      setDestinations(res.data.data); 
+      setDestinations(res.data.data);
     } catch (err) {
       console.error(err);
     }
   }
 
   const handleClosePopup = () => {
-    setIsOpen(false);    
+    setIsOpen(false);
   }
 
   if (isLoading) return <div>Loading...</div>
-  if (error) return <div>Error loading data</div>
-
+  console.log("Destinations data:", destinations);
   return (
     <>
-      {isOpen && <DestinationPopup onClose={handleClosePopup}/>}
+      {isOpen && <DestinationPopup onClose={handleClosePopup} />}
       <div className="flex flex-col my-12 mx-6">
         <div id="title">
           <h1>QUẢN LÝ ĐỊA ĐIỂM</h1>
@@ -58,7 +69,7 @@ export default function Page() {
                 <i className="ri-upload-cloud-line"></i>
                 <h4>Xuất file</h4>
               </button>
-              <button onClick={()=> setIsOpen(true)} className="flex btn-primary text-white gap-2 p-2 rounded-md">
+              <button onClick={() => setIsOpen(true)} className="flex btn-primary text-white gap-2 p-2 rounded-md">
                 <i className="ri-add-line"></i>
                 <h4>Thêm địa điểm</h4>
               </button>
@@ -66,20 +77,23 @@ export default function Page() {
           </div>
         </div>
 
-        <SearchBar 
-          placeholder = 'Tìm kiếm địa điểm....'
+        <SearchBar
+          placeholder='Tìm kiếm địa điểm....'
           onSearch={handleSearch}
           filterSlot={
             <FilterDropdown
-            options={['Danh mục phổ biến','Toạ độ hiện thị','Trạng thái chờ duyệt','Trạng thái đã duyệt']}
-            value={filter}
-            onChange={setFilter}
+              options={[
+                "Đã phê duyệt",
+                "Chưa phê duyệt"
+              ]}
+              value={filter}
+              onChange={setFilter}
             />
           }
         />
-        <DestinationTable data={destinations ?? []}/>       
-        </div>
-      </>
+        <DestinationTable data={destinations ?? []} />
+      </div>
+    </>
   )
 }
 

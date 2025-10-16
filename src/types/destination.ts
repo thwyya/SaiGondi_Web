@@ -22,7 +22,7 @@ export interface Location {
     totalRatings: number;
     totalLikes: number;
     likeBy: string[];
-    status: "approved" | "pending" | "rejected"; 
+    status: "approved" | "pending" | "deleted";
     createdBy: string;
     verifiedBy?: string; 
     createdAt: string; 

@@ -1,5 +1,6 @@
 import { Destination } from "@/types/destination"
 import api from "./api"
+import type { QueryFunctionContext } from '@tanstack/react-query';
 export interface TopPlace {
   viewCount: any;
   _id: string;
@@ -7,9 +8,19 @@ export interface TopPlace {
   views: number;
   image?: string;
 }
-export async function getDestinations(): Promise<Destination[]> {
-  const res = await api.get('/admin/places')
-  return res.data.data.places ?? res.data
+export const getDestinations = async ({ queryKey }: QueryFunctionContext) => {
+  const [, params] = queryKey as any[];
+  const res = await api.get('/admin/places', { params });
+  return res.data.data.places ?? res.data;
+}
+export const deleteDestination = async (id: string) => {
+  try {
+    const res = await api.delete(`/admin/places/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("Lỗi xóa địa điểm:", err);
+    throw err;
+  }
 }
 export async function getTopViewedPlaces(): Promise<TopPlace[]> {
   try {
