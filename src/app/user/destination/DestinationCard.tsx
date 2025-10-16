@@ -88,7 +88,7 @@ const DestinationCard = ({ destination }: Props) => {
   const location = destination.address || "Chưa rõ";
 
   return (
-    <div className="flex flex-col sm:grid sm:grid-cols-[35%_65%] lg:grid-cols-[30%_70%] rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
+    <div className="flex flex-col sm:grid sm:grid-cols-[35%_65%] lg:grid-cols-[30%_70%]  rounded-xl shadow-md bg-white overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleClick}>
       <div className="h-48 sm:h-full overflow-hidden">
         <Image
           alt={destination.name}

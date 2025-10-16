@@ -31,6 +31,8 @@ import { updateUser } from "@/store/slices/authSlice";
 import { Category } from "@/types/category";
 import { categoryApi } from "@/lib/category/categoryApi";
 import Link from "next/link";
+import { blogCommentApi } from "@/lib/blogComment/blogCommentApi";
+import { toast } from "sonner";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -63,7 +65,6 @@ const DestinationDetail = () => {
   };
 
   const [isFavorited, setIsFavorited] = useState(false);
-
   useEffect(() => {
     if (user && destination?._id) {
       const favoriteIds = (user.favorites || []).map((fav: any) =>
@@ -271,6 +272,7 @@ const DestinationDetail = () => {
       ? destination.images[0]
       : "/image.svg");
 
+  
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -460,7 +462,7 @@ const DestinationDetail = () => {
               align: "start",
             }}
               className="w-full ">
-              <CarouselContent className="gap-4">
+              <CarouselContent className="gap-3 p-8">
                 {/* First image (main image) - clickable */}
                 {Array.isArray(destination.images) && destination.images.length > 0 && (
                   destination.images.slice(0, 20).map((img, idx) => (
@@ -599,19 +601,27 @@ const DestinationDetail = () => {
                         rating: rating,
                         comment: comment,
                       };
-                      await createReview(id, reviewData);
-
-                      // Refetch reviews sau khi tạo mới
-                      const reviewsRes = await getReviewsByPlaceId(id);
-                      setReviews(reviewsRes.reviews || []);
+                      const createRes = await createReview(id, reviewData);
+                      if (createRes && (createRes.review || createRes.data || createRes)) {
+                        const newReview = createRes.review || createRes.data || createRes;
+                        if (newReview && typeof newReview === 'object' && newReview._id) {
+                          setReviews((prev) => [newReview as any, ...prev]);
+                        } else {
+                          const reviewsRes = await getReviewsByPlaceId(id);
+                          setReviews(reviewsRes.reviews || []);
+                        }
+                      } else {
+                        const reviewsRes = await getReviewsByPlaceId(id);
+                        setReviews(reviewsRes.reviews || []);
+                      }
 
                       setShowReviewForm(false);
                       setRating(0);
                       setComment("");
-                      alert("Gửi đánh giá thành công!");
+                      toast.success("Gửi đánh giá thành công!");
                     } catch (error) {
                       console.error("Failed to submit review:", error);
-                      alert("Gửi đánh giá thất bại. Vui lòng thử lại.");
+                      toast.error("Gửi đánh giá thất bại. Vui lòng thử lại.");
                     }
                   }}
                 >

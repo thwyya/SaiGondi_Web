@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
       />
       <StatsGrid stats={data.stats} />
       <ChartsSection />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 mt-10">
         <TopUsers topUsers={data.topUsers} />
         <TopPlaces topPlaces={data.topPlaces} />
       </div>
