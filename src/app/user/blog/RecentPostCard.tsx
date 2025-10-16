@@ -32,10 +32,10 @@ const RecentPostCard: React.FC<RecentPostCardProps> = ({ post }) => {
           <h3 className="text-sm font-semibold leading-tight line-clamp-2">{post.title}</h3>
         </Link>
         <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-          <Link href={`/user/profile`}>
+          <Link href={`/user/profile/${post.authorId}`}>
             <Image src={post.authorAvatar || defaultImage} alt={post.author} width={16} height={16} className="object-cover rounded-full" />
           </Link>
-          <Link href={`/user/profile`}>
+          <Link href={`/user/profile/${post.authorId}`}>
             <span>{post.author}</span>
           </Link>
           <span className="mx-1">|</span>
