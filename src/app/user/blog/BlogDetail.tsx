@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import { blogApi } from '@/lib/blog/blogApi';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { Post } from '@/types/post';
+import { renderWithHashtags } from '@/lib/hashtagUtils';
 
 type BlogDetailProps = {
   post: any;
@@ -212,7 +213,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       <article className="prose prose-lg max-w-none text-justify text-[var(--foreground)] space-y-6">
         {post.content?.map((block: Post['content'][0], idx: number) => {
           if (block.type === 'text') {
-            return <p key={idx}>{block.value}</p>;
+            return <p key={idx}>{renderWithHashtags(block.value)}</p>;
           }
           if (block.type === 'image' && block.url) {
             return (
@@ -240,12 +241,13 @@ export default function BlogDetail({ post }: BlogDetailProps) {
 
       <div className="flex flex-wrap gap-2 mb-4 mt-5">
         {post.tags?.map((tag: string, idx: number) => (
-          <span
+          <Link
             key={idx}
-            className="inline-block bg-gray-100 text-sm text-gray-600 px-3 py-1 rounded-md"
+            href={`/search?tag=${tag}&type=blogs`}
+            className="inline-block bg-gray-100 text-sm text-gray-600 px-3 py-1 rounded-md hover:bg-gray-200 hover:text-gray-800 transition-colors"
           >
             #{tag}
-          </span>
+          </Link>
       ))}
       </div>
       

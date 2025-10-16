@@ -10,7 +10,6 @@ export interface FilterState {
     blogSort?: string;
     blogCategory?: string;
     destRating?: string;
-    destCategory?: string;
     destWard?: string;
     placeCategory?: string;
 }
@@ -20,16 +19,21 @@ interface SearchFilterProps {
     filterType: 'all' | 'destinations' | 'blogs';
     onFilterChange: (filters: Partial<FilterState>) => void;
     blogCategories: { id: string; name: string; }[];
-    destCategories: { id: string; name: string; }[];
     placeCategories: { id: string; name: string; }[];
 }
+
+const blogSortOptions = [
+    { label: 'Bài viết mới nhất', value: 'newest' },
+    { label: 'Bài viết cũ nhất', value: 'createdAt,asc' },
+    { label: 'Tương tác nhiều nhất', value: 'popular' },
+    { label: 'Tương tác ít nhất', value: 'views,asc' }
+];
 
 const SearchFilter = ({
     filters,
     filterType,
     onFilterChange,
     blogCategories,
-    destCategories,
     placeCategories
 }: SearchFilterProps) => {
     const [wards, setWards] = useState<Ward[]>([]);
@@ -40,7 +44,13 @@ const SearchFilter = ({
     useEffect(() => {
         // Reset filters when the filter type changes (e.g., switching from "destinations" to "blogs")
         if (internalFilterType !== filterType) {
-            onFilterChange({});
+            onFilterChange({
+                blogSort: undefined,
+                blogCategory: undefined,
+                destRating: undefined,
+                destWard: undefined,
+                placeCategory: undefined
+            });
         }
         setInternalFilterType(filterType);
     }, [filterType, internalFilterType, onFilterChange]);
@@ -59,13 +69,12 @@ const SearchFilter = ({
 
     useEffect(() => {
         const active: string[] = [];
-        if (filters.blogSort && filters.blogSort !== 'Chọn thứ tự') active.push(filters.blogSort);
+        if (filters.blogSort) {
+            const sortLabel = blogSortOptions.find(o => o.value === filters.blogSort)?.label;
+            if (sortLabel) active.push(sortLabel);
+        }
         if (filters.blogCategory) {
             const catName = blogCategories.find(c => c.id === filters.blogCategory)?.name;
-            if (catName) active.push(catName);
-        }
-        if (filters.destCategory) {
-            const catName = destCategories.find(c => c.id === filters.destCategory)?.name;
             if (catName) active.push(catName);
         }
         if (filters.placeCategory) {
@@ -74,11 +83,10 @@ const SearchFilter = ({
         }
         if (filters.destRating) active.push(`${filters.destRating} sao`);
         if (filters.destWard) {
-            const wardName = wards.find(w => w._id === filters.destWard)?.name;
-            if (wardName) active.push(wardName);
+            active.push(filters.destWard);
         }
         setActiveFilters(active);
-    }, [filters, blogCategories, destCategories, placeCategories, wards]);
+    }, [filters, blogCategories, placeCategories, wards]);
 
     const handleFilterUpdate = (newFilter: Partial<FilterState>) => {
         const updatedFilters = { ...filters, ...newFilter };
@@ -92,14 +100,13 @@ const SearchFilter = ({
     const removeFilter = (filterToRemove: string) => {
         const updatedFilters = { ...filters };
 
-        if (filters.blogSort === filterToRemove) {
+        const sortOption = blogSortOptions.find(o => o.label === filterToRemove);
+        if (sortOption && sortOption.value === filters.blogSort) {
             updatedFilters.blogSort = undefined;
         }
+
         if (blogCategories.find(c => c.name === filterToRemove)?.id === filters.blogCategory) {
             updatedFilters.blogCategory = undefined;
-        }
-        if (destCategories.find(c => c.name === filterToRemove)?.id === filters.destCategory) {
-            updatedFilters.destCategory = undefined;
         }
         if (placeCategories.find(c => c.name === filterToRemove)?.id === filters.placeCategory) {
             updatedFilters.placeCategory = undefined;
@@ -107,7 +114,7 @@ const SearchFilter = ({
         if (`${filters.destRating} sao` === filterToRemove) {
             updatedFilters.destRating = undefined;
         }
-        if (wards.find(w => w.name === filterToRemove)?._id === filters.destWard) {
+        if (filters.destWard === filterToRemove) {
             updatedFilters.destWard = undefined;
         }
 
@@ -116,12 +123,6 @@ const SearchFilter = ({
 
 
     const wardNames = wards.map(w => w.name);
-    const blogSortOptions = [
-        { label: 'Bài viết mới nhất', value: 'newest' },
-        { label: 'Bài viết cũ nhất', value: 'createdAt' },
-        { label: 'Tương tác nhiều nhất', value: 'popular' },
-        { label: 'Tương tác ít nhất', value: 'views' }
-    ];
     const destRatingOptions = ['5', '4', '3', '2', '1'].map(r => `${r} sao`);
 
     const FilterSection = ({ title, icon: Icon, gradient, children }: { title: string; icon: any; gradient: string; children: React.ReactNode; }) => (
@@ -161,8 +162,7 @@ const SearchFilter = ({
             if (value === 'Tất cả khu vực') {
                 handleFilterUpdate({ destWard: undefined });
             } else {
-                const selectedId = wards.find(w => w.name === value)?._id;
-                handleFilterUpdate({ destWard: selectedId });
+                handleFilterUpdate({ destWard: value });
             }
         };
 
@@ -218,9 +218,10 @@ const SearchFilter = ({
                     <FilterGroup label="Khu vực" icon={MapPin}>
                         <FilterDropdown
                             options={['Tất cả khu vực', ...wardNames]}
-                            value={wards.find(w => w._id === filters.destWard)?.name || 'Tất cả khu vực'}
+                            value={filters.destWard || 'Tất cả khu vực'}
                             onChange={handleWardChange}
                             className={dropdownClassName}
+                            isSearchable={true}
                         />
                     </FilterGroup>
                 </FilterSection>
@@ -249,9 +250,10 @@ const SearchFilter = ({
                     <FilterGroup label="Khu vực" icon={MapPin}>
                         <FilterDropdown
                             options={['Tất cả khu vực', ...wardNames]}
-                            value={wards.find(w => w._id === filters.destWard)?.name || 'Tất cả khu vực'}
+                            value={filters.destWard || 'Tất cả khu vực'}
                             onChange={handleWardChange}
                             className={dropdownClassName}
+                            isSearchable={true}
                         />
                     </FilterGroup>
                 </FilterSection>
