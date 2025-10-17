@@ -15,6 +15,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SearchBox from '@/components/ui/SearchBox';
 import SearchFilter, { FilterState } from '@/components/filters/SearchFilter';
+import { GridPagination } from '@/shared/GridPagination';
 
 // Define the possible filter types
 type FilterType = 'all' | 'destinations' | 'blogs';
@@ -56,6 +57,9 @@ function SearchResults() {
   const [blogCategories, setBlogCategories] = useState<Category[]>([]);
   const [placeCategories, setPlaceCategories] = useState<Category[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 12;
 
   const filters: Partial<FilterState> = useMemo(() => ({
     blogSort: searchParams.get('blogSort') || undefined,
@@ -79,6 +83,7 @@ function SearchResults() {
   }, []);
 
   const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
+    setCurrentPage(1);
     const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -105,6 +110,7 @@ function SearchResults() {
     } else {
         setActiveTab('all');
     }
+    setCurrentPage(1);
   }, [type]);
 
   useEffect(() => {
@@ -112,11 +118,10 @@ function SearchResults() {
       setLoading(true);
       setError(null);
       try {
-        // Build Destination Params
+        // Build Destination Params (without rating)
         const destParams: any = { limit: 200 };
         if (filters.destWard) destParams.ward = filters.destWard;
         if (filters.placeCategory) destParams.category = filters.placeCategory;
-        if (filters.destRating) destParams.minRating = parseFloat(filters.destRating);
 
         // Build Blog Params
         const blogParams: any = { limit: 200 };
@@ -134,8 +139,19 @@ function SearchResults() {
 
         const [destResponse, blogResponse] = await Promise.all([destPromise, blogPromise]);
 
-        const fetchedDestinations = destResponse?.data?.places || destResponse?.data || [];
+        let fetchedDestinations = destResponse?.data?.places || destResponse?.data || [];
         const fetchedBlogs = blogResponse?.data?.blogs || blogResponse?.data || [];
+
+        // Apply rating filter on the client
+        if (filters.destRating) {
+            const minRating = parseFloat(filters.destRating);
+            const maxRating = minRating < 5 ? minRating + 1 : 10; // Use a high number for max if it's 5 stars
+
+            fetchedDestinations = fetchedDestinations.filter((dest: Destination) => {
+                if (dest.avgRating === undefined) return false;
+                return dest.avgRating >= minRating && dest.avgRating < maxRating;
+            });
+        }
 
         setResults({
           destinations: fetchedDestinations,
@@ -166,19 +182,25 @@ function SearchResults() {
     }
   }, [activeTab, results]);
 
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredResults.items.slice(startIndex, endIndex);
+  }, [filteredResults.items, currentPage, itemsPerPage]);
+
   const renderGridItems = () => {
     if (loading) {
       return Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />);
     }
 
-    if (filteredResults.items.length === 0) {
+    if (paginatedItems.length === 0) {
         if (query || tag) {
             return <NoResults query={query || `#${tag}`} />;
         } 
         return <div className="text-center col-span-full py-16">Nhập từ khóa để bắt đầu tìm kiếm hoặc chọn bộ lọc.</div>;
     }
 
-    return filteredResults.items.map((item) => {
+    return paginatedItems.map((item) => {
         if ('address' in item) { // It's a Destination
             const dest = item as Destination;
             return (
@@ -230,11 +252,11 @@ function SearchResults() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
+    <div className="relative overflow-hidden bg-[var(--background)] flex flex-col flex-grow">
         <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none -top-20 -left-96" />
         <div className="absolute w-[500px] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none top-1/4 -right-96" />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 pb-16 flex-grow flex flex-col">
         <div className="max-w-3xl mx-auto text-center mb-4">
             <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
                 {pageTitle()}
@@ -248,7 +270,10 @@ function SearchResults() {
                 {tabs.map((tab) => (
                     <button
                         key={tab.name}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {
+                            setActiveTab(tab.id);
+                            setCurrentPage(1);
+                        }}
                         className={`${
                             activeTab === tab.id
                             ? 'border-[var(--primary)] text-[var(--primary)]'
@@ -265,7 +290,7 @@ function SearchResults() {
             </nav>
         </div>
 
-        <div className={`flex flex-col ${activeTab !== 'all' ? 'lg:grid lg:grid-cols-4 lg:gap-8' : ''}`}>
+        <div className={`flex-grow flex flex-col ${activeTab !== 'all' ? 'lg:grid lg:grid-cols-4 lg:gap-8' : ''}`}>
             {activeTab !== 'all' && (
                 <div className="lg:hidden mb-4">
                     <button 
@@ -278,7 +303,7 @@ function SearchResults() {
             )}
 
             {activeTab !== 'all' && (
-                <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
+                <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0 z-20`}>
                     <SearchFilter 
                         filters={filters}
                         filterType={activeTab} 
@@ -289,11 +314,17 @@ function SearchResults() {
                 </aside>
             )}
 
-            <div className={activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}>
+            <div className={`min-h-[75vh] ${activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
                 {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {renderGridItems()}
                 </div>
+                <GridPagination 
+                    totalItems={filteredResults.items.length}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={currentPage}
+                    onPageChange={setCurrentPage}
+                />
             </div>
         </div>
       </div>
@@ -303,20 +334,22 @@ function SearchResults() {
 
 export default function SearchPage() {
   return (
-    <main>
+    <div className="flex flex-col min-h-screen">
         <Header />
-        <Suspense fallback={
-            <div className="relative overflow-hidden bg-[var(--background)] min-h-screen">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)}
+        <main className="flex-grow flex">
+            <Suspense fallback={
+                <div className="relative overflow-hidden bg-[var(--background)] flex-grow">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)}
+                        </div>
                     </div>
                 </div>
-            </div>
-        }>
-            <SearchResults />
-        </Suspense>
+            }>
+                <SearchResults />
+            </Suspense>
+        </main>
         <Footer />
-    </main>
+    </div>
   );
 }

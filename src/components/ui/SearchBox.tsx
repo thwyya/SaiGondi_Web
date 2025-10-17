@@ -2,15 +2,14 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiSearch, FiSliders } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import Button from "./Button";
 
 interface SearchBoxProps {
   searchType?: 'all' | 'destinations' | 'blogs';
-  showFilterIcon?: boolean;
 }
 
-const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all', showFilterIcon = false }) => {
+const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -49,9 +48,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all', showFilterIco
           </span>
 
           <FiSearch className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
-          {showFilterIcon && (
-            <FiSliders className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-[var(--foreground)] w-4 h-4 sm:w-5 sm:h-5" />
-          )}
+          
 
           <input
             type="text"
