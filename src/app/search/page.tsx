@@ -256,7 +256,7 @@ function SearchResults() {
         <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none -top-20 -left-96" />
         <div className="absolute w-[500px] h-[550px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none top-1/4 -right-96" />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 pb-16 flex-grow flex flex-col">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-12 py-8 relative z-10 pb-16 flex-grow flex flex-col">
         <div className="max-w-3xl mx-auto text-center mb-4">
             <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--foreground)] sm:text-4xl">
                 {pageTitle()}
