@@ -269,7 +269,7 @@ const DestinationDetail = () => {
       ? destination.images[0]
       : "/image.svg");
 
-  
+
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -454,7 +454,7 @@ const DestinationDetail = () => {
           {/* Bottom Section: Additional Images */}
           <div className="relative overflow-hidden">
             {/* Edge gradients */}
-            
+
             <Carousel opts={{
               align: "start",
             }}
@@ -710,81 +710,81 @@ const DestinationDetail = () => {
             {relatedBlogs.length === 0 ? (
               <p className="text-gray-600">Chưa có bài viết liên quan.</p>
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
               gap-x-6 lg:gap-x-8 xl:gap-x-10
               gap-y-45 sm:gap-y-20 md:gap-y-40 lg:gap-y-20">
-              {(() => {
-                const limitedRelated = relatedBlogs.slice(0, 4);
-                return limitedRelated.map((post) => {
-                  if (!post || !post.id) return null;
+                {(() => {
+                  const limitedRelated = relatedBlogs.slice(0, 4);
+                  return limitedRelated.map((post) => {
+                    if (!post || !post.id) return null;
 
-                  const authorName = post.author;
-                  const authorAvatar = post.authorAvatar;
-                  const postTitle = post.title || 'Untitled Post';
-                  const postWard = post.ward || 'Unknown Location';
+                    const authorName = post.author;
+                    const authorAvatar = post.authorAvatar;
+                    const postTitle = post.title || 'Untitled Post';
+                    const postWard = post.ward || 'Unknown Location';
 
-                  return (
-                    <div className="group">
-                      <div className="relative py-6 hover:shadow-lg hover:scale-[1.02] transition-transform ">
-                        <Link key={post.id} href={`/user/blog/${post.slug}`} >
-                          <div className="absolute bottom-0 left-0 w-full h-70 z-0 overflow-hidden cursor-pointer ">
-                            <Image
-                              src={post.image || "/default.jpg"}
-                              alt={postTitle}
-                              fill
-                              style={{objectFit: "cover"}}
-                            />
-                          </div>
-                        </Link>
-
-                    <div className="bg-white left-0 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[90%] ml-0 mt-8 mb-6">
-                      <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
-                          <div className="p-4 sm:p-6">
-                            <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
-                              <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
+                    return (
+                      <div key={post.id} className="group">
+                        <div className="relative py-6 hover:shadow-lg hover:scale-[1.02] transition-transform ">
+                          <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                            <div className="absolute bottom-0 left-0 w-full h-70 z-0 overflow-hidden cursor-pointer ">
+                              <Image
+                                src={post.image || "/default.jpg"}
+                                alt={postTitle}
+                                fill
+                                style={{ objectFit: "cover" }}
+                              />
                             </div>
+                          </Link>
 
-                            <div className="border-t border-gray-200 pt-2 mt-2">
-                              <Link key={post.id} href={`/user/blog/${post.slug}`} >
-                                <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem] cursor-pointer">
-                                  {postTitle}
-                                </h3>
-                              </Link>
+                          <div className="bg-white left-0 shadow-lg overflow-hidden relative z-10 translate-y-45 w-[88%] sm:w-[90%] ml-0 mt-8 mb-6">
+                            <div className="absolute top-6 left-0 w-1 h-10 bg-[var(--warning)] z-20" />
+                            <div className="p-4 sm:p-6">
+                              <div className="flex items-center justify-between text-xs sm:text-sm text-[var(--warning)] mb-3 sm:mb-4">
+                                <span>{post.date ? new Date(post.date).toLocaleDateString("vi-VN") : ''}</span>
+                              </div>
 
-                              <Link key={post.authorId} href={`/user/profile/${post.authorId}`}>
-                                <div className="flex items-center space-x-2 cursor-pointer">
-                                  <Image
-                                    src={authorAvatar}
-                                    alt={authorName}
-                                    width={24}
-                                    height={24}
-                                    className="rounded-full"
-                                  />
-                                  <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
-                                    {authorName}
-                                  </p>
+                              <div className="border-t border-gray-200 pt-2 mt-2">
+                                <Link key={post.id} href={`/user/blog/${post.slug}`} >
+                                  <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-1 leading-snug line-clamp-2 min-h-[3rem] cursor-pointer">
+                                    {postTitle}
+                                  </h3>
+                                </Link>
+
+                                <Link key={post.authorId} href={`/user/profile/${post.authorId}`}>
+                                  <div className="flex items-center space-x-2 cursor-pointer">
+                                    <Image
+                                      src={authorAvatar}
+                                      alt={authorName}
+                                      width={24}
+                                      height={24}
+                                      className="rounded-full"
+                                    />
+                                    <p className="text-gray-800 text-[12px] sm:text-sm font-inter">
+                                      {authorName}
+                                    </p>
+                                  </div>
+                                </Link>
+
+                                <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
+                                  <span className="flex items-center gap-1 min-w-0">
+                                    <HiLocationMarker className="text-[var(--warning)] shrink-0" />
+                                    <span className="truncate">{postWard}</span>
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <IoChatbubbles className="text-[var(--warning)]" />
+                                    Bình luận({post.totalComments || 0})
+                                  </span>
                                 </div>
-                              </Link>
-
-                              <div className="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-500 mt-2 whitespace-nowrap">
-                                <span className="flex items-center gap-1 min-w-0">
-                                  <HiLocationMarker className="text-[var(--warning)] shrink-0" />
-                                  <span className="truncate">{postWard}</span>
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <IoChatbubbles className="text-[var(--warning)]" />
-                                  Bình luận({post.totalComments || 0})
-                                </span>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })
-              })()}
-            </div>
+                    )
+                  })
+                })()}
+              </div>
             )}
           </div>
           <div className="hidden md:block absolute top-42 right-3 sm:right-6 lg:right-9 w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] lg:w-[220px] lg:h-[220px] pointer-events-none -z-10">

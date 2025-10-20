@@ -270,21 +270,6 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
                 <button onClick={clearFilters} className="text-sm text-blue-500 hover:underline">Xóa bộ lọc</button>
             </div>
             <span className="block h-px bg-gray-300 my-4 lg:my-6" />
-            
-            {/* District Filter */}
-            <h4 className="font-semibold mb-3">Khu vực</h4>
-            <Select<RSOption, false>
-              value={(() => {
-                const opts = districts.map(d => ({ value: d.id, label: d.name }));
-                return opts.find(o => o.value === selectedDistrict) || null;
-              })()}
-              onChange={(o) => handleFilterChange('district', o?.value || '')}
-              options={districts.map(d => ({ value: d.id, label: d.name }))}
-              placeholder="Chọn khu vực"
-              isClearable
-              styles={{ menu: (b) => ({ ...b, zIndex: 40 }) }}
-            />
-            <span className="block h-px bg-gray-400 my-4 lg:my-8" />
 
             {/* Xếp hạng */}
             <h4 className="font-semibold mb-3">Xếp hạng</h4>
