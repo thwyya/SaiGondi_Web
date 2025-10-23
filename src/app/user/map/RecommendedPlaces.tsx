@@ -59,8 +59,8 @@ export default function RecommendedPlaces() {
         {loading ? (
           <p>Đang tải địa điểm gợi ý...</p>
         ) : places.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {places.map((place) => (
+          <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-4 gap-6">
+            {places.slice(0, 4).map((place) => (
               <DestinationCard
                 key={place._id}
                 _id={place._id}

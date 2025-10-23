@@ -13,8 +13,8 @@ export function TablePagination<TData>({ table }: TablePaginationProps<TData>) {
   const pages = getPaginationRange(currentPage, totalPages);
 
   return (
-    <div className="sm:flex justify-between mt-4 w-[90%] mx-auto">
-        <div className="h4 text-gray-400 mb-2">Show {currentPage}- { (totalPages - currentPage < 3) ? totalPages : currentPage + 3 } from {totalPages} </div>
+    <div className="sm:flex justify-between mt-4 w-[90%] mx-auto mb-4">
+        <div className="h4 text-gray-400 mb-2 text-sm">Hiện {currentPage} trên {totalPages} </div>
          <div className="flex items-center gap-2">
             {/* Previous */}
             <button

@@ -147,6 +147,7 @@ export default function HCMMap() {
 
         try {
           const res = await getAllDestinations();
+          console.log("All places:", res);
           const places: Place[] = Array.isArray(res) ? res : res.places || [];
 
           const matched: Place | undefined = places.find((p: any) => {
@@ -200,7 +201,9 @@ export default function HCMMap() {
       }));
 
       setIsCheckedIn(true);
-      setMessage(`Bạn đã check-in ${selectedInfo.name} thành công!`);
+      setMessage(
+        `Bạn đã check-in ${getWardName(selectedInfo.ward) || selectedInfo.name} thành công!`
+      );
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error("Chi tiết lỗi check-in:", error.response?.data);
