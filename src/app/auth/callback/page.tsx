@@ -13,14 +13,22 @@ function AuthCallback() {
 
   useEffect(() => {
     const handleAuth = async () => {
+      console.log("AuthCallback: Component mounted. Checking for tokens in URL...");
+      console.log("AuthCallback: Full URL search params:", searchParams.toString());
+      
       const accessToken = searchParams.get("accessToken");
       const refreshToken = searchParams.get("refreshToken");
+      
+      console.log("AuthCallback: Extracted accessToken:", accessToken);
+      console.log("AuthCallback: Extracted refreshToken:", refreshToken);
 
-      if (accessToken && refreshToken) {
+      if (accessToken) {
         try {
           // Save tokens to localStorage
           localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
+          if (refreshToken) {
+            localStorage.setItem("refreshToken", refreshToken);
+          }
 
           // 1. Fetch user profile using the new token
           const userProfile = await authApi.getProfile(accessToken);
@@ -30,7 +38,7 @@ function AuthCallback() {
             dispatch(login({ 
               user: userProfile, 
               accessToken: accessToken, 
-              refreshToken: refreshToken 
+              refreshToken: refreshToken || null
             }));
           } else {
             // Handle case where token is valid but profile fetch fails
@@ -61,7 +69,8 @@ function AuthCallback() {
         }
       } else {
         // No tokens found in URL, redirect to login
-        console.error("No tokens found in URL");
+        console.error("AuthCallback: No accessToken found in URL. Redirecting to login page.");
+        console.error("AuthCallback: Available search params:", searchParams.toString());
         router.push("/auth/login");
       }
     };

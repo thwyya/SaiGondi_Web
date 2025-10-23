@@ -1,6 +1,6 @@
 # 🏙️ SAIGON ĐI WEB
 
-Dự án web ứng dụng Next.js + TypeScript dành cho nền tảng khám phá thành phố Sài Gòn.  
+Dự án web ứng dụng Next.js + TypeScript dành cho nền tảng khám phá thành phố Sài Gòn.
 Cấu trúc được tổ chức rõ ràng theo module và thành phần, dễ mở rộng và bảo trì.
 
 ---

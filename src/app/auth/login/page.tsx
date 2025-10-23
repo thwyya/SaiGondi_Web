@@ -10,6 +10,7 @@ import Button from "@/components/ui/Button";
 import { FaFacebookF, FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import SimpleOAuthButton from "@/components/SimpleOAuthButton";
 import { authApi } from "@/lib/auth/authApi";
 import { AxiosError } from "axios";
 
@@ -129,13 +130,19 @@ export default function LoginPage() {
       </div>
 
       <div className="flex justify-center mt-8 space-x-4">
-        <a href="http://localhost:5000/api/users/auth/facebook">
-         <Button variant="outline-primary"><FaFacebookF className="text-[var(--primary)] text-xl" /></Button>
-        </a>
-        <a href="http://localhost:5000/api/users/auth/google">
-          <Button variant="outline-primary"><FcGoogle className="text-xl" /></Button>
-        </a>
+        <SimpleOAuthButton provider="facebook">
+          <FaFacebookF className="text-[var(--primary)] text-xl" />
+        </SimpleOAuthButton>
+        <SimpleOAuthButton provider="google">
+          <FcGoogle className="text-xl" />
+        </SimpleOAuthButton>
         <Button variant="outline-primary"><FaApple className="text-black text-xl" /></Button>
+      </div>
+      
+      <div className="text-center mt-4">
+        <a href="/auth/debug" className="text-sm text-blue-600 hover:underline">
+          Debug OAuth Issues
+        </a>
       </div>
     </>
   );
