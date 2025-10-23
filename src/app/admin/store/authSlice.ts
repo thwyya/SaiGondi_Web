@@ -4,7 +4,7 @@ import axios from 'axios';
 
 interface AuthState {
     user: any | null;
-    token: string | null;
+    accessToken: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;  
@@ -19,9 +19,9 @@ void,
   'auth/fetchCurrentUser',
   async (_, thunkAPI) => {
     try {
-      const token = localStorage.getItem('token');
+      const accessToken = localStorage.getItem('accessToken');
       const res = await axios.get('/api/me', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${accessToken}` }
       });
       return res.data.data;
     } catch (err:any) {
@@ -35,7 +35,7 @@ void,
 // Khởi tạo state
 const initialState: AuthState = {
   user: null,
-  token: null,
+  accessToken: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -47,15 +47,15 @@ const authSlice = createSlice({
   reducers: {
     login(state, action) {
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
-      localStorage.setItem('token', action.payload.token); 
+      localStorage.setItem('accessToken', action.payload.accessToken); 
     },
     logout(state) {
       state.user = null;
-      state.token = null;
+      state.accessToken = null;
       state.isAuthenticated = false;
-      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
     },
   },
   extraReducers: (builder) => {
@@ -72,11 +72,11 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.user = null;
-        state.token = null;
+        state.accessToken = null;
         state.isAuthenticated = false;
         state.isLoading = false;
         state.error = action.payload ?? 'Unknown error';
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
       });
   },
 });

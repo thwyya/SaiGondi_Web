@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { questionApi } from '@/lib/question/questionApi';
+import { toast } from 'sonner';
 
 interface AskQuestionModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export default function AskQuestionModal({
     }
 
     if (!title.trim() || title.trim().length < 10) {
-      alert('Tiêu đề phải có ít nhất 10 ký tự');
+      toast.error('Tiêu đề phải có ít nhất 10 ký tự');
       return;
     }
 

@@ -42,7 +42,7 @@ const FeaturedBloggers = () => {
           <BloggerCard
             key={blogger.author._id}
             _id={blogger.author._id}
-            avatar={blogger.author.avatar || "/Logo.svg"}
+            avatar={blogger.author.avatar || "/Image.svg"}
             name={`${blogger.author.firstName} ${blogger.author.lastName}`}
             description={blogger.author.bio}
           />

@@ -4,6 +4,7 @@ import CustomDropdown from "@/shared/CustomDropdown";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/services/categoryService";
 import api from "@/services/api";
+import { toast } from "sonner";
 
 
 export default function DestinationPopup({onClose}:{onClose:()=>void}) {
@@ -32,7 +33,7 @@ export default function DestinationPopup({onClose}:{onClose:()=>void}) {
     const confirmAdd = async () => {
         try {
             await api.post('/admin/places', form);
-            alert('Thêm danh mục thành công')
+            toast.success('Thêm danh mục thành công')
             onClose()
             window.location.reload();
         } catch (err) {

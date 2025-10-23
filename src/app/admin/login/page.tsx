@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { login as loginAction } from '@/app/admin/store/authSlice';
 import { BASE_URL } from "../utils/config";
 import api from "@/services/api";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -35,8 +36,8 @@ export default function LoginPage() {
       setRememberMe(true);
     }
 
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
       api
         .get("/admin/stats/overview")
         .then((res) => setStats(res.data?.data || {}))
@@ -49,7 +50,7 @@ export default function LoginPage() {
     if (e) e.preventDefault();
 
     if (!email || !password) {
-      return alert('Vui lòng nhập đầy đủ thông tin');
+      return toast.error('Vui lòng nhập đầy đủ thông tin');
     }
 
     try {
@@ -62,7 +63,7 @@ export default function LoginPage() {
       }
 
       if (user.role !== 'admin') {
-        alert('Bạn không có quyền truy cập admin');
+        toast.error('Bạn không có quyền truy cập admin');
         return;
       }
 
@@ -74,11 +75,11 @@ export default function LoginPage() {
         localStorage.removeItem("admin_remember_password");
       }
 
-      dispatch(loginAction({ accessToken, refreshToken }));
-      alert('Đăng nhập thành công');
+      dispatch(loginAction({ user, accessToken, refreshToken }));
+      toast.success('Đăng nhập thành công');
       router.push('/admin/dashboard');
     } catch (err) {
-      alert('Đăng nhập thất bại');
+      toast.error('Đăng nhập thất bại');
       console.error(err);
     }
   };
