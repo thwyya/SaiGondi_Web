@@ -9,6 +9,7 @@ import { FiX } from 'react-icons/fi';
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import Button from '@/components/ui/Button';
 import { getCurrentUserId } from '@/lib/auth/auth';
+import { toast } from 'sonner';
 
 type CommentCardProps = {
   comment: BlogComment;
@@ -60,12 +61,12 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
 
   const handleReport = async () => {
     if (!reportReason.trim()) {
-      alert("Vui lòng nhập lý do báo cáo!");
+      toast.error("Vui lòng nhập lý do báo cáo!");
       return;
     }
     try {
       await blogCommentApi.reportComment(comment._id, reportReason);
-      alert("Đã gửi báo cáo thành công!");
+      toast.success("Đã gửi báo cáo thành công!");
       setReportOpen(false);
       setReportReason("");
     } catch (err) {

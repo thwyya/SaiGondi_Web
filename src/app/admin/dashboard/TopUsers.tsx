@@ -1,7 +1,7 @@
 "use client";
 
 import { TopUser } from "@/app/assets/data/topPlace";
-import { FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
@@ -10,6 +10,8 @@ import Image from "next/image";
 export default function TopUsers({ topUsers }: { topUsers: TopUser[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -21,15 +23,41 @@ export default function TopUsers({ topUsers }: { topUsers: TopUser[] }) {
         console.error("Decode token error:", err);
       }
     }
+  }, []);
 
-    console.log("TopUsers data:", topUsers);
-  }, [topUsers]);
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 150, behavior: "smooth" });
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (el) {
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
     }
   };
+
+  const scrollLeft = () => {
+    scrollRef.current?.scrollBy({ left: -200, behavior: "smooth" });
+  };
+
+  const scrollRight = () => {
+    scrollRef.current?.scrollBy({ left: 200, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleCheck = () => {
+      checkScroll();
+    };
+
+    requestAnimationFrame(handleCheck);
+    setTimeout(handleCheck, 200);
+
+    el.addEventListener("scroll", checkScroll);
+
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+    };
+  }, [topUsers]);
 
   const getLatestBadge = (badges: any[] = []) => {
     if (!badges || badges.length === 0) return null;
@@ -50,14 +78,15 @@ export default function TopUsers({ topUsers }: { topUsers: TopUser[] }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col m-6">
+    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col m-3 relative">
       <h2 className="text-[#343C6A] text-lg font-bold mb-4">
         TOP 5 NGƯỜI DÙNG NỔI BẬT
       </h2>
+
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex items-center gap-10 overflow-x-auto scrollbar-hide pr-12"
+          className="flex items-center gap-6 overflow-x-auto scrollbar-hide px-6 pb-5"
         >
           {topUsers.map((user, i) => {
             const isCurrentUser =
@@ -97,14 +126,30 @@ export default function TopUsers({ topUsers }: { topUsers: TopUser[] }) {
             );
           })}
         </div>
-        <button
-          onClick={scrollRight}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10
-                     flex items-center justify-center h-10 w-10 rounded-full
-                     bg-gray-100 hover:bg-gray-200 shadow-md"
-        >
-          <FaChevronRight className="text-gray-600" />
-        </button>
+
+        {/* Nút trái */}
+        {canScrollLeft && (
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-0 bottom-0 mx-1 my-auto 
+                       flex items-center justify-center w-10 h-10
+                       bg-gray-100 hover:bg-gray-200 shadow-md rounded-full z-10"
+          >
+            <FaChevronLeft className="text-gray-600" />
+          </button>
+        )}
+
+        {/* Nút phải */}
+        {canScrollRight && (
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-0 bottom-0 mx-1 my-auto 
+                       flex items-center justify-center w-10 h-10
+                       bg-gray-100 hover:bg-gray-200 shadow-md rounded-full z-10"
+          >
+            <FaChevronRight className="text-gray-600" />
+          </button>
+        )}
       </div>
     </div>
   );

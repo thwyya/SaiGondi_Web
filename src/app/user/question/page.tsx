@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import QuestionForm from './QuestionForm';
 import QuestionList from './QuestionList';
 
 export default function QuestionPage() {
+  const [newQuestion, setNewQuestion] = useState(null);
   return (
     <main className="">
          <div className="relative overflow-hidden">
@@ -13,8 +15,8 @@ export default function QuestionPage() {
             <div className="absolute w-[500px] h-[450px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "2050px", left: "1470px" }} />
             <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "2980px", left: "-150px" }} />
             <div className="absolute w-[500px] h-[550px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "4750px", left: "1470px" }} />
-        <QuestionForm />
-        <QuestionList />
+        <QuestionForm onSuccess={(question: any) => setNewQuestion(question)}/>
+        <QuestionList newQuestion={newQuestion}/>
       </div>
     </main>
   );

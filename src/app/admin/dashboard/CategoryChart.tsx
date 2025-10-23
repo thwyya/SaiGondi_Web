@@ -74,15 +74,15 @@ const CategoryChart: React.FC = () => {
   return (
     <div className="w-full rounded-xl p-4">
       <h4 className="font-bold mb-4 text-base sm:text-lg">Các danh mục</h4>
-      <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+      <div className="flex flex-col xl:flex-row items-center justify-center">
         
-        <div className="flex justify-center md:justify-center w-full md:w-1/3">
-          <div className="w-40 sm:w-48 md:w-56 lg:w-52">
+        <div className="flex justify-center md:justify-center w-full md:w-3/5">
+          <div className="w-40 sm:w-48 md:w-56 lg:w-60">
             <Pie data={pieData} options={options} />
           </div>
         </div>
 
-        <div className="py-20 flex flex-col gap-2 w-full md:w-auto">
+        <div className="mt-3 flex flex-col gap-2 w-full md:w-auto">
           {categories.map((item, idx) => {
             const percent =
               total > 0 ? ((item.count / total) * 100).toFixed(1) : 0;

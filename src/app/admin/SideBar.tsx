@@ -19,9 +19,9 @@ const navLinks: NavLink[] = [
 const SideBar = () => {
   return (
     <div className="flex flex-col h-full px-4 py-6">
-      <img src="/logo.svg" alt="Logo" className="w-[70%] mx-auto" />
+      <img src="/logo.svg" alt="Logo" className="w-[80%] mx-auto" />
 
-      <nav className="mt-6 flex flex-col gap-2">
+      <nav className="mt-6 flex flex-col">
         {navLinks.map(({ display, path, icon }) => (
           <Link
             key={path}

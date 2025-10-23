@@ -12,13 +12,19 @@ import { MdOutlineDeleteOutline } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 
-export default function QuestionList() {
+export default function QuestionList({ newQuestion }: { newQuestion?: any }) {
   const [filter, setFilter] = useState<'all' | 'answered' | 'unanswered'>('all');
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (newQuestion) {
+      setQuestions((prev) => [newQuestion, ...prev]);
+    }
+  }, [newQuestion]);
 
   // Lấy userId từ token
   useEffect(() => {
@@ -103,7 +109,7 @@ export default function QuestionList() {
         ))}
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-6">
         {filteredQuestions.map((q) => {
           const authorId = q.authorId;
           const isCurrentUser = currentUserId && authorId === currentUserId;
@@ -118,13 +124,15 @@ export default function QuestionList() {
             >
               <div className="flex items-start gap-3 mb-3">
                 <Link href={profileLink} className="flex items-center gap-2">
-                  <Image
-                    src={q.author?.avatar || '/Image.svg'}
-                    alt={q.author?.firstName || 'User'}
-                    width={42}
-                    height={42}
-                    className="rounded-full object-cover"
-                  />
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <Image
+                      src={q.author?.avatar || '/Image.svg'}
+                      alt={q.author?.firstName || 'User'}
+                      width={42}
+                      height={42}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>                  
                   <div>
                     <h4 className="font-semibold text-sm">
                       {q.author?.firstName} {q.author?.lastName}

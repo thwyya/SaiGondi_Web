@@ -69,7 +69,7 @@ export default function DestinationPage() {
   const handleFilterChange = useCallback(
     (name: string, value: string | string[]) => {
       const params = new URLSearchParams(searchParams.toString());
-      
+
       if (name === 'page') {
         params.set(name, value as string);
       } else {
@@ -79,17 +79,17 @@ export default function DestinationPage() {
           params.delete(name);
           value.forEach(v => params.append(name, v));
         } else if (value) {
-params.set(name, value);
+          params.set(name, value);
         } else {
           params.delete(name);
         }
       }
-      
+
       router.push(`${pathname}?${params.toString()}`);
     },
     [searchParams, pathname, router]
   );
-  
+
   const clearFilters = () => {
     router.push(pathname);
   };
@@ -182,7 +182,7 @@ params.set(name, value);
     const fetchCategories = async () => {
       try {
         const res = await getCategories({ type: 'place' });
-const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
+        const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
         const formatted: CategoryOption[] = (list || []).map((category) => ({
           id: category._id,
           name: category.name,
@@ -192,7 +192,7 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
         console.error("fetch categories error:", err);
       }
     };
-    
+
     const fetchDistricts = async () => {
       try {
         // Assuming an API endpoint /api/districts
@@ -251,7 +251,7 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 xl:gap-8 mb-12">
           {/* Backdrop */}
           {isFilterOpen && (
-            <div 
+            <div
               className="fixed top-[80px] left-0 right-0 bottom-0 bg-opacity-50 z-40 lg:hidden"
               onClick={() => setIsFilterOpen(false)}
             />
@@ -260,16 +260,31 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
           {/* Bộ lọc */}
           <div ref={filterRef} id="filter" className={`${isFilterOpen ? 'fixed top-[80px] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md max-h-[calc(100vh-80px)]' : 'hidden'} lg:flex lg:static lg:translate-x-0 lg:translate-y-0 lg:z-auto flex-col lg:w-[260px] xl:w-[300px] shrink-0 bg-white p-4 lg:p-0 rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none lg:bg-transparent overflow-y-auto`}>
             <div className="flex justify-between items-center mb-2 lg:hidden">
-               <h2 className="font-bold text-lg">BỘ LỌC</h2>
+              <h2 className="font-bold text-lg">BỘ LỌC</h2>
               <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-700 text-xl">
                 <IoIosClose className="text-3xl" />
               </button>
             </div>
-             <div className="flex justify-between items-center">
-                <h2 className="font-bold text-lg hidden lg:block">BỘ LỌC</h2>
-                <button onClick={clearFilters} className="text-sm text-blue-500 hover:underline">Xóa bộ lọc</button>
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold text-lg hidden lg:block">BỘ LỌC</h2>
+              <button onClick={clearFilters} className="text-sm text-blue-500 hover:underline">Xóa bộ lọc</button>
             </div>
             <span className="block h-px bg-gray-300 my-4 lg:my-6" />
+
+            {/* District Filter */}
+            <h4 className="font-semibold mb-3">Khu vực</h4>
+            <Select<RSOption, false>
+              value={(() => {
+                const opts = districts.map(d => ({ value: d.id, label: d.name }));
+                return opts.find(o => o.value === selectedDistrict) || null;
+              })()}
+              onChange={(o) => handleFilterChange('district', o?.value || '')}
+              options={districts.map(d => ({ value: d.id, label: d.name }))}
+              placeholder="Chọn khu vực"
+              isClearable
+              styles={{ menu: (b) => ({ ...b, zIndex: 40 }) }}
+            />
+            <span className="block h-px bg-gray-400 my-4 lg:my-8" />
 
             {/* Xếp hạng */}
             <h4 className="font-semibold mb-3">Xếp hạng</h4>
@@ -298,7 +313,7 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
                     onChange={() => {
                       const newServices = selectedServices.includes(option.id)
                         ? selectedServices.filter(item => item !== option.id)
-: [...selectedServices, option.id];
+                        : [...selectedServices, option.id];
                       handleFilterChange('services', newServices);
                     }}
                     className="h-4 w-4"
@@ -357,7 +372,7 @@ const list = (res?.data ?? res) as Array<{ _id: string; name: string }>;
                   <Select
                     value={options.find((o) => o.value === sortBy)}
                     onChange={(o) => handleFilterChange('sortBy', o?.value || 'rating')}
-options={options}
+                    options={options}
                     placeholder="Sắp xếp theo"
                     styles={{
                       control: (b, s) => ({
@@ -415,7 +430,7 @@ options={options}
 
             {/* Pagination */}
             {!loading && totalPages > 1 && (
-<div className="flex justify-center mt-6 lg:mt-8 gap-1 lg:gap-2 flex-wrap px-2">
+              <div className="flex justify-center mt-6 lg:mt-8 gap-1 lg:gap-2 flex-wrap px-2">
                 <button onClick={() => handleFilterChange('page', String(Math.max(currentPage - 1, 1)))} disabled={currentPage === 1} className="px-2 lg:px-3 py-1 lg:py-2 text-sm lg:text-base border rounded-lg disabled:opacity-50 cursor-pointer">
                   Trước
                 </button>
