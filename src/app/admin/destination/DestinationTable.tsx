@@ -4,10 +4,12 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { GenericTable } from "@/shared/GenericTable"
 // import {Destination, destinations} from "../../assets/data/destinations";
 import { Destination } from '@/types/destination';
+import { getDestinationById, getReviewsByPlaceId } from '@/lib/place/destinationApi';
+import DestinationPreviewModal from './DestinationPreviewModal';
 import { deleteDestination } from '@/services/destinationService';
 import { toast } from 'sonner';
 import {
@@ -21,19 +23,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import EditDestinationForm from './EditDestinationForm';
 
 
 interface Props {
   data: Destination[]
+  onDeleteSuccess?: (deletedId: string) => void
+  onUpdateSuccess?: (updated: Destination) => void
 }
 
 
-export function DestinationTable({ data }: Props) {
-
+export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [dialogOpen, setDialogOpen] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  // Modal / preview state
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [destination, setDestination] = useState<any | null>(null)
+  const [id, setId] = useState<string>('')
+  // keep local rows so we can update table optimistically without requiring parent refresh
+  const [rows, setRows] = useState<Destination[]>(data)
+
+  useEffect(() => {
+    setRows(data)
+  }, [data])
 
   const handleClickDelete = async (id: string) => {
     try {
@@ -45,6 +61,7 @@ export function DestinationTable({ data }: Props) {
         newSet.delete(id)
         return newSet
       })
+      onDeleteSuccess?.(id)
     } catch (err) {
       console.error('Failed to delete destination', err)
       toast.error('Xoá địa điểm thất bại')
@@ -63,8 +80,8 @@ export function DestinationTable({ data }: Props) {
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === data.length) setSelectedIds(new Set())
-    else setSelectedIds(new Set(data.map(d => d.id)))
+    if (selectedIds.size === rows.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(rows.map(d => d.id)))
   }
 
 
@@ -74,7 +91,7 @@ export function DestinationTable({ data }: Props) {
       header: () => (
         <input
           type="checkbox"
-          checked={selectedIds.size === data.length && data.length > 0}
+          checked={selectedIds.size === rows.length && rows.length > 0}
           onChange={toggleSelectAll}
         />
       ),
@@ -112,30 +129,13 @@ export function DestinationTable({ data }: Props) {
     {
       header: 'Toạ độ',
       accessorKey: 'location',
+      meta: { className: 'hidden sm:table-cell' },
       cell: ({ getValue }) => {
         const value = getValue() as { type: string; coordinates: number[] };
         const coordStr = `${value.coordinates[1].toFixed(4)}, ${value.coordinates[0].toFixed(4)}`; // lat, lng
         return <span className='clamp-1'>{coordStr}</span>;
       },
     },
-    // {
-    //   header: 'Toạ độ',
-    //   accessorKey: 'location',
-    //   cell: ({ getValue }) => {
-    //     const value = getValue() as { type: string; coordinates: number[] } | null | undefined;
-    //     return <span>{value && value.coordinates?.length ? 'Có' : 'Không'}</span>;
-    //   },
-    // },
-
-    // {
-    //   header: 'Trạng thái',
-    //   accessorKey: 'status',
-    //   cell: ({ getValue }) => {
-    //     const value = getValue() as string;
-    //     return <span className='clamp-1'>{value}</span>;
-    //   },
-    // },
-
     {
       header: 'Trạng thái',
       accessorKey: 'status',
@@ -176,17 +176,25 @@ export function DestinationTable({ data }: Props) {
         const destination = row.original;
         return (
           <div className="flex gap-2">
-            <button className="text-[#667085]"><i className="hover:text-green-700 ri-eye-line"></i></button>
-            <button className="text-[#667085]"><i className="hover:text-blue-700 ri-pencil-line"></i></button>
+            <button
+              className="text-[#667085]"
+              onClick={() => {
+                setSelectedPreviewId(destination.id)
+                setPreviewOpen(true)
+              }}
+            >
+              <i className="hover:text-green-700 ri-eye-line"></i>
+            </button>
+            <button onClick={() => { setDestination(destination); setId(destination.id); setEditOpen(true) }} className="text-[#667085]"><i className="hover:text-blue-700 ri-pencil-line"></i></button>
             <button onClick={() => { setPendingDeleteId(destination.id); setDialogOpen(true); }} className="text-[#667085]"><i className="hover:text-red-700 ri-delete-bin-6-line"></i></button>
           </div>
         );
       },
     },
-  ], [selectedIds, data])
+  ], [selectedIds, rows])
 
   const table = useReactTable({
-    data,
+    data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
@@ -197,14 +205,42 @@ export function DestinationTable({ data }: Props) {
     await handleClickDelete(pendingDeleteId)
     setDialogOpen(false)
     setPendingDeleteId(null)
-    // Optionally refresh parent list here if needed
   }
 
   return (
+
     <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none">
-        <GenericTable data={data} columns={columns} />
+      <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none border border-gray-300 rounded-md shadow-sm">
+        <GenericTable data={rows} columns={columns} />
       </div>
+
+      {/* Edit dialog */}
+      <AlertDialog open={editOpen} onOpenChange={(v: boolean) => { if (!v) setEditOpen(false) }}>
+        <AlertDialogContent className="max-w-3xl w-full max-h-[90vh] overflow-auto bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className='flex items-center justify-between'>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Chỉnh sửa địa điểm</span>
+                <i className="ri-pencil-line"></i>
+              </div>
+              <i
+                className="ri-close-line cursor-pointer text-lg"
+                onClick={() => setEditOpen(false)}
+              ></i>
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="p-4">
+            <EditDestinationForm id={id} initialValues={destination} onSaved={(updated) => {
+              if (updated) {
+                const updatedRecord = updated.data || updated.place || updated
+                setDestination(updatedRecord)
+                onUpdateSuccess?.(updatedRecord)
+              }
+              setEditOpen(false)
+            }} />
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialogContent className='bg-white text-black'>
         <AlertDialogHeader>
@@ -222,7 +258,21 @@ export function DestinationTable({ data }: Props) {
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
+      {/* Preview Modal */}
+      <DestinationPreviewModal
+        id={selectedPreviewId ?? ''}
+        open={previewOpen && !!selectedPreviewId}
+        onClose={() => { setPreviewOpen(false); setSelectedPreviewId(null); }}
+        onUpdateSuccess={(updatedRecord: any) => {
+          const updatedId = updatedRecord?.id || updatedRecord?._id
+          if (updatedId) {
+            setRows(prev => prev.map(r => (r.id === updatedId || (r as any)._id === updatedId ? { ...r, ...updatedRecord } : r)))
+          }
+          onUpdateSuccess?.(updatedRecord)
+        }}
+      />
     </AlertDialog>
+
   )
 
 }

@@ -34,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px]" style={{ top: "2980px", left: "-150px" }} />
         <div className="absolute w-[500px] h-[550px] bg-[var(--secondary)] opacity-50 blur-[250px]" style={{ top: "4750px", left: "1470px" }} />
 
-        <div className="relative hidden md:block w-64 border-r border-[#0000001A] z-20 shrink-0">
+        <div className="relative hidden xl:block w-64 border-r border-[rgba(0,0,0,0.1)] z-20 shrink-0">
           <SideBar />
         </div>
 
@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <main className="relative flex-1 w-full p-4 md:p-6 z-10">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden mb-4 p-2 rounded-lg border border-gray-300 dark:border-gray-700"
+              className="xl:hidden mb-4 p-2 rounded-lg border border-gray-300 dark:border-gray-700"
             >
               <Menu size={24} />
             </button>

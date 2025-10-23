@@ -185,7 +185,6 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         const res = await fetch("http://localhost:5000/api/wards")
         if (!res.ok) throw new Error("Failed to fetch wards")
         const data = await res.json()
-        console.log("fetchWards response:", data)
         const formatted: Option[] = data.map((ward: Ward) => ({
           value: ward._id,
           label: `${ward.name}`,
@@ -202,7 +201,6 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
     const fetchServices = async () => {
         try {
           const res = await getServices();
-          console.log("services api response:", res);
 
           const formatted = res.data.map((service: ServiceOption) => ({
             id: service.id,

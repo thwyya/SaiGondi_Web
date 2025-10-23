@@ -4,7 +4,7 @@ import qs from "qs";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Tạo địa điểm mới (dùng axiosInstance để tự động gắn accessToken)
-export const createDestination = async (destinationData: FormData) =>{
+export const createDestination = async (destinationData: FormData) => {
   const res = await axiosInstance.post(`${API_URL}/places/suggest`, destinationData);
   return res.data;
 }
@@ -19,7 +19,7 @@ export interface Category {
 export const getDestinations = async (params?: any) => {
   console.log("Fetching destinations with params:", params);
   try {
-    const res = await axios.get(`${API_URL}/places`, { 
+    const res = await axios.get(`${API_URL}/places`, {
       params,
       timeout: 10000, // 10 second timeout
       paramsSerializer: function (params) {
@@ -55,14 +55,14 @@ export const getDestinationById = async (id: string) => {
   return res.data;
 };
 
-export const getServices = async () =>{
+export const getServices = async () => {
   const res = await axios.get(`${API_URL}/services`);
   return res.data;
 };
 // Lấy danh sách danh mục
 export const getCategories = async (params?: any) => {
   const res = await axios.get(`${API_URL}/users/categories`, { params });
-  return res.data; 
+  return res.data;
 };
 // Tìm kiếm địa điểm
 export const searchDestinations = async (params: any) => {
@@ -138,7 +138,7 @@ export const reportReview = async (reviewId: string, reason: string) => {
 
 // Lấy tất cả địa điểm (không phân trang)
 export const getAllDestinations = async () => {
-  const res = await axios.get(`${API_URL}/places`);
+  const res = await axios.get(`${API_URL}/places/map-data`);
   if (Array.isArray(res.data.data)) {
     return res.data.data;
   }
@@ -149,9 +149,15 @@ export const getAllDestinations = async () => {
 };
 
 // Lấy địa điểm lân cận
-export const getNearbyPlaces = async (latitude: number, longitude: number, radius = 5000) => {
+export const getNearbyPlaces = async (latitude: number, longitude: number, distance = 5000) => {
   const res = await axiosInstance.get(`${API_URL}/places/nearby`, {
-    params: { latitude, longitude, radius },
+    params: { latitude, longitude, distance },
   });
   return res.data.data;
 };
+
+export const updateDestination = async (id: string, data: any | FormData) => {
+  const res = await axiosInstance.patch(`/admin/places/${id}`, data as any);
+  return res.data;
+};
+
