@@ -9,7 +9,7 @@ interface AdminHeaderProps {
   avatarUrl: string;
   avatarOpen: boolean;
   setAvatarOpen: (value: boolean) => void;
- avatarRef: RefObject<HTMLDivElement | null>;
+  avatarRef: RefObject<HTMLDivElement | null>;
   handleLogout: () => void;
 }
 
@@ -22,19 +22,21 @@ export default function AdminHeader({
   handleLogout,
 }: AdminHeaderProps) {
   return (
-    <div className="flex justify-end mt-6 px-4">
+    <div className="flex justify-between items-center px-6 sm:px-8 lg:px-9 xl:px-11">
       <div
         ref={avatarRef}
         className="relative flex items-center gap-2 cursor-pointer"
         onClick={() => setAvatarOpen(!avatarOpen)}
       >
-        <Image
-          src={avatarUrl}
-          alt="Avatar"
-          width={32}
-          height={32}
-          className="rounded-full object-cover"
-        />
+        <div className="w-9 h-9 rounded-2xl overflow-hidden">
+          <Image
+            src={avatarUrl}
+            alt="Avatar"
+            width={36}
+            height={36}
+            className="object-cover w-full h-full"
+          />
+        </div>
         <span className="font-medium">{firstName}</span>
         <FaChevronDown className="text-gray-500" size={14} />
 

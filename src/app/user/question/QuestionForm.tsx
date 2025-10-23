@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { questionApi } from '@/lib/question/questionApi';
+import { toast } from 'sonner';
 
 interface QuestionFormProps {
   onSuccess?: (question: any) => void;
@@ -21,21 +22,19 @@ export default function QuestionForm({ onSuccess }: QuestionFormProps) {
     }
 
     if (!title.trim() || title.trim().length < 10) {
-      alert('Tiêu đề phải có ít nhất 10 ký tự');
+      toast.error('Tiêu đề phải có ít nhất 10 ký tự');
       return;
     }
 
     try {
-      const newQuestion = await questionApi.createQuestion({
-        title: title.trim(),
-      });
+      const created = await questionApi.createQuestion({ title: title.trim() });
 
-      if (onSuccess && typeof onSuccess === 'function') {
-        onSuccess(newQuestion);
-      }
+      const fullData = await questionApi.getQuestionById(created._id);
+
+      if (onSuccess) onSuccess(fullData);
+
 
       setTitle('');
-      router.push('/user/question');
     } catch (error) {
       console.error('Tạo câu hỏi thất bại', error);
     }

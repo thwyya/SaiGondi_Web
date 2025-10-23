@@ -5,7 +5,7 @@ import AnimatedNumber from "../AnimatedNumber";
 
 export default function StatsGrid({ stats }: any) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 m-6 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mr-3 ml-3 gap-4">
       <div className="flex flex-col rounded-2xl py-6 px-2 lg:p-6 gap-2 bg-[#EDEEFC]">
         <h4 className="text-sm lg:text-base font-bold text-center">Số địa điểm</h4>
         <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">

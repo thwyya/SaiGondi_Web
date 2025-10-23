@@ -7,6 +7,7 @@ import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { PiCamera } from 'react-icons/pi';
+import { toast } from 'sonner';
 
 interface AccountSettingProps {
   open: boolean;
@@ -22,8 +23,7 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
     bio: '',
     avatarUrl: '',
     avatarFile: null as File | null,
-    email: '',
-    phone: ''
+    email: ''
   });
 
   const [originalAvatar, setOriginalAvatar] = useState('');
@@ -80,8 +80,7 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
           bio: user?.bio || '',
           avatarUrl: user?.avatar || '',
           avatarFile: null,
-          email: user?.email || '',
-          phone: user?.phone || ''
+          email: user?.email || ''
         });
         setOriginalAvatar(user?.avatar || '');
         setView("view");
@@ -140,15 +139,6 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
       newErrors.bio = '';
     }
 
-    // Phone
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Số điện thoại không được để trống';
-    } else if (!PHONE_REGEX.test(formData.phone)) {
-      newErrors.phone = 'Số điện thoại phải là 10 số hợp lệ (bắt đầu bằng 0)';
-    } else {
-      newErrors.phone = '';
-    }
-
     setErrors(newErrors);
 
     return !Object.values(newErrors).some(Boolean);
@@ -177,16 +167,17 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
     if (!validateEdit()) return; 
 
     try {
-      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      // const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       await profileApi.updateProfile({
-        fullName,
+        // fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         bio: formData.bio,
-        avatar: formData.avatarFile, 
-        phone: formData.phone      
+        avatar: formData.avatarFile      
       });
 
       setOriginalAvatar(formData.avatarUrl);
-      alert('Cập nhật thành công!');
+      toast.success('Cập nhật thành công!');
       setView("view");
       setErrors({
         firstName: '',
@@ -199,7 +190,7 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
       });
     } catch (error) {
       console.error(error);
-      alert('Cập nhật thất bại. Vui lòng thử lại.');
+      toast.success('Cập nhật thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -208,11 +199,11 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
 
     try {
       await authApi.changePassword(passwords.currentPassword, passwords.newPassword);
-      alert('Đổi mật khẩu thành công!');
+      toast.success('Đổi mật khẩu thành công!');
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setView("view");
     } catch {
-      alert('Đổi mật khẩu thất bại.');
+      toast.error('Đổi mật khẩu thất bại.');
     }
   };
 
@@ -278,14 +269,6 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
                 label="Email"
                 readOnly
                 className="bg-gray-100 cursor-default"
-              />
-
-              <Input 
-                name="phone" 
-                value={formData.phone || "Chưa có thông tin"} 
-                label="Số điện thoại"
-                readOnly
-                className="cursor-default"
               />
 
               <Input 
@@ -399,14 +382,6 @@ export default function AccountSetting({ open, onClose }: AccountSettingProps) {
               label="Email"
               readOnly
               className="cursor-default bg-gray-100"
-            />
-            <Input
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              label="Số điện thoại"
-              status={errors.phone ? "error" : "default"}
-              supportText={errors.phone}
             />
 
             <div className="flex justify-center mt-4 gap-4">

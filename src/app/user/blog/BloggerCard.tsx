@@ -9,8 +9,6 @@ type BloggerCardProps = {
   avatar: string;
   name: string;
   description: string;
-  facebookLink?: string;
-  zaloLink?: string;
 };
 
 const BloggerCard = ({

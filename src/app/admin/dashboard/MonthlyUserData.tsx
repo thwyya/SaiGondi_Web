@@ -168,7 +168,7 @@ export default function MonthlyLineChart() {
   };
 
   return (
-    <div className="w-full mb-6 overflow-hidden">
+    <div className="w-full overflow-hidden mt-6">
       <div className="flex items-center gap-6">
         <h3 className="font-bold m-4 border-r pr-6 border-gray-300">
           Tổng hợp người dùng

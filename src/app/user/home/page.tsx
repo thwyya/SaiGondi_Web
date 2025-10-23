@@ -1,3 +1,5 @@
+"use client";
+
 import SearchBox from '@/components/ui/SearchBox';
 import HomeBanner from './HomeBanner';
 import ServiceSection from './ServiceSection';

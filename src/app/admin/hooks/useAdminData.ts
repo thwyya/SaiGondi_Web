@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import api from "@/services/api";
 import { getAllDestinations } from "@/lib/place/destinationApi";
-import { useRouter } from "next/navigation";
 import { TopPlace, TopUser } from "@/app/assets/data/topPlace";
 
 export function useAdminData() {
   const router = useRouter();
+
   const [stats, setStats] = useState({
     users: 0,
     places: 0,
@@ -21,43 +22,44 @@ export function useAdminData() {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [topPlaces, setTopPlaces] = useState<TopPlace[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const avatarRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const savedName = localStorage.getItem("firstName");
-    const savedAvatar = localStorage.getItem("avatar");
     const token = localStorage.getItem("accessToken");
-    if (savedName) setFirstName(savedName);
-    if (savedAvatar) setAvatarUrl(savedAvatar);
 
-    api.get("/admin/stats/overview")
-      .then((res) => setStats(res.data?.data || {}))
-      .catch(() => console.log("Lỗi lấy thống kê"));
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
 
-    if (token) {  
-    api.get("/admin/me")
-      .then((res) => {
-        const fullName = res.data?.fullName || "";
-        if (fullName) {
-          const first = fullName.trim().split(" ")[0];
-          setFirstName(first);
-          localStorage.setItem("firstName", first);
+    Promise.all([
+      api.get("/admin/stats/overview"),
+      api.get("/admin/me"),
+      api.get("/admin/stats/topUsers"),
+    ])
+      .then(([overviewRes, meRes, topUsersRes]) => {
+        setStats(overviewRes.data?.data || {});
+
+        const user = meRes.data?.data;
+        if (user) {
+          if (user.firstName) setFirstName(user.firstName);
+          if (user.avatar) setAvatarUrl(user.avatar);
         }
-        if (res.data?.avatar) {
-          setAvatarUrl(res.data.avatar);
-          localStorage.setItem("avatar", res.data.avatar);
+
+        setTopUsers(topUsersRes.data?.data || []);
+      })
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          router.push("/admin/login");
+        } else {
+          console.log("Lỗi khi lấy dữ liệu admin:", err);
         }
       })
-      .catch(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        router.push("/admin/login");
-      });
-    }
-    api.get("/admin/stats/topUsers")
-      .then((res) => setTopUsers(res.data?.data || []))
-      .catch(() => console.log("Lỗi lấy TOP users"));
+      .finally(() => setLoading(false));
 
     getAllDestinations()
       .then((places) => {
@@ -73,20 +75,20 @@ export function useAdminData() {
         }
       })
       .catch(() => console.log("Lỗi lấy TOP places"));
+
     const handleClickOutside = (e: MouseEvent) => {
       if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
         setAvatarOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    localStorage.removeItem("firstName");
-    localStorage.removeItem("avatar");
     router.push("/admin/login");
   };
 
@@ -100,5 +102,6 @@ export function useAdminData() {
     topUsers,
     topPlaces,
     handleLogout,
+    loading,
   };
 }

@@ -6,8 +6,11 @@ import { Inter } from "next/font/google";
 import SideBar from "./SideBar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import "@/styles/globals.css";
+import { FiX } from "react-icons/fi";
+import { useAdminData } from "./hooks/useAdminData";
+import AdminHeader from "@/components/AdminHeader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === "/admin/login";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const data = useAdminData();
   if (isLoginPage) return <>{children}</>;
 
   return (
@@ -43,13 +46,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div
               className="fixed inset-0 bg-black/50"
               onClick={() => setSidebarOpen(false)}
-            ></div>
-            <div className="relative w-64 bg-white dark:bg-gray-900 border-r border-gray-200 z-40 p-4">
+            />
+            <div className="relative w-64 bg-white border-r border-gray-200 z-40 p-4">
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute top-4 right-4 text-gray-600 dark:text-gray-300"
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
               >
-                <X size={24} />
+                <FiX size={24} />
               </button>
               <SideBar />
             </div>
@@ -57,14 +60,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         <QueryClientProvider client={queryClient}>
-          <main className="relative flex-1 w-full p-4 md:p-6 z-10">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="xl:hidden mb-4 p-2 rounded-lg border border-gray-300 dark:border-gray-700"
-            >
-              <Menu size={24} />
-            </button>
-            {children}
+          <main className="relative flex-1 w-full flex flex-col p-4 md:p-6 z-10">
+            <div className="flex justify-between items-center mb-4 lg:mb-6">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 xl:hidden"
+              >
+                <Menu size={24} />
+              </button>
+
+              <div className="hidden lg:block flex-1" />
+
+              <AdminHeader
+                firstName={data.firstName}
+                avatarUrl={data.avatarUrl}
+                avatarOpen={data.avatarOpen}
+                setAvatarOpen={data.setAvatarOpen}
+                avatarRef={data.avatarRef}
+                handleLogout={data.handleLogout}
+              />
+            </div>
+
+            <div className="flex-1">{children}</div>
           </main>
         </QueryClientProvider>
       </div>

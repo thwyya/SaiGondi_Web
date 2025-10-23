@@ -107,13 +107,15 @@ export default function Header() {
                 ref={avatarRef}
                 onClick={() => setAvatarOpen((v) => !v)}
               >
-                <Image
-                  src={avatarUrl}
-                  alt="Avatar"
-                  width={30}
-                  height={30}
-                  className="rounded-xl object-cover"
-                />
+                <div className="w-9 h-9 rounded-2xl overflow-hidden">
+                  <Image
+                    src={avatarUrl}
+                    alt="Avatar"
+                    width={30}
+                    height={30}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
                 <span className="text-[var(--foreground)] font-inter">{firstName}</span>
                 <FaChevronDown className="text-gray-500" size={14} />
                 {avatarOpen && (

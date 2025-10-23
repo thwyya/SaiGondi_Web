@@ -12,7 +12,8 @@ import Button from '@/components/ui/Button';
 import { blogApi } from '@/lib/blog/blogApi';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { Post } from '@/types/post';
-import { renderWithHashtags } from '@/lib/hashtagUtils';
+import { getCurrentUserId } from '@/lib/auth/auth';
+import { toast } from 'sonner';
 
 type BlogDetailProps = {
   post: any;
@@ -20,11 +21,18 @@ type BlogDetailProps = {
 
 export default function BlogDetail({ post }: BlogDetailProps) {
   post = mapBlogToPost(post);
-  const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userId") : null; //đang lấy userId từ localStorage
+  const currentUserId = getCurrentUserId();
 
-  const [liked, setLiked] = useState(
-    currentUserId ? post.likeBy.includes(currentUserId) : false
-  );
+  const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    if (currentUserId && post.likeBy) {
+      setLiked(post.likeBy.map(String).includes(currentUserId));
+    } else {
+      setLiked(false);
+    }
+  }, [currentUserId, post.likeBy]);
+
   const [likeCount, setLikeCount] = useState(post.totalLikes);
   const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -56,8 +64,9 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     try {
       const updatedBlog = await blogApi.likeBlog(post.id);
       setLikeCount(updatedBlog.totalLikes);
+
       if (currentUserId) {
-        setLiked(updatedBlog.likeBy.includes(currentUserId));
+        setLiked(updatedBlog.likeBy.map(String).includes(currentUserId));
       }
     } catch (err) {
       console.error("Lỗi khi like blog:", err);
@@ -65,12 +74,18 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   };
 
   const scrollToComments = () => {
-    commentRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (commentRef.current) {
+      const y =
+        commentRef.current.getBoundingClientRect().top +
+        window.scrollY -
+        100; 
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    alert('Đã sao chép liên kết!');
+    toast.success('Đã sao chép liên kết!');
     setShowShareMenu(false);
   };
 
@@ -81,15 +96,15 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       // Cập nhật shareCount theo dữ liệu server trả về
       setShareCount(res.shareCount);
 
-      alert('Đã chia sẻ về trang cá nhân.');
+      toast.success('Đã chia sẻ về trang cá nhân.');
       setShowShareMenu(false);
     } catch (err: any) {
       console.error('Lỗi khi chia sẻ blog:', err);
 
       if (err.response?.status === 429 || err.response?.data?.statusCode === 429) {
-        alert('Bạn đã chia sẻ quá nhiều lần, vui lòng thử lại sau.');
+        toast.error('Bạn đã chia sẻ quá nhiều lần, vui lòng thử lại sau.');
       } else {
-        alert('Có lỗi xảy ra khi chia sẻ. Vui lòng thử lại.');
+        toast.error('Có lỗi xảy ra khi chia sẻ. Vui lòng thử lại.');
       }
       setShowShareMenu(false);
     }
@@ -137,7 +152,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       {/* Thông tin tác giả + like/share */}
       <div className="flex items-center justify-between flex-wrap text-sm text-[var(--gray-1)] mb-4">
         <div className="flex items-center gap-2">
-          <Link href={`/user/profile`} className="flex items-center gap-2">
+          <Link href={`/user/profile/${post.authorId}`} className="flex items-center gap-2">
             <Image
               src={post.authorAvatar || '/Logo.svg'}
               alt={post.author || 'Ẩn danh'}
@@ -213,7 +228,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
       <article className="prose prose-lg max-w-none text-justify text-[var(--foreground)] space-y-6">
         {post.content?.map((block: Post['content'][0], idx: number) => {
           if (block.type === 'text') {
-            return <p key={idx}>{renderWithHashtags(block.value || '')}</p>;
+            return <p key={idx}>{block.value}</p>;
           }
           if (block.type === 'image' && block.url) {
             return (
@@ -241,13 +256,12 @@ export default function BlogDetail({ post }: BlogDetailProps) {
 
       <div className="flex flex-wrap gap-2 mb-4 mt-5">
         {post.tags?.map((tag: string, idx: number) => (
-          <Link
+          <span
             key={idx}
-            href={`/search?tag=${tag}&type=blogs`}
-            className="inline-block bg-gray-100 text-sm text-gray-600 px-3 py-1 rounded-md hover:bg-gray-200 hover:text-gray-800 transition-colors"
+            className="inline-block bg-gray-100 text-sm text-gray-600 px-3 py-1 rounded-md"
           >
             #{tag}
-          </Link>
+          </span>
       ))}
       </div>
       
@@ -267,13 +281,11 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                     className="object-cover"
                   />
                 ) : (
-                  item.url && (
-                    <video
-                      src={item.url}
-                      controls
-                      className="w-full h-full object-cover"
-                    />
-                  )
+                  <video
+                    src={item.url}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
             ))}

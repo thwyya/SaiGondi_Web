@@ -13,14 +13,14 @@ export const profileApi = {
   },
 
   // Cập nhật thông tin người dùng
-  updateProfile: async (data: { fullName: string; bio: string; avatar?: File | null;  phone?: string}) => {
+  updateProfile: async (data: { firstName: string; lastName: string; bio: string; avatar?: File | null}) => {
     const formData = new FormData();
-    formData.append("fullName", data.fullName);
+    formData.append("firstName", data.firstName);
+    formData.append("lastName", data.lastName);
     formData.append("bio", data.bio);
     if (data.avatar) {
       formData.append("avatar", data.avatar);
     }
-    formData.append("phone", data.phone || "");
 
     return await axios.put(`${API_URL}/me`, formData, {
       headers: {

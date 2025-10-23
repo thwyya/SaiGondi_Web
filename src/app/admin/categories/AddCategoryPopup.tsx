@@ -2,17 +2,18 @@
 import { useState } from "react";
 import { GoTag } from "react-icons/go";
 import api from "@/services/api";
+import { toast } from "sonner";
 
 export default function AddCategoryPopup({onClose}:{onClose:()=>void}) {
 
     const [categoryName, setCategoryName] = useState("")
 
     const handleAddCategory = async () => {
-        if (!categoryName) return alert('Vui lòng nhập tên danh mục')
+        if (!categoryName) return toast.error('Vui lòng nhập tên danh mục')
         try {
 
             await api.post('/admin/categories', { name: categoryName });
-            alert('Thêm danh mục thành công')
+            toast.success('Thêm danh mục thành công')
             onClose()
             window.location.reload();
         }

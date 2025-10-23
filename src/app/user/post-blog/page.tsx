@@ -243,10 +243,10 @@ export default function PostBlogPage() {
             variant="outline-secondary"
             // onClick={() => saveDraft(true)}
             className="flex items-center gap-2 rounded-xl border border-[var(--gray-3)] text-[var(--gray-1)] hover:bg-[var(--gray-5)]"
-          >
+          >          
             <FiSave /> Lưu nháp
           </Button>
-          <Button
+          <Button   
             variant="primary"
             onClick={handleSubmit}
             className="flex items-center gap-2 rounded-xl"
