@@ -9,11 +9,12 @@ interface NavLink {
 
 const navLinks: NavLink[] = [
   { display: 'Dashboard', path: '/admin/dashboard', icon: <i className="ri-pie-chart-line h-8 w-8 content-center pl-2"></i> },
-  { display: 'Địa điểm', path: '/admin/destination', icon: <i className="ri-shopping-bag-4-line h-8 w-8 content-center  pl-2"></i> },
-  { display: 'Danh mục', path: '/admin/categories', icon: <i className="ri-folder-6-line h-8 w-8 content-center  pl-2 "></i> },
-  { display: 'Đánh giá', path: '/admin/reviews', icon: <i className="ri-chat-smile-ai-line h-8 w-8 content-center pl-2" /> },
   { display: 'Người dùng', path: '/admin/users', icon: <i className="ri-id-card-line h-8 w-8 content-center pl-2 "></i> },
   { display: 'Blog', path: '/admin/blog', icon: <i className="ri-news-line h-8 w-8 content-center pl-2"></i> },
+  { display: 'Địa điểm', path: '/admin/destination', icon: <i className="ri-shopping-bag-4-line h-8 w-8 content-center  pl-2"></i> },
+  { display: 'Danh mục', path: '/admin/categories', icon: <i className="ri-folder-6-line h-8 w-8 content-center  pl-2 "></i> },
+  { display: 'Báo cáo', path: '/admin/reports', icon: <i className="ri-chat-smile-ai-line h-8 w-8 content-center pl-2" /> },
+  { display: 'Dịch vụ', path: '/admin/services', icon: <i className="ri-chat-smile-ai-line h-8 w-8 content-center pl-2" /> },
 ]
 
 const SideBar = () => {
