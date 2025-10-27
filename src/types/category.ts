@@ -1,4 +1,5 @@
-
+import { Blog } from "./blog";
+import { Place } from "./place";
 
 export interface Category {
   _id: string;
@@ -9,4 +10,8 @@ export interface Category {
   createdAt: string; 
   updatedAt: string; 
   type: string; 
+  blogs: Blog[];
+  places: Place[];
+  blogCount: number;
+  placeCount: number;
 }
