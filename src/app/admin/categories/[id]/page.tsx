@@ -135,7 +135,7 @@ export default function CategoryDetailsPage() {
                   : 'bg-green-100 text-green-700'
               }`}>
                 <i className={`${category.type === 'blog' ? 'ri-article-line' : 'ri-map-pin-line'} mr-1`}></i>
-                {category.type === 'blog' ? 'Blog' : 'Địa điểm'}
+                {category.type === 'blog' ? 'Bài viết' : 'Địa điểm'}
               </span>
               <span className="px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
                 <i className="ri-list-check mr-1"></i>
@@ -339,7 +339,7 @@ export default function CategoryDetailsPage() {
                           : 'bg-green-100 text-green-700'
                       }`}>
                         <i className={`${category.type === 'blog' ? 'ri-article-line' : 'ri-map-pin-line'} mr-1`}></i>
-                        {category.type === 'blog' ? 'Blog' : 'Địa điểm'}
+                        {category.type === 'blog' ? 'Bài viết' : 'Địa điểm'}
                       </span>
                     </p>
                   </div>

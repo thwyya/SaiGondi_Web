@@ -1,11 +1,9 @@
 'use client';
 import Link from 'next/link';
 import {
-  ColumnDef,
-  getCoreRowModel,
-  useReactTable,
+  ColumnDef
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useMemo} from 'react';
 import { GenericTable } from '@/shared/GenericTable';
 import { Category } from '@/types/category';
 
@@ -69,6 +67,7 @@ export function CategoryTable({ data, onEdit, onDelete, selectedIds, onSelect, o
         cell: ({ row }) => {
           const type = row.original.type;
           const isPlace = type === 'place';
+
           return (
             <div className="flex items-center justify-center">
               <span
@@ -142,7 +141,7 @@ export function CategoryTable({ data, onEdit, onDelete, selectedIds, onSelect, o
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm  border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border-gray-200">
       <GenericTable data={data} columns={columns} />
     </div>
   );
