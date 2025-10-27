@@ -42,14 +42,14 @@ export default function FeedbackSection() {
         <button
           aria-label="Previous"
           onClick={handlePrev}
-          className="hidden sm:flex absolute top-1/2 -translate-y-1/2 -left-3 md:-left-6 lg:-left-18 w-10 h-10 md:w-12 md:h-12 rounded-full border border-gray-300 items-center justify-center hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
+          className="cursor-pointer hidden sm:flex absolute top-1/2 -translate-y-1/2 -left-3 md:-left-6 lg:-left-18 w-10 h-10 md:w-12 md:h-12 rounded-full border border-gray-300 items-center justify-center hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
         >
           <IoIosArrowBack className="text-[var(--gray-3)] text-2xl md:text-3xl" />
         </button>
         <button
           aria-label="Next"
           onClick={handleNext}
-          className="hidden sm:flex absolute top-1/2 -translate-y-1/2 -right-3 md:-right-6 lg:-right-18 w-10 h-10 md:w-12 md:h-12 rounded-full border border-gray-300 items-center justify-center hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
+          className="cursor-pointer hidden sm:flex absolute top-1/2 -translate-y-1/2 -right-3 md:-right-6 lg:-right-18 w-10 h-10 md:w-12 md:h-12 rounded-full border border-gray-300 items-center justify-center hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
         >
           <IoIosArrowForward className="text-[var(--gray-3)] text-2xl md:text-3xl" />
         </button>
