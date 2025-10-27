@@ -314,7 +314,7 @@ function SearchResults() {
                 </aside>
             )}
 
-            <div className={`min-h-[75vh] ${activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
+            <div className={`min-h-[90vh] ${activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
                 {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {renderGridItems()}

@@ -8,10 +8,14 @@ export interface TopPlace {
   views: number;
   image?: string;
 }
-export const getDestinations = async ({ queryKey }: QueryFunctionContext) => {
-  const [, params] = queryKey as any[];
+export const getDestinationsByParams = async (params: any) => {
   const res = await api.get('/admin/places', { params });
   return res.data.data.places ?? res.data;
+}
+
+export const getDestinations = async ({ queryKey }: QueryFunctionContext) => {
+  const [, params] = queryKey as any[];
+  return getDestinationsByParams(params);
 }
 export const deleteDestination = async (id: string) => {
   try {
