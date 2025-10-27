@@ -3,12 +3,11 @@ import { useState, useEffect } from 'react'
 import React from 'react'
 import SearchBar from '../SearchBar'
 import { DestinationTable } from './DestinationTable';
-import DestinationPopup from './AddDestinationPopup'
 import FilterDropdown from '@/shared/Filter';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AddPlace } from '@/app/user/destination/addPlaceForm';
 import { getDestinations } from '@/services/destinationService';
-import api from '@/services/api';
+import { exportToExcel } from '@/lib/export';
 import { Destination } from '@/types/destination';
 
 
@@ -20,6 +19,7 @@ export default function Page() {
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
 
   const mapFiterToParams = (filter: string): string | undefined => {
@@ -39,7 +39,6 @@ export default function Page() {
     queryFn: getDestinations
   });
 
-  // Fetch initial data
   useEffect(() => {
     if (data) setDestinations(data);
   }, [data]);
@@ -73,47 +72,48 @@ export default function Page() {
       console.error('Search (via getDestinations) failed', err);
     }
   }
+
+
   const onClickExport = async () => {
-    setIsExporting(true);
-    setExportStatus(null);
+    setIsExporting(true)
+    setExportStatus(null)
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      setExportStatus('Đang tải file từ server...');
-      const res = await fetch('/api/export-destinations', { headers });
-      if (!res.ok) {
-        const text = await res.text().catch(() => 'Lỗi server');
-        throw new Error(text);
+      const dataToExport = selectedIds.size > 0
+        ? destinations.filter(d => selectedIds.has(d.id))
+        : destinations
+
+      if (!dataToExport || dataToExport.length === 0) {
+        setExportStatus('Không có dữ liệu để xuất')
+        setTimeout(() => setExportStatus(null), 2500)
+        return
       }
-      const blob = await res.blob();
-      try {
-        setExportStatus('Đang chuẩn bị tải...');
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = `destinations.xlsx`;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        setExportStatus('Đã tải xong');
-        setTimeout(() => setExportStatus(null), 2500);
-      } catch (err) {
-        console.error('Download failed', err);
-        setExportStatus('Tải xuống thất bại');
-      }
-    } catch (err: any) {
-      console.error(err);
-      setExportStatus(err?.message ?? 'Có lỗi xảy ra');
+
+      await exportToExcel(dataToExport, 'destinations')
+      setExportStatus('Đã tải xong')
+      setTimeout(() => setExportStatus(null), 2500)
+    } catch (err) {
+      console.error('Export failed', err)
+      setExportStatus('Xuất file thất bại')
     } finally {
-      setIsExporting(false);
+      setIsExporting(false)
     }
   }
 
-  const handleClosePopup = () => {
-    setIsOpen(false);
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) newSet.delete(id)
+      else newSet.add(id)
+      return newSet
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === destinations?.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(destinations?.map(d => d.id) ?? []))
+    }
   }
 
   const handleDeleteSuccess = (deletedId: string) => {
@@ -129,7 +129,6 @@ export default function Page() {
   if (isLoading) return <div>Loading...</div>
   return (
     <>
-      {/* {isOpen && <DestinationPopup onClose={handleClosePopup} />} */}
       <div className="flex flex-col my-6 mx-4 md:mx-6">
         <div id="title">
           <h1 className='text-3xl font-semibold'>QUẢN LÝ ĐỊA ĐIỂM</h1>
@@ -148,7 +147,10 @@ export default function Page() {
                 <i className="ri-add-line"></i>
                 <span className='whitespace-nowrap'>Thêm địa điểm</span>
               </button>
-              <AddPlace open={isOpen} setOpen={setIsOpen} />
+              <AddPlace open={isOpen} setOpen={setIsOpen} onSaved={(newDest: any) => {
+                setDestinations(prev => [newDest, ...prev])
+                queryClient.invalidateQueries({ queryKey: ['destinations'] })
+              }} />
             </div>
           </div>
         </div>
@@ -173,6 +175,9 @@ export default function Page() {
           data={destinations ?? []}
           onDeleteSuccess={handleDeleteSuccess}
           onUpdateSuccess={handleUpdateSuccess}
+          selectedIds={selectedIds}
+          onSelect={toggleSelect}
+          onSelectAll={toggleSelectAll}
         />
         {exportStatus && (
           <div className="mt-3 text-sm text-gray-600">{exportStatus}</div>
