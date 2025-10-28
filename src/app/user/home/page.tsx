@@ -22,7 +22,7 @@ export default function UserHomePage() {
     <div className="absolute w-[400px] h-[300px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "3000px", left: "-100px" }} />
     <div className="absolute w-[600px] h-[650px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: "4800px", left: "1450px" }} />
       <HomeBanner />
-      <SearchBox searchType="all" showFilterIcon={true} />
+      <SearchBox searchType="all"  />
       <ServiceSection />
       <HotDestinations />
       <HotSearchSection/>

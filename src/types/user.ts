@@ -17,6 +17,7 @@ export interface SharedBlog {
     emailVerified: boolean;
     avatar: string;
     bio: string;
+    phone: string;
     role: 'user' | 'admin';
     favorites: string[];
     points: number;

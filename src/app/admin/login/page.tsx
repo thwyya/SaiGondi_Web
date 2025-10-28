@@ -127,13 +127,6 @@ export default function LoginPage() {
             <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--primary)]" />
             <span className="ml-2 text-sm text-gray-900">Ghi nhớ mật khẩu</span>
           </label>
-
-          <a
-            href="/auth/forgot-password"
-            className="text-[var(--primary)] hover:underline whitespace-nowrap"
-          >
-            Quên mật khẩu?
-          </a>
         </div>
 
         <Button type="submit" variant="primary" className="w-full mt-4">
