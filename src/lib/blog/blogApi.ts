@@ -25,6 +25,12 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/${id}`);
     return res.data.data;
   },
+  //
+  // Lấy chi tiết blog theo id
+  getBlogByIdPending: async (id: string) => {
+    const res = await axios.get(`${API_URL}/blogs/pending/${id}`);
+    return res.data.data;
+  },
 
   // Lấy chi tiết blog theo slug
   getBlogBySlug: async (slug: string) => {

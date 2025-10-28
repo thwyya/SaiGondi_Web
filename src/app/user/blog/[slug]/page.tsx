@@ -44,7 +44,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           <div className="absolute w-[500px] h-[500px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: '1100px', left: '-60px' }} />
           <div className="absolute w-[500px] h-[500px] bg-[var(--secondary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: '2000px', left: '1300px' }} />
           <div className="absolute w-[500px] h-[500px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none" style={{ top: '2500px', left: '-60px' }} />
-          
+         
           <Image
             src="/city-bg.svg"
             alt="city-bg"

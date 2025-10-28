@@ -256,12 +256,13 @@ export default function BlogDetail({ post }: BlogDetailProps) {
 
       <div className="flex flex-wrap gap-2 mb-4 mt-5">
         {post.tags?.map((tag: string, idx: number) => (
-          <span
+         <Link
             key={idx}
-            className="inline-block bg-gray-100 text-sm text-gray-600 px-3 py-1 rounded-md"
+            href={`/search?q=${encodeURIComponent(tag)}&type=all`}
+            className="inline-block bg-gray-100 hover:bg-gray-200 text-sm text-gray-700 px-3 py-1 rounded-md transition"
           >
             #{tag}
-          </span>
+          </Link>
       ))}
       </div>
       
