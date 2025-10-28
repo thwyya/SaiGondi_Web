@@ -16,10 +16,11 @@ import Footer from '@/components/Footer';
 import SearchBox from '@/components/ui/SearchBox';
 import SearchFilter, { FilterState } from '@/components/filters/SearchFilter';
 import { GridPagination } from '@/shared/GridPagination';
+import { Search, AlertCircle, ArrowLeft } from 'lucide-react';
 
 // Define the possible filter types
+// type FilterType = 'blogs';
 type FilterType = 'all' | 'destinations' | 'blogs';
-
 // Skeleton component for loading state
 const SkeletonCard = () => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse border border-[var(--gray-5)]">
@@ -49,6 +50,71 @@ function SearchResults() {
   const query = searchParams.get('q');
   const tag = searchParams.get('tag');
   const type = (searchParams.get('type') || 'all') as FilterType;
+ 
+  if (!query || query.trim() === "") {
+    // Version đẹp: Hiển thị modal thông báo giữa màn hình
+    const EmptySearchNotification = () => {
+      const [countdown, setCountdown] = useState(5);
+
+      useEffect(() => {
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              router.replace("/");
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000); // đếm mỗi giây
+        return () => clearInterval(timer);
+      }, []);
+
+      return (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-50 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-yellow-200 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-200 rounded-full opacity-20 blur-3xl animate-pulse delay-1000"></div>
+          </div>
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-[90%] border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-yellow-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full p-4 shadow-lg">
+                  <AlertCircle className="w-12 h-12 text-white" />
+                </div>
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">
+              Chưa nhập từ khóa tìm kiếm
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Vui lòng nhập từ khóa để bắt đầu tìm kiếm địa điểm và bài viết
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span>
+                  Tự động chuyển về trang chủ sau{" "}
+                  <span className="font-bold text-blue-600">{countdown}</span> giây
+                </span>
+              </div>
+              <button
+                onClick={() => router.replace("/")}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Quay về trang chủ ngay
+              </button>
+            </div>
+            <div className="absolute -top-2 -right-2 w-20 h-20 bg-yellow-100 rounded-full opacity-50 blur-2xl"></div>
+            <div className="absolute -bottom-2 -left-2 w-24 h-24 bg-orange-100 rounded-full opacity-50 blur-2xl"></div>
+          </div>
+        </div>
+      );
+    };
+
+    return <EmptySearchNotification />;
+  }
 
   const [results, setResults] = useState<{ destinations: Destination[], blogs: Blog[] }>({ destinations: [], blogs: [] });
   const [loading, setLoading] = useState(true);
@@ -58,6 +124,7 @@ function SearchResults() {
   const [placeCategories, setPlaceCategories] = useState<Category[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterMode, setFilterMode] = useState<'blogs' | 'destinations'>('blogs');
 
   const itemsPerPage = 12;
 
@@ -107,9 +174,7 @@ function SearchResults() {
     const validTypes: FilterType[] = ['all', 'destinations', 'blogs'];
     if (validTypes.includes(type)) {
         setActiveTab(type);
-    } else {
-        setActiveTab('all');
-    }
+    } 
     setCurrentPage(1);
   }, [type]);
 
@@ -176,7 +241,6 @@ function SearchResults() {
         return { items: destinations, type: 'destination' };
       case 'blogs':
         return { items: blogs, type: 'blog' };
-      case 'all':
       default:
         return { items: [...destinations, ...blogs], type: 'all' };
     }
@@ -265,67 +329,47 @@ function SearchResults() {
 
         <SearchBox searchType={activeTab} />
 
-        <div className="mt-8 mb-8 border-b border-[var(--gray-5)]">
-            <nav className="-mb-px flex justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.name}
-                        onClick={() => {
-                            setActiveTab(tab.id);
-                            setCurrentPage(1);
-                        }}
-                        className={`${
-                            activeTab === tab.id
-                            ? 'border-[var(--primary)] text-[var(--primary)]'
-                            : 'border-transparent text-[var(--gray-2)] hover:text-[var(--gray-1)] hover:border-[var(--gray-4)]'
-                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}
-                    >
-                        {tab.name} ({
-                            tab.id === 'all' ? results.destinations.length + results.blogs.length :
-                            tab.id === 'destinations' ? results.destinations.length :
-                            results.blogs.length
-                        })
-                    </button>
-                ))}
-            </nav>
-        </div>
-
-        <div className={`flex-grow flex flex-col ${activeTab !== 'all' ? 'lg:grid lg:grid-cols-4 lg:gap-8' : ''}`}>
-            {activeTab !== 'all' && (
-                <div className="lg:hidden mb-4">
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
-                    >
-                        {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
-                    </button>
-                </div>
-            )}
-
-            {activeTab !== 'all' && (
-                <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0 z-20`}>
-                    <SearchFilter 
-                        filters={filters}
-                        filterType={activeTab} 
-                        onFilterChange={handleFilterChange} 
-                        blogCategories={blogCategories}
-                        placeCategories={placeCategories}
-                    />
-                </aside>
-            )}
-
-            <div className={`min-h-[90vh] ${activeTab !== 'all' ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
-                {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {renderGridItems()}
-                </div>
-                <GridPagination 
-                    totalItems={filteredResults.items.length}
-                    itemsPerPage={itemsPerPage}
-                    currentPage={currentPage}
-                    onPageChange={setCurrentPage}
-                />
+        <div className="flex-grow lg:grid lg:grid-cols-4 lg:gap-8">
+         <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-1 mb-8 lg:mb-0`}>
+          {activeTab === 'all' && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Chọn loại lọc:
+              </label>
+              <select
+                value={filterMode}
+                onChange={(e) => setFilterMode(e.target.value as 'blogs' | 'destinations')}
+                className="w-full p-2 border rounded-lg focus:ring focus:ring-green-300"
+              >
+                <option value="blogs">Bài viết</option>
+                <option value="destinations">Địa điểm</option>
+              </select>
             </div>
+          )}
+
+          <SearchFilter 
+            filters={filters}
+            filterType={activeTab === 'all' ? filterMode : activeTab} 
+            onFilterChange={handleFilterChange} 
+            blogCategories={blogCategories}
+            placeCategories={placeCategories}
+          />
+        </aside>
+
+
+
+          <div className="min-h-[120vh] lg:col-span-3">
+            {error && <div className="text-center text-[var(--error)] col-span-full mb-4">{error}</div>}
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${activeTab === 'all' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {renderGridItems()}
+            </div>
+            <GridPagination 
+              totalItems={filteredResults.items.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -246,8 +246,7 @@ export default function DestinationPage() {
       <div className="absolute w-[500px] h-[500px] bg-[var(--primary)] opacity-50 blur-[250px] pointer-events-none -z-10" style={{ top: '2500px', left: '-60px' }} />
 
       <div className="relative min-h-screen z-10 w-[95%] sm:w-[90%] lg:w-[95%] xl:w-[90%] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6 xl:px-8">
-        <SearchBox />
-
+        <SearchBox searchType="destinations"/>
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 xl:gap-8 mb-12">
           {/* Backdrop */}
           {isFilterOpen && (
