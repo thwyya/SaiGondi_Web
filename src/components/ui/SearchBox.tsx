@@ -9,7 +9,7 @@ interface SearchBoxProps {
   searchType?: 'all' | 'destinations' | 'blogs';
 }
 
-const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
+const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'blogs' }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -38,7 +38,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ searchType = 'all' }) => {
       setError(null);
     }
   };
-
+// nút tìm kiếm
   return (
     <form onSubmit={handleSearch} className="relative bg-transparent flex flex-col items-center w-full py-12 sm:py-16 px-4">
       <div className="bg-[var(--background)] rounded-2xl shadow-md flex items-center w-full max-w-7xl gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">

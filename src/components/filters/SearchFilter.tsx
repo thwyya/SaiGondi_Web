@@ -124,9 +124,9 @@ const SearchFilter = ({
 
     const wardNames = wards.map(w => w.name);
     const destRatingOptions = ['5', '4', '3', '2', '1'].map(r => `${r} sao`);
-
+    //iocn dưới header bộ lọc 
     const FilterSection = ({ title, icon: Icon, gradient, children }: { title: string; icon: any; gradient: string; children: React.ReactNode; }) => (
-        <div className="space-y-4 animate-fadeIn">
+        <div className="space-y-4 animate-fadeIn ">
             <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-100">
                 <div className={`p-2 ${gradient} rounded-lg shadow-sm`}><Icon className="w-4 h-4 text-white" /></div>
                 <span className="text-sm font-semibold text-gray-800">{title}</span>
@@ -134,7 +134,7 @@ const SearchFilter = ({
             <div className="space-y-3 pl-2">{children}</div>
         </div>
     );
-
+    // lable Danh mục địa điểm ở bộ lọc     
     const FilterGroup = ({ label, icon: Icon, children }: { label: string; icon: any; children: React.ReactNode; }) => (
         <div className="group">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700 mb-2">
@@ -165,7 +165,7 @@ const SearchFilter = ({
                 handleFilterUpdate({ destWard: value });
             }
         };
-
+        // Tab bài viết 
         if (currentType === 'blogs') {
             return (
                 <FilterSection title="Bộ lọc Bài viết" icon={FolderOpen} gradient="bg-gradient-to-br from-blue-400 to-cyan-400">
@@ -195,8 +195,8 @@ const SearchFilter = ({
                 </FilterSection>
             );
         }
-
-        if (currentType === 'destinations') {
+        // tab địa điểm 
+        else if (currentType === 'destinations') {
             return (
                 <FilterSection title="Bộ lọc Địa điểm" icon={MapPin} gradient="bg-gradient-to-br from-emerald-500 to-teal-600">
                     <FilterGroup label="Danh mục địa điểm" icon={FolderOpen}>
@@ -215,6 +215,7 @@ const SearchFilter = ({
                             className={dropdownClassName}
                         />
                     </FilterGroup>
+                    {/* // */}
                     <FilterGroup label="Khu vực" icon={MapPin}>
                         <FilterDropdown
                             options={['Tất cả khu vực', ...wardNames]}
@@ -286,7 +287,7 @@ const SearchFilter = ({
             </div>
         );
     };
-
+    // bộ lọc " Header "
     return (
         <div className="w-full relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-cyan-50 to-pink-50 rounded-2xl blur-2xl opacity-60"></div>

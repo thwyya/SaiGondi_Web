@@ -15,15 +15,14 @@ export interface Category {
   description?: string;
 }
 
-// Lấy danh sách địa điểm
 export const getDestinations = async (params?: any) => {
   console.log("Fetching destinations with params:", params);
   try {
     const res = await axios.get(`${API_URL}/places`, {
       params,
-      timeout: 10000, // 10 second timeout
+      timeout: 10000, 
       paramsSerializer: function (params) {
-        return qs.stringify(params, { arrayFormat: 'repeat' }); // services=a&services=b
+        return qs.stringify(params, { arrayFormat: 'repeat' }); 
       }
     });
     return res.data;

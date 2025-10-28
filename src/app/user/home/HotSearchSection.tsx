@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTopSearches } from '@/services/searchService';
+import { Flame } from 'lucide-react';
 
 const HotSearchSection = () => {
   const [topSearches, setTopSearches] = useState<any[]>([]);
@@ -39,15 +40,15 @@ const HotSearchSection = () => {
             {topSearches.map((item, index) => (
               <Link href={`/search?q=${item.keyword}`} key={index}>
                 <div
-                  className={`flex items-center gap-3 md:gap-4 xl:gap-5 p-3 md:p-4 xl:p-5 rounded-2xl transition bg-white/60 hover:bg-white hover:shadow-md cursor-pointer`}
+                  className={`flex items-center gap-3 md:gap-4 xl:gap-5 p-3 md:p-4 xl:p-2 rounded-2xl transition bg-white/60 hover:bg-white hover:shadow-md cursor-pointer`}
                 >
                   <div className="w-12 h-12 md:w-16 md:h-16 xl:w-18 xl:h-18 rounded-xl flex items-center justify-center shrink-0">
                     <Image
-                      src={"/Hot-Search.svg"} // Using a generic icon for all
+                      src={"/Hot-Search.svg"}
                       alt="icon"
-                      width={64}
-                      height={64}
-                      className="w-8 h-8 md:w-12 md:h-12 xl:w-14 xl:h-14"
+                      width={40}
+                      height={40}
+                      className="w-8 h-8 md:w-12 md:h-12 xl:w-12 xl:h-12"
                     />
                   </div>
                   <div>

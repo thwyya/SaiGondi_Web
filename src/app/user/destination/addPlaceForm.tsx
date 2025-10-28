@@ -72,7 +72,7 @@ const formSchema = z.object({
   category: z.string(),
 })
 
-export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
+export function AddPlace({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boolean) => void; onSaved?: (created: any) => void }) {
   const [wardSearch, setWardSearch] = useState("");
   const [wardOpen, setWardOpen] = useState(false);
   const [wardValue, setWardValue] = useState("");
@@ -136,7 +136,7 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
       }
 
 
-      const imgs = values.images || [] // values.images is File[]
+      const imgs = values.images || [] 
       imgs.forEach((file) => {
         formData.append("images", file)
       })
@@ -147,7 +147,13 @@ export function AddPlace({ open, setOpen }: { open: boolean; setOpen: (v: boolea
         }
       }
 
-      await createDestination(formData)
+      const created = await createDestination(formData)
+      try {
+        // notify parent if it wants to update local state in realtime
+        onSaved?.(created)
+      } catch (err) {
+        console.error('onSaved handler error', err)
+      }
       toast.success("Địa điểm đã được gửi cho admin phê duyệt")
       setOpen(false)
     } catch (err: any) {

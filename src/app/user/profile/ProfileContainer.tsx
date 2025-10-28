@@ -75,16 +75,20 @@ export default function ProfileContainer({ isOwnProfile = false }: { isOwnProfil
   const avatarUrl = user.avatar || '/Image.svg';
 
   const handleFilter = (value: string) => {
+    let blogs = [];
     if (value === 'mine') {
       const nonSharedBlogs = (user.blogs || []).filter((b: any) =>
         !b.title?.startsWith("Chia sẻ:")
       );
       setFilteredBlogs(nonSharedBlogs);
     } else if (value === 'shared') {
-      const sharedBlogs = (user.blogs || []).filter((b: any) =>
+     const sharedBlogs = (user.blogs || []).filter((b: any) =>
         b.title?.startsWith("Chia sẻ:")
       );
       setFilteredBlogs(sharedBlogs);
+    } else if (value === 'pending' || value === 'approved') {
+        blogs = (user.blogs || []).filter((b: any) => b.status === value);
+        setFilteredBlogs(blogs);
     }
   };
 

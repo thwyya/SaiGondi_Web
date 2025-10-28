@@ -6,9 +6,7 @@ import {
 } from '@tanstack/react-table'
 import { useMemo, useState, useEffect } from 'react'
 import { GenericTable } from "@/shared/GenericTable"
-// import {Destination, destinations} from "../../assets/data/destinations";
 import { Destination } from '@/types/destination';
-import { getDestinationById, getReviewsByPlaceId } from '@/lib/place/destinationApi';
 import DestinationPreviewModal from './DestinationPreviewModal';
 import { deleteDestination } from '@/services/destinationService';
 import { toast } from 'sonner';
@@ -30,21 +28,23 @@ interface Props {
   data: Destination[]
   onDeleteSuccess?: (deletedId: string) => void
   onUpdateSuccess?: (updated: Destination) => void
+  selectedIds?: Set<string>
+  onSelect?: (id: string) => void
+  onSelectAll?: () => void
 }
 
 
-export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Props) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess, selectedIds: propSelectedIds, onSelect: propOnSelect, onSelectAll: propOnSelectAll }: Props) {
+  const [localSelectedIds, setLocalSelectedIds] = useState<Set<string>>(new Set())
+  const selectedIds = propSelectedIds ?? localSelectedIds
   const [dialogOpen, setDialogOpen] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  // Modal / preview state
   const [previewOpen, setPreviewOpen] = useState(false)
   const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [destination, setDestination] = useState<any | null>(null)
   const [id, setId] = useState<string>('')
-  // keep local rows so we can update table optimistically without requiring parent refresh
   const [rows, setRows] = useState<Destination[]>(data)
 
   useEffect(() => {
@@ -56,11 +56,13 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
       setIsDeleting(true)
       await deleteDestination(id)
       toast.success("Xoá địa điểm thành công")
-      setSelectedIds(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(id)
-        return newSet
-      })
+      if (!propSelectedIds) {
+        setLocalSelectedIds(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(id)
+          return newSet
+        })
+      }
       onDeleteSuccess?.(id)
     } catch (err) {
       console.error('Failed to delete destination', err)
@@ -70,8 +72,12 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
     }
   }
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+  const handleToggleSelect = (id: string) => {
+    if (propOnSelect) {
+      propOnSelect(id)
+      return
+    }
+    setLocalSelectedIds(prev => {
       const newSet = new Set(prev)
       if (newSet.has(id)) newSet.delete(id)
       else newSet.add(id)
@@ -79,11 +85,14 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
     })
   }
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === rows.length) setSelectedIds(new Set())
-    else setSelectedIds(new Set(rows.map(d => d.id)))
+  const handleToggleSelectAll = () => {
+    if (propOnSelectAll) {
+      propOnSelectAll()
+      return
+    }
+    if (selectedIds.size === rows.length) setLocalSelectedIds(new Set())
+    else setLocalSelectedIds(new Set(rows.map(d => d.id)))
   }
-
 
   const columns = useMemo<ColumnDef<Destination>[]>(() => [
     {
@@ -92,14 +101,14 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
         <input
           type="checkbox"
           checked={selectedIds.size === rows.length && rows.length > 0}
-          onChange={toggleSelectAll}
+          onChange={handleToggleSelectAll}
         />
       ),
       cell: ({ row }) => (
         <input
           type="checkbox"
           checked={selectedIds.has(row.original.id)}
-          onChange={() => toggleSelect(row.original.id)}
+          onChange={() => handleToggleSelect(row.original.id)}
         />
       ),
     },
@@ -110,7 +119,6 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
         const destination = row.original;
         return (
           <div className="flex gap-3">
-            {/* <img src={destination.images} alt="" className='h-10 w-10 object-cover rounded-md'/> */}
             <h2 className='clamp-1'>{destination.name}</h2>
           </div>
         )
@@ -131,8 +139,12 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
       accessorKey: 'location',
       meta: { className: 'hidden sm:table-cell' },
       cell: ({ getValue }) => {
-        const value = getValue() as { type: string; coordinates: number[] };
-        const coordStr = `${value.coordinates[1].toFixed(4)}, ${value.coordinates[0].toFixed(4)}`; // lat, lng
+        const value = getValue() as { type?: string; coordinates?: number[] } | undefined;
+        if (!value?.coordinates || !Array.isArray(value.coordinates) || value.coordinates.length < 2) {
+          return <span className='clamp-1'>—</span>;
+        }
+        const [lng, lat] = value.coordinates;
+        const coordStr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         return <span className='clamp-1'>{coordStr}</span>;
       },
     },
@@ -166,7 +178,6 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
         };
 
         return <span className={status.className}>{status.label}</span>;
-        // return <span className={value? "px-2 py-1 bg-[#E7F4EE] text-[#0D894F] rounded-xl font-bold":" px-2 py-1 bg-[#FBF0DC] text-[#FFC968] rounded-xl font-bold"}>{value? "Hoạt động": "Bị khoá"}</span> 
       },
     },
     {
@@ -183,10 +194,10 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
                 setPreviewOpen(true)
               }}
             >
-              <i className="hover:text-green-700 ri-eye-line"></i>
+              <i className="hover:text-green-700 ri-eye-line cursor-pointer"></i>
             </button>
-            <button onClick={() => { setDestination(destination); setId(destination.id); setEditOpen(true) }} className="text-[#667085]"><i className="hover:text-blue-700 ri-pencil-line"></i></button>
-            <button onClick={() => { setPendingDeleteId(destination.id); setDialogOpen(true); }} className="text-[#667085]"><i className="hover:text-red-700 ri-delete-bin-6-line"></i></button>
+            <button onClick={() => { setDestination(destination); setId(destination.id); setEditOpen(true) }} className="text-[#667085]"><i className="hover:text-blue-700 ri-pencil-line cursor-pointer"></i></button>
+            <button onClick={() => { setPendingDeleteId(destination.id); setDialogOpen(true); }} className="text-[#667085]"><i className="hover:text-red-700 ri-delete-bin-6-line cursor-pointer"></i></button>
           </div>
         );
       },
@@ -251,13 +262,12 @@ export function DestinationTable({ data, onDeleteSuccess, onUpdateSuccess }: Pro
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => { setDialogOpen(false); setPendingDeleteId(null); }}>Cancel</AlertDialogCancel>
-          <AlertDialogAction>
-            <button disabled={isDeleting} onClick={confirmDelete} className="px-3 py-1 text-white rounded-md">
-              {isDeleting ? 'Đang xoá...' : 'Continue'}
-            </button>
+          <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="px-3 py-1 text-white rounded-md">
+            {isDeleting ? 'Đang xoá...' : 'Continue'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
+
       {/* Preview Modal */}
       <DestinationPreviewModal
         id={selectedPreviewId ?? ''}
