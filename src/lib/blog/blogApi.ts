@@ -12,6 +12,13 @@ export const blogApi = {
     return res.data;
   },
 
+  getBlogByAdmin: async (query?: Record<string, any>) => { 
+    const res = await axiosInstance.get(`/admin/posts`, {
+      params: query
+    });
+    return res.data;
+  },
+
   // Lấy danh sách blog phổ biến
   getPopularBlogs: async (query?: Record<string, any>) => {
     const res = await axios.get(`${API_URL}/blogs/popular`, {
@@ -99,5 +106,10 @@ export const blogApi = {
   getBlogsByWard: async (wardId: string) => {
     const res = await axios.get(`${API_URL}/blogs/ward/${wardId}`);
     return res.data;
+  },
+
+  deleteAdminBlogs: async (ids: string[]) => {
+    const deletePromises = ids.map(id => axiosInstance.delete(`/admin/posts/${id}`));
+    return Promise.all(deletePromises);
   },
 };
