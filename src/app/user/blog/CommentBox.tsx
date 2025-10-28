@@ -6,6 +6,7 @@ import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { FaRegImage } from 'react-icons/fa6';
 import { FiX } from 'react-icons/fi';
 import { BlogComment } from '@/types/blogComment';
+import { getCurrentUserId } from '@/lib/auth/auth';
 
 type CommentBoxProps = {
   blogId: string;
@@ -13,14 +14,17 @@ type CommentBoxProps = {
   onCommentUpdated?: (comment: any) => void;
   editingComment?: BlogComment | null;
   onCancelEdit?: () => void;  
+  onRequireLogin?: () => void;
 };
 
-const CommentBox = ({ blogId, onCommentAdded, onCommentUpdated, editingComment, onCancelEdit }: CommentBoxProps) => {
+const CommentBox = ({ blogId, onCommentAdded, onCommentUpdated, editingComment, onCancelEdit, onRequireLogin }: CommentBoxProps) => {
   const [comment, setComment] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]); // ảnh cũ từ BE
   const [loading, setLoading] = useState(false);
 
+  const currentUserId = getCurrentUserId();
+  
   // Khi chuyển sang chế độ sửa thì load sẵn nội dung
   useEffect(() => {
     if (editingComment) {
@@ -50,6 +54,7 @@ const CommentBox = ({ blogId, onCommentAdded, onCommentUpdated, editingComment, 
   };
 
   const handleSubmit = async () => {
+    if (!currentUserId) return onRequireLogin?.();
     if (!comment.trim() && images.length === 0 && previewImages.length === 0) return;
 
     try {

@@ -15,9 +15,10 @@ type CommentCardProps = {
   comment: BlogComment;
   onUpdated?: () => void;
   onEdit?: (comment: BlogComment) => void;
+  onRequireLogin?: () => void;
 };
 
-const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
+const CommentCard = ({ comment, onUpdated, onEdit, onRequireLogin }: CommentCardProps) => {
   const [likes, setLikes] = useState(comment.totalLikes || 0);
   const [liked, setLiked] = useState(false);
   const [popupImage, setPopupImage] = useState<string | null>(null);
@@ -38,18 +39,18 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
   }, [comment, currentUserId]);
   
   const handleLike = async () => {
+    if (!currentUserId) return onRequireLogin?.();
     try {
       const updated = await blogCommentApi.likeComment(comment._id);
       setLikes(updated.totalLikes);
-      if (currentUserId) {
-        setLiked(updated.likeBy.includes(currentUserId));
-      }
+      setLiked(updated.likeBy.includes(currentUserId));
     } catch (err) {
       console.error("Failed to like comment", err);
     }
   };
 
   const handleDelete = async () => {
+    if (!currentUserId) return onRequireLogin?.();
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
       await blogCommentApi.deleteComment(comment._id);
@@ -59,7 +60,17 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
     }
   };
 
+  const handleOpenReport = () => {
+    if (!currentUserId) {
+      onRequireLogin?.();
+      return;
+    }
+    setReportOpen(true);
+    setMenuOpen(false);
+  };
+
   const handleReport = async () => {
+    if (!currentUserId) return onRequireLogin?.();
     if (!reportReason.trim()) {
       toast.error("Vui lòng nhập lý do báo cáo!");
       return;
@@ -106,10 +117,7 @@ const CommentCard = ({ comment, onUpdated, onEdit }: CommentCardProps) => {
                 </>
               )}
               <button
-                onClick={() => {
-                  setReportOpen(true);
-                  setMenuOpen(false);
-                }}
+                onClick={handleOpenReport}
                 className="block w-full text-left px-3 py-2 hover:bg-gray-100"
               >
                 Báo cáo

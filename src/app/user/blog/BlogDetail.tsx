@@ -14,6 +14,8 @@ import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { Post } from '@/types/post';
 import { getCurrentUserId } from '@/lib/auth/auth';
 import { toast } from 'sonner';
+import { useLoginNotice } from '@/hooks/useLoginNotice';
+import { FiFlag } from 'react-icons/fi';
 
 type BlogDetailProps = {
   post: any;
@@ -22,6 +24,8 @@ type BlogDetailProps = {
 export default function BlogDetail({ post }: BlogDetailProps) {
   post = mapBlogToPost(post);
   const currentUserId = getCurrentUserId();
+
+  const { show: showLogin, LoginNotice } = useLoginNotice();
 
   const [liked, setLiked] = useState(false);
 
@@ -42,6 +46,8 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const [totalComments, setTotalComments] = useState<number>(0); //lấy tổng số comment
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   // Gọi API lấy tổng số bình luận
   useEffect(() => {
@@ -61,15 +67,13 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   }, [post?.id]);
   
   const toggleLike = async () => {
+    if (!currentUserId) return showLogin();
     try {
-      const updatedBlog = await blogApi.likeBlog(post.id);
-      setLikeCount(updatedBlog.totalLikes);
-
-      if (currentUserId) {
-        setLiked(updatedBlog.likeBy.map(String).includes(currentUserId));
-      }
-    } catch (err) {
-      console.error("Lỗi khi like blog:", err);
+      const updated = await blogApi.likeBlog(post.id);
+      setLikeCount(updated.totalLikes);
+      setLiked(updated.likeBy.map(String).includes(currentUserId));
+    } catch {
+      toast.error('Không thể thực hiện thao tác. Vui lòng thử lại.');
     }
   };
 
@@ -90,28 +94,40 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   };
 
   const handleSharePersonal = async () => {
+    if (!currentUserId) return showLogin();
     try {
       const res = await blogApi.shareBlog(post.id);
-
-      // Cập nhật shareCount theo dữ liệu server trả về
       setShareCount(res.shareCount);
-
       toast.success('Đã chia sẻ về trang cá nhân.');
-      setShowShareMenu(false);
     } catch (err: any) {
-      console.error('Lỗi khi chia sẻ blog:', err);
-
       if (err.response?.status === 429 || err.response?.data?.statusCode === 429) {
         toast.error('Bạn đã chia sẻ quá nhiều lần, vui lòng thử lại sau.');
       } else {
         toast.error('Có lỗi xảy ra khi chia sẻ. Vui lòng thử lại.');
       }
+    } finally {
       setShowShareMenu(false);
     }
   };
 
-
-
+  const handleReport = async () => {
+    if (!currentUserId) return showLogin();
+    if (!reportReason.trim()) {
+      toast.error('Vui lòng nhập lý do báo cáo.');
+      return;
+    }
+    try {
+      await blogApi.reportBlog(post.id, reportReason.trim());
+      toast.success('Đã gửi báo cáo bài viết.');
+      setReportOpen(false);
+      setReportReason('');
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        'Không thể gửi báo cáo. Vui lòng thử lại.';
+      toast.error(message);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,6 +138,40 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     if (showShareMenu) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showShareMenu]);
+
+  // Lock background scroll when report modal is open
+  const scrollYRef = useRef<number>(0);
+  useEffect(() => {
+    if (reportOpen) {
+      // store current scroll position
+      scrollYRef.current = window.scrollY || window.pageYOffset || 0;
+      // lock scroll
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.overflow = 'hidden';
+    } else {
+      // restore
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+      // restore scroll position
+      window.scrollTo(0, scrollYRef.current || 0);
+    }
+
+    // cleanup on unmount
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollYRef.current || 0);
+    };
+  }, [reportOpen]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -149,7 +199,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
         
       </div>
 
-      {/* Thông tin tác giả + like/share */}
+      {/* Thông tin tác giả + like + share + report */}
       <div className="flex items-center justify-between flex-wrap text-sm text-[var(--gray-1)] mb-4">
         <div className="flex items-center gap-2">
           <Link href={`/user/profile/${post.authorId}`} className="flex items-center gap-2">
@@ -210,6 +260,15 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                 </button>
               </div>
             )}
+          </div>
+          <div
+            className="cursor-pointer flex items-center gap-1"
+            onClick={() => {
+              if (!currentUserId) return showLogin();
+              setReportOpen(true);
+            }}
+          >
+            <FiFlag className="text-[var(--foreground)]" />
           </div>
         </div>
       </div>
@@ -306,6 +365,33 @@ export default function BlogDetail({ post }: BlogDetailProps) {
         </div>
       )}
       <div ref={commentRef}></div>
+      {reportOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md relative">
+            <h2 className="text-lg font-semibold mb-3">Báo cáo bài viết</h2>
+            <textarea
+              className="w-full border rounded p-2 mb-4 text-sm"
+              rows={4}
+              placeholder="Nhập lý do báo cáo..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline-secondary"
+                onClick={() => setReportOpen(false)}
+                className="flex items-center gap-2 border border-[var(--gray-3)] text-[var(--gray-1)] hover:bg-[var(--gray-5)]"
+              >
+                Hủy
+              </Button>
+              <Button onClick={handleReport} variant="primary">
+                Gửi
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      <LoginNotice />
     </div>
   );
 }

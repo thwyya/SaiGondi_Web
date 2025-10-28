@@ -160,3 +160,8 @@ export const updateDestination = async (id: string, data: any | FormData) => {
   return res.data;
 };
 
+// Báo cáo địa điểm
+export const reportPlace = async (placeId: string, reason: string) => {
+  const res = await axiosInstance.post(`/places/report/${placeId}`, { reason });
+  return res.data;
+};

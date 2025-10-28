@@ -10,6 +10,8 @@ import { getAllDestinations } from "@/lib/place/destinationApi";
 import { checkinApi } from "@/lib/checkin/checkinApi";
 import { AxiosError } from "axios";
 import { HCMMapSVG } from "./HCMMapSVG";
+import { useLoginNotice } from "@/hooks/useLoginNotice"; 
+import { useSelector } from "react-redux";
 
 type Status = "visited" | null;
 interface Place {
@@ -47,7 +49,11 @@ export default function HCMMap() {
 
   const [lastPos, setLastPos] = useState<{ x: number; y: number } | null>(null);
   const mapRef = useRef<SVGSVGElement | null>(null);
+  const scrollYRef = useRef<number | null>(null);
   const router = useRouter();
+
+  const { show: showLoginNotice, LoginNotice } = useLoginNotice();
+  const isAuthenticated = useSelector((state: any) => state.auth?.isAuthenticated);
 
   // random màu pastel
   const getRandomPastelColor = () => {
@@ -181,6 +187,13 @@ export default function HCMMap() {
 
   const handleVisited = async () => {
     if (!selectedInfo) return;
+
+    // Check auth before attempting check-in
+    if (!isAuthenticated) {
+      showLoginNotice();
+      return;
+    }
+
     try {
       await checkinApi.createCheckin(selectedInfo._id, {
         note: `Check-in ${selectedInfo.name}`,   // luôn có note
@@ -335,6 +348,46 @@ export default function HCMMap() {
     };
   }, [isDragging, lastPos]);
 
+  // Add effect to lock background scroll when popup is open
+  useEffect(() => {
+    if (popupPos && selectedName) {
+      // save current scroll position
+      scrollYRef.current = window.scrollY;
+      // prevent background scroll and preserve visual position
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+    } else {
+      // restore
+      if (document.body.style.position === "fixed") {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+        // restore scroll position
+        if (scrollYRef.current !== null) {
+          window.scrollTo(0, scrollYRef.current);
+          scrollYRef.current = null;
+        }
+      }
+    }
+
+    // cleanup on unmount
+    return () => {
+      if (document.body) {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+      }
+      scrollYRef.current = null;
+    };
+  }, [popupPos, selectedName]);
+
   return (
     <div className="w-full max-w-5xl mx-auto px-0 sm:px-4 mt-5 relative select-none ">
       <div className="absolute -top-3 right-2 z-[9999] flex flex-col gap-2">
@@ -456,6 +509,7 @@ export default function HCMMap() {
           )}
         </div>
       )}
+      <LoginNotice />
     </div>
   );
 }

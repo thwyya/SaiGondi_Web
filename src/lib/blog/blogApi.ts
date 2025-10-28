@@ -106,4 +106,10 @@ export const blogApi = {
     const res = await axios.get(`${API_URL}/blogs/ward/${wardId}`);
     return res.data;
   },
+
+    // Báo cáo blog
+  reportBlog: async (id: string, reason: string) => {
+    const res = await axiosInstance.post(`/blogs/report/${id}`, { reason });
+    return res.data.data;
+  },
 };

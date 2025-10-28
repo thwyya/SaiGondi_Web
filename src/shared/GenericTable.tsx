@@ -42,7 +42,7 @@ export function GenericTable<T>({ data, columns, initialPageSize = 10 }: Generic
   })
 
   return (
-    <div className="rounded-md border shadow-sm overflow-x-auto">
+    <div className="rounded-md overflow-x-auto">
       <div className="min-w-[640px] md:min-w-full">
         <Table>
         <TableHeader className='border-1 border-gray-300 bg-gray-100'>

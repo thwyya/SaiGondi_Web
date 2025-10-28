@@ -1,38 +1,31 @@
 'use client';
 
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { ReactNode, useEffect, useState, useRef } from "react";
-import { getDestinationById, createReview, getReviewsByPlaceId, getServices } from "@/lib/place/destinationApi";
-import { Place } from "@/types/place";
-import { Review } from "@/types/review";
-import ReviewCard from "../ReviewCard";
-import { wardApi } from "@/lib/ward/wardApi";
-import { Ward } from "@/types/ward";
+import Button from "@/components/ui/Button";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { blogApi } from "@/lib/blog/blogApi";
-import { Blog } from "@/types/blog";
 import { mapBlogToPost } from "@/lib/blog/mapBlogToPost";
-import { Post } from "@/types/post";
-import { Bus, Car, CircleHelp, Coffee, Ticket, Wifi, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
-
-import Button from '@/components/ui/Button';
-import { IoChatbubbles } from 'react-icons/io5';
-import { HiLocationMarker } from 'react-icons/hi';
-import { useDispatch, useSelector } from "react-redux";
-import { addToFavorites, removeFromFavorites } from "@/lib/place/destinationApi";
-import { updateUser } from "@/store/slices/authSlice";
-import { Category } from "@/types/category";
 import { categoryApi } from "@/lib/category/categoryApi";
+import { addToFavorites, createReview, getDestinationById, getReviewsByPlaceId, getServices, removeFromFavorites } from "@/lib/place/destinationApi";
+import { wardApi } from "@/lib/ward/wardApi";
+import { updateUser } from "@/store/slices/authSlice";
+import { Blog } from "@/types/blog";
+import { Category } from "@/types/category";
+import { Place } from "@/types/place";
+import { Post } from "@/types/post";
+import { Review } from "@/types/review";
+import { Ward } from "@/types/ward";
+import * as Icons from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { blogCommentApi } from "@/lib/blogComment/blogCommentApi";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { HiLocationMarker } from "react-icons/hi";
+import { IoChatbubbles } from "react-icons/io5";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
+import ReviewCard from "../ReviewCard";
+import Image from "next/image";
+import { useLoginNotice } from "@/hooks/useLoginNotice";
 
 const DestinationDetail = () => {
   const params = useParams();
@@ -40,6 +33,7 @@ const DestinationDetail = () => {
   const id = params.id as string;
   const { user, isAuthenticated, isLoading: userLoading } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
+  const { show: showLoginNotice, LoginNotice } = useLoginNotice();
 
   const [destination, setDestination] = useState<Place | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -52,17 +46,8 @@ const DestinationDetail = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Post[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
-  const [servicesData, setServicesData] = useState<{ id: string, name: string }[]>([]);
+  const [servicesData, setServicesData] = useState<{ id: string, name: string, icon: string }[]>([]);
   const [currentMainImage, setCurrentMainImage] = useState<string>("");
-  type ServiceKey = "Miễn phí đỗ xe" | "Miễn phí ăn sáng" | "Miễn phí Internet" | "Miễn phí di chuyển" | "Miễn phí hủy đặt trước";
-
-  const serviceIcons: Record<ServiceKey, ReactNode> = {
-    "Miễn phí đỗ xe": <Car className="w-4 h-4 text-gray-600" />,
-    "Miễn phí ăn sáng": <Coffee className="w-4 h-4 text-gray-600" />,
-    "Miễn phí Internet": <Wifi className="w-4 h-4 text-gray-600" />,
-    "Miễn phí di chuyển": <Bus className="w-4 h-4 text-gray-600" />,
-    "Miễn phí hủy đặt trước": <Ticket className="w-4 h-4 text-gray-600" />
-  };
 
   const [isFavorited, setIsFavorited] = useState(false);
   useEffect(() => {
@@ -79,8 +64,7 @@ const DestinationDetail = () => {
 
   const handleFavoriteClick = async () => {
     if (!isAuthenticated || !user) {
-      alert("Vui lòng đăng nhập để yêu thích địa điểm.");
-      router.push('/auth/login');
+      showLoginNotice();
       return;
     }
     if (!destination) return;
@@ -103,7 +87,7 @@ const DestinationDetail = () => {
     } catch (error) {
       setIsFavorited(previousIsFavorited); // Revert UI on error
       console.error("Failed to update favorite status", error);
-      alert("Đã xảy ra lỗi khi cập nhật yêu thích. Vui lòng thử lại.");
+      toast.error("Đã xảy ra lỗi khi cập nhật yêu thích. Vui lòng thử lại.");
     }
   };
 
@@ -111,7 +95,7 @@ const DestinationDetail = () => {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(pageUrl);
-    alert("Đã sao chép liên kết vào clipboard!");
+    toast.success("Đã sao chép liên kết vào clipboard!");
   };
   useEffect(() => {
     if (id) {
@@ -232,8 +216,13 @@ const DestinationDetail = () => {
       try {
         const res = await getServices();
         const services = res?.data || res || [];
+        // keep icon field (service.icon) so we can render DynamicIcon
         const formatted = Array.isArray(services)
-          ? services.map((service: any) => ({ id: service.id || service._id || service._id, name: service.name }))
+          ? services.map((service: any) => ({
+              id: service.id || service._id || service._id,
+              name: service.name,
+              icon: service.icon, // must match lucide-react export name, e.g. "Car", "Coffee"
+            }))
           : [];
         setServicesData(formatted);
       } catch (err) {
@@ -269,6 +258,14 @@ const DestinationDetail = () => {
       ? destination.images[0]
       : "/image.svg");
 
+
+  // Dynamic icon component: render icon by its export name (from DB)
+  const DynamicIcon = ({ name, className = "w-4 h-4 text-gray-600" }: { name?: string; className?: string }) => {
+    const IconComponent = (Icons as any)[name || "CircleHelp"];
+    if (!IconComponent) return <Icons.CircleHelp className={className} />;
+    const C = IconComponent as any;
+    return <C className={className} />;
+  };
 
   return (
     <div key={user?._id} className="bg-gradient-to-b from-orange-50 to-blue-50 min-h-screen">
@@ -439,12 +436,13 @@ const DestinationDetail = () => {
                       key={index}
                       className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-lg text-sm"
                     >
-                      {/* icon fallback nếu không khớp key */}
-                      {serviceIcons[serviceName as ServiceKey] ?? (
-                        <CircleHelp className="w-4 h-4 text-gray-400" />
-                      )}
-                      {serviceName}
-                    </span>
+                      {/* render icon name from servicesData (serviceInfo.icon) */}
+                      {(() => {
+                        const serviceInfo = servicesData.find(s => s.id === serviceId);
+                        return <DynamicIcon name={serviceInfo?.icon} />;
+                      })()}
+                       {serviceName}
+                     </span>
                   );
                 })}
               </div>
@@ -554,8 +552,7 @@ const DestinationDetail = () => {
             onClick={() => {
               if (userLoading) return; // Chờ check user xong
               if (!isAuthenticated) {
-                alert("Vui lòng đăng nhập để viết đánh giá.");
-                router.push('/auth/login');
+                showLoginNotice();
               } else {
                 setShowReviewForm(true);
               }
@@ -589,8 +586,7 @@ const DestinationDetail = () => {
                   onSubmit={async (e) => {
                     e.preventDefault();
                     if (!isAuthenticated) {
-                      alert("Vui lòng đăng nhập để gửi đánh giá.");
-                      router.push('/auth/login');
+                      showLoginNotice();
                       return;
                     }
                     try {
@@ -792,6 +788,7 @@ const DestinationDetail = () => {
           </div>
         </section>
       </div>
+      <LoginNotice />
     </div>
   );
 };

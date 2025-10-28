@@ -6,6 +6,8 @@ import { MdNavigateBefore, MdNavigateNext } from 'react-icons/md';
 import { blogCommentApi } from '@/lib/blogComment/blogCommentApi';
 import { BlogComment } from '@/types/blogComment';
 import CommentBox from './CommentBox';
+import { getCurrentUserId } from '@/lib/auth/auth';
+import { useLoginNotice } from '@/hooks/useLoginNotice';
 
 type CommentSectionProps = {
   blogId: string;
@@ -17,6 +19,9 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [editingComment, setEditingComment] = useState<BlogComment | null>(null);
+  const currentUserId = getCurrentUserId();
+
+  const { show: showLogin, LoginNotice } = useLoginNotice();
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -69,6 +74,7 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
             comment={c}
             onUpdated={refreshComments}
             onEdit={(comment) => setEditingComment(comment)}
+            onRequireLogin={showLogin}
           />
         ))
       ) : (
@@ -101,7 +107,11 @@ const CommentSection = ({ blogId, onCommentAdded }: CommentSectionProps) => {
         onCommentAdded={handleNewComment}
         onCommentUpdated={handleUpdatedComment}
         editingComment={editingComment}
-        onCancelEdit={handleCancelEdit} />
+        onCancelEdit={handleCancelEdit}
+        onRequireLogin={showLogin}
+      />
+      
+      <LoginNotice />
     </div>
   );
 };
