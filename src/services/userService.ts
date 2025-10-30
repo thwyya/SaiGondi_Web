@@ -1,9 +1,14 @@
 import api, { authApi } from "./api";
 import { User } from "@/types/user";
+import type { QueryFunctionContext } from '@tanstack/react-query';
 
-export async function getUsers(): Promise<User[]>{
-    const res = await api.get('/admin/users')
-    return res.data
+export const getUsers = async ({ queryKey }: QueryFunctionContext) => {
+  const [, params] = queryKey as any[];
+  return getUsersByParams(params);
+}
+export const getUsersByParams = async (params: any) => {
+  const res = await api.get('/admin/users', { params });
+  return res.data.data.users ?? res.data;
 }
 
 export const sendPasswordResetOTP = async (email: string) => {
