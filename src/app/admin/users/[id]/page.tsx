@@ -309,7 +309,7 @@ export default function ProfilePage() {
                                                 blogDetails.map((blog: any) => (
                                                     <div
                                                         key={blog._id}
-                                                        className="flex gap-4 p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
+                                                        className="flex gap-4 p-4 rounded-lg border border-slate-200  transition-all"
                                                     >
                                                         <img
                                                             src={blog.mainImage}
