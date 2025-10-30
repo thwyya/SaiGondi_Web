@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCategoryById, updateCategory, deleteCategory } from '@/services/categoryService';
 import { useParams, useRouter } from 'next/navigation';
+import ItemDetailsPopup from './ItemDetailsPopup';
+
 
 export default function CategoryDetailsPage() {
   const params = useParams();
@@ -13,6 +15,8 @@ export default function CategoryDetailsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const { data: category, isLoading: isLoadingCategory, error: categoryError } = useQuery({
     queryKey: ['category', id],
@@ -67,6 +71,16 @@ export default function CategoryDetailsPage() {
     if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này không? Hành động này không thể hoàn tác.')) {
       deleteMutation.mutate();
     }
+  };
+
+  const handleItemClick = (item: any) => {
+    setSelectedItem(item);
+    setIsPopupOpen(true);
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
+    setSelectedItem(null);
   };
 
   if (isLoadingCategory) {
@@ -135,7 +149,7 @@ export default function CategoryDetailsPage() {
                   : 'bg-green-100 text-green-700'
               }`}>
                 <i className={`${category.type === 'blog' ? 'ri-article-line' : 'ri-map-pin-line'} mr-1`}></i>
-                {category.type === 'blog' ? 'Blog' : 'Địa điểm'}
+                {category.type === 'blog' ? 'Bài viết' : 'Địa điểm'}
               </span>
               <span className="px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
                 <i className="ri-list-check mr-1"></i>
@@ -195,6 +209,7 @@ export default function CategoryDetailsPage() {
                     {filteredItems.map((item: any, index: number) => (
                       <div
                         key={item._id}
+                        onClick={() => handleItemClick(item)}
                         className="group flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-pointer bg-white hover:bg-blue-50"
                       >
                         <div className="flex items-center space-x-4 flex-1">
@@ -339,7 +354,7 @@ export default function CategoryDetailsPage() {
                           : 'bg-green-100 text-green-700'
                       }`}>
                         <i className={`${category.type === 'blog' ? 'ri-article-line' : 'ri-map-pin-line'} mr-1`}></i>
-                        {category.type === 'blog' ? 'Blog' : 'Địa điểm'}
+                        {category.type === 'blog' ? 'Bài viết' : 'Địa điểm'}
                       </span>
                     </p>
                   </div>
@@ -419,6 +434,13 @@ export default function CategoryDetailsPage() {
           </div>
         </div>
       </div>
+      {isPopupOpen && selectedItem && (
+        <ItemDetailsPopup
+          item={selectedItem}
+          itemType={category.type as 'blog' | 'place'}
+          onClose={handleClosePopup}
+        />
+      )}
     </div>
   );
 }

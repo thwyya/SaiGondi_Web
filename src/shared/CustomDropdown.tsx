@@ -8,6 +8,7 @@ interface DropdownProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function CustomDropdown({
@@ -15,13 +16,14 @@ export default function CustomDropdown({
   value,
   onChange,
   className = "flex-1",
+  disabled = false,
 }: DropdownProps) {
   return (
     <div className={` ${className}`}>
-      <Listbox value={value} onChange={onChange}>
+      <Listbox value={value} onChange={onChange} disabled={disabled}>
         <div className="relative mt-1">
           {/* Nút dropdown */}
-          <Listbox.Button className="relative flex-1 w-full cursor-default rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-10 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 sm:text-sm">
+          <Listbox.Button className={`relative flex-1 w-full cursor-default rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-10 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 sm:text-sm ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
             <span className="block truncate">{value}</span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
               <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
