@@ -36,7 +36,7 @@ export interface Blog {
   ward: Ward;
   province: string;
   originalPostId: string | null;
-  status: "pending" | "approved" | "rejected"; 
+  status: "pending" | "approved" | "rejected" | "deleted"; 
   destroy: boolean;
   deletedAt: string | null;
   createdAt: string;
