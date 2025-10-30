@@ -38,6 +38,9 @@ export function UserTable({ data, onDeleteSuccess, selectedIds: propSelectedIds,
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [rows, setRows] = useState<any[]>(data)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [pendingEditUser, setPendingEditUser] = useState<any | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
   
   useEffect(() => {
     setRows(data)
@@ -94,6 +97,36 @@ export function UserTable({ data, onDeleteSuccess, selectedIds: propSelectedIds,
     setPendingDeleteId(null)
   }
 
+  const handleToggleBan = async () => {
+    if (!pendingEditUser) return
+    const userId = pendingEditUser._id || pendingEditUser.id
+    const currentBannedStatus = pendingEditUser.banned ?? pendingEditUser.isBanned ?? false
+    
+    try {
+      setIsUpdating(true)
+      await axiosInstance.patch(`/admin/users/${userId}`, {
+        banned: !currentBannedStatus
+      })
+      
+      toast.success(currentBannedStatus ? 'Mở khóa tài khoản thành công' : 'Khóa tài khoản thành công')
+      
+      setRows(prev => prev.map(r => {
+        if ((r._id || r.id) === userId) {
+          return { ...r, banned: !currentBannedStatus, isBanned: !currentBannedStatus }
+        }
+        return r
+      }))
+      
+      setEditDialogOpen(false)
+      setPendingEditUser(null)
+    } catch (err) {
+      console.error('Failed to update user', err)
+      toast.error('Cập nhật trạng thái thất bại')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   const columns = useMemo<ColumnDef<any>[]>(() => [
     {
       id: 'select',
@@ -136,12 +169,7 @@ export function UserTable({ data, onDeleteSuccess, selectedIds: propSelectedIds,
     },
     {
       header: 'Số bài viết',
-      accessorFn: row => row.postCount ?? row.blogCount ?? row.sharedBlogs?.length ?? 0,
-      cell: ({ getValue }) => <span>{getValue() as number}</span>
-    },
-    {
-      header: 'Số đánh giá',
-      accessorFn: row => row.reviewCount ?? row.reviews?.length ?? 0,
+      accessorFn: row => row.totalBlogs ?? 0,
       cell: ({ getValue }) => <span>{getValue() as number}</span>
     },
     {
@@ -165,10 +193,26 @@ export function UserTable({ data, onDeleteSuccess, selectedIds: propSelectedIds,
       accessorKey: 'action',
       cell: ({ row }) => {
         const user = row.original
+        const isBanned = user.banned ?? user.isBanned ?? false
+        
+        const handleViewUser = () => {
+          if (isBanned) {
+            toast.warning('Tài khoản này đã bị khóa')
+            return
+          }
+          router.push(`/admin/users/${user._id || user.id}`)
+        }
+        
         return (
           <div className="flex gap-2">
-            <button onClick={() => router.push(`/admin/users/${user._id || user.id}`)} className="text-[#667085]"><i className=" hover:text-green-700 ri-eye-line cursor-pointer"></i></button>
-            <button className="text-[#667085]"><i className="hover:text-blue-700 ri-pencil-line cursor-pointer"></i></button>
+            <button onClick={handleViewUser} className="text-[#667085]"><i className=" hover:text-green-700 ri-eye-line cursor-pointer"></i></button>
+            <button onClick={() => { setPendingEditUser(user); setEditDialogOpen(true); }} className="text-[#667085]">
+              {isBanned ? (
+              <i className='ri-user-heart-line hover:text-blue-700 cursor-pointer'></i>
+              ) : (
+              <i className='ri-user-forbid-line hover:text-blue-700 cursor-pointer'></i>
+              )}
+              </button>
             <button onClick={() => { setPendingDeleteId(user._id || user.id); setDialogOpen(true); }} className="text-[#667085]"><i className="ri-delete-bin-6-line hover:text-red-700 cursor-pointer"></i></button>
           </div>
         )
@@ -179,26 +223,48 @@ export function UserTable({ data, onDeleteSuccess, selectedIds: propSelectedIds,
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() })
 
   return (
-    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none border border-gray-300 rounded-md shadow-sm">
-        <GenericTable data={rows} columns={columns} />
-      </div>
+    <>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="[&>div]:!border-0 [&>div]:!shadow-none [&>div]:!rounded-none border border-gray-300 rounded-md shadow-sm">
+          <GenericTable data={rows} columns={columns} />
+        </div>
 
-      <AlertDialogContent className='bg-white text-black'>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Bạn có chắc chắn muốn xoá?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Hành động này không thể hoàn tác. Vui lòng xác nhận để tiếp tục.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => { setDialogOpen(false); setPendingDeleteId(null); }}>Hủy</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="px-3 py-1 text-white rounded-md">
-            {isDeleting ? 'Đang xoá...' : 'Xác nhận'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        <AlertDialogContent className='bg-white text-black'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xoá?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Vui lòng xác nhận để tiếp tục.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setDialogOpen(false); setPendingDeleteId(null); }}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="px-3 py-1 text-white rounded-md">
+              {isDeleting ? 'Đang xoá...' : 'Xác nhận'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent className='bg-white text-black'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingEditUser?.banned || pendingEditUser?.isBanned ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn {pendingEditUser?.banned || pendingEditUser?.isBanned ? 'mở khóa' : 'khóa'} tài khoản{' '}
+              <strong>{pendingEditUser?.username || pendingEditUser?.email}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setEditDialogOpen(false); setPendingEditUser(null); }}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggleBan} disabled={isUpdating} className="px-3 py-1 text-white rounded-md">
+              {isUpdating ? 'Đang cập nhật...' : 'Xác nhận'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
          

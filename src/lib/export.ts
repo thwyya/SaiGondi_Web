@@ -6,7 +6,7 @@ export const exportToExcel = async (data: any[], fileName: string) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Sheet 1');
 
-  const headers = Object.keys(data[0] ?? {});
+  const headers = Object.keys(data[0] ?? {}).filter(key => key !== 'password');
   worksheet.addRow(headers);
 
   const formatValue = (val: any) => {
@@ -15,7 +15,7 @@ export const exportToExcel = async (data: any[], fileName: string) => {
       const parts = val.map((el) => {
         if (el == null) return '';
         if (typeof el === 'object') {
-          return el.name ?? el.title ?? el.label ?? el.id ?? el.coordinates ?? JSON.stringify(el);
+          return el.name ?? el.title ?? el.label ?? el.id ?? el._id ?? el.coordinates ?? JSON.stringify(el);
         }
         return String(el);
       }).filter(Boolean);
@@ -23,7 +23,7 @@ export const exportToExcel = async (data: any[], fileName: string) => {
     }
 
     if (typeof val === 'object') {
-      return val.name ?? val.title ?? val.label ?? val.id ?? val.coordinates ?? JSON.stringify(val);
+      return val.name ?? val.title ?? val.label ?? val.id ?? val._id ?? val.coordinates ?? JSON.stringify(val);
     }
 
     return String(val);
